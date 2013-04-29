@@ -1,0 +1,55 @@
+body,
+input,
+button {
+	font-family: 'Open Sans Condensed', sans-serif;
+	font-size: 14px;
+	font-weight: bold;
+	color: #666;
+}
+button {
+	border-radius: 10px;
+	border: 2px solid #aaa;
+	background: #eee;
+	cursor: pointer;
+}
+button:hover {
+	background: #ddd;
+}
+span {
+	margin-right: 20px;
+}
+h3 {
+	margin: 0px;
+}
+table {
+	font-size: 14px;
+	line-height: 14px;
+	width: 760px;
+	font-weight: bold;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+table td {
+	border: 1px solid #ddd;
+}
+.status {
+	color: #ad0;
+}
+.cols {
+	display: table;
+	width: 100%;
+	table-layout: fixed;
+}
+.cols > div {
+	display: table-cell;
+}
+.hide {
+	display: none;
+}
+.pl > div {
+	display: inline-block;
+}
+.que .battle,
+.games .battle {
+	display: none;
+}
