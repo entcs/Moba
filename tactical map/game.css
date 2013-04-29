@@ -1,0 +1,51 @@
+body {
+	margin:0;
+	overflow: hidden;
+}
+#container {
+	text-align: center;	
+}
+canvas {
+	border: 2px solid grey;
+	box-sizing: border-box;
+}
+canvas {
+    image-rendering: optimizeSpeed;             // Older versions of FF
+    image-rendering: -moz-crisp-edges;          // FF 6.0+
+    image-rendering: -webkit-optimize-contrast; // Webkit
+
+}
+.kineticjs-content {
+	
+}
+#ui {
+	width: 100%;
+	text-align: center;
+}
+.buts {
+	margin: 0px auto;
+	padding: 5px;
+	display: inline-block;
+	border-radius: 15px;
+	border: 2px solid #aaa;
+	//width: 512px;
+	
+}
+.buts li{
+	list-style: none;	
+	display: inline-block;	
+}
+.but {
+	width: 48px;
+	height: 48px;
+	background: #ddd;
+	border-radius: 10px;
+	border: 2px solid #aaa;
+	cursor: pointer;
+}
+.bow {
+	background:url(./gfx/items.png) no-repeat 0px 0px #ddd;
+}
+.sword {
+	background:url(./gfx/items.png) no-repeat -48px 0px #ddd;
+}
