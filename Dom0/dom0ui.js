@@ -216,7 +216,7 @@
 				},
 				dist=dui.dist(mpos,cpos);
 				
-			if (dist>256){
+			if (dist>180){
 				var off={
 					x: (cpos.x+(mpos.x-cpos.x)/32),
 					y: (cpos.y+(mpos.y-cpos.y)/32)

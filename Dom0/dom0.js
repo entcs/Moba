@@ -396,7 +396,7 @@ var loop=function(tar,fn,how){
 					}	
 				} else {
 					//object
-					var seq=[],ind=0;
+					var seq=[],ind=0,obj;
 					for (var key in tar){
 						if(seq.length==fn) {
 							if (how(seq,ind)==false) {
@@ -404,10 +404,14 @@ var loop=function(tar,fn,how){
 								break;
 							}				
 							seq=[];
-							seq.push({key:tar[key]});
+							obj={};
+							obj[key]=tar[key];
+							seq.push(obj);
 							ind++;							
 						} else {
-							seq.push({key:tar[key]});
+							obj={};
+							obj[key]=tar[key];
+							seq.push(obj);						
 						}
 					}
 					if (seq.length) how(seq,ind++)
@@ -437,6 +441,7 @@ var loop=function(tar,fn,how){
 	}
 }
 
+//example loops return false will break out of loop
 var list=['a','b','c','d','e']
 var obj={a:'a1',b:'b1',c:'c1',d:'d1',e:'e1'}
 
@@ -455,7 +460,6 @@ loop(obj,function(key,val,ind){
 loop(obj,2,function(seq,ind){
 	console.log('obj sequence looping:',obj,seq,ind);
 })
-
 loop('abcdefg',function(ind,str){
 	console.log('string looping:','abcdefg',ind,str);
 })
