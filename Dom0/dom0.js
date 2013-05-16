@@ -1,3 +1,125 @@
+//node
+Node.prototype.find=function(sel){
+	return this.findall(sel)[0];
+}
+Node.prototype.findall=function(sel){	
+	function findit(sel,tars){	
+		var tars1=[];
+		for (var nr in tars){
+			var tar=[],
+				ctar=tars[nr];
+			switch (sel[0]){
+				case '.':
+					tar=ctar.getElementsByClassName(sel[1]);
+					break;
+				case '#':
+					tar.push(document.getElementById(sel[1]) || '');
+					break;
+				default:
+					tar=ctar.getElementsByTagName(sel[1]);
+					break;
+			}
+			//return tar;
+			if ('toarray' in tar){
+				tar=tar.toarray()
+			}					
+			tars1=tars1.concat(tar);			
+			//remove duplicates
+			var nodup=[];
+			for(var nr in tars1){
+				if(nodup.indexOf(tars1[nr])==-1) nodup.push(tars1[nr]);
+			}		
+		}
+		return nodup;
+	}
+
+	var sel=sel.split(' '),
+		arr=[],
+		csel='',
+		found=[this];
+				
+	for(var nr=0;nr<sel.length;nr++){
+		csel=sel[nr];
+		if (csel[0]=='.' || csel[0]=='#') {
+			csel=[csel[0],csel.substr(1,csel.length-1)]
+		} else {
+			csel=['',csel]
+		}
+		found=findit(csel,found);
+	}		
+	return  found;
+}
+Node.prototype.__defineGetter__("firstborne", function(){
+        return this.children[0];
+});
+//element
+Element.prototype.findup=function(sel){
+	if (!sel) {
+		return this.parentNode;
+	} else {
+		var sel=sel.split(' '),
+			arr=[],
+			csel='';
+				
+		for(var nr=0;nr<sel.length;nr++){
+			csel=sel[nr];
+			if (csel[0]=='.' || csel[0]=='#') {
+				arr.push([csel[0],csel.substr(1,csel.length-1)])
+			} else {
+				arr.push(['',csel])
+			}
+		}			
+		var f=this.findargs({
+			sel: arr,
+			parent: 'up',
+			found: false
+		});
+		return f.found;
+	}		
+}
+Element.prototype.next=function(changescope){
+	var found=false;
+	if (changescope){
+		found=this.children[0] || this.nextSibling;
+		if (found==null){
+			var obj=this;
+			//stop if document
+			while (found==null){
+				obj=obj.parentElement;
+				if (obj==document.body){
+					found=document.body;
+				} else {
+					found=obj.nextSibling;
+				}
+			}
+		}		
+	} else {
+		found=this.nextSibling;
+	}
+	return found;
+}
+Element.prototype.prev=function(changescope){
+	var found=false;	
+	if (changescope){
+		found=this.children[this.children.length-1] || this.previousSibling;
+		if (found==null){
+			var obj=this;
+			//stop if body
+			while (found==null){
+				obj=obj.parentElement;
+				if (obj==document.body){
+					found=document.body;
+				} else {
+					found=obj.previousSibling;
+				}
+			}
+		}
+		
+	} else {
+		found=this.previousSibling;
+	}
+	return found;
+}
 //element
 Element.prototype.visibilityevent=true;
 Element.prototype.to=function(parent,loc){
@@ -172,159 +294,6 @@ Element.prototype.off=function(name,fn,flag){
 	this.removeEventListener(name,fn, flag || false);
 	return this;
 }
-Element.prototype.find=function(sel){	
-	var sel=sel.split(' '),
-		arr=[],
-		csel='';
-			
-	for(var nr=0;nr<sel.length;nr++){
-		csel=sel[nr];
-		if (csel[0]=='.' || csel[0]=='#') {
-			arr.push([csel[0],csel.substr(1,csel.length-1)])
-		} else {
-			arr.push(['',csel])
-		}
-	}			
-	var f=this.findargs({
-		sel: arr,
-		parent: parent,
-		found: []
-	});	
-	if ('toarray' in f.found){
-		f.found=f.found.toarray()
-	}
-	return  f.found;
-}
-Element.prototype.findup=function(sel){
-	if (!sel) {
-		return this.parentNode;
-	} else {
-		var sel=sel.split(' '),
-			arr=[],
-			csel='';
-				
-		for(var nr=0;nr<sel.length;nr++){
-			csel=sel[nr];
-			if (csel[0]=='.' || csel[0]=='#') {
-				arr.push([csel[0],csel.substr(1,csel.length-1)])
-			} else {
-				arr.push(['',csel])
-			}
-		}			
-		var f=this.findargs({
-			sel: arr,
-			parent: 'up',
-			found: false
-		});
-		return f.found;
-	}		
-}
-Element.prototype.findargs=function(args){
-	switch(args.parent){
-		case 'up':
-		case 'parent':
-			var par=this.parentNode,
-				csel=args.sel[0];
-			if (par!=document){
-				switch(csel[0]){
-					case '.':
-						if (par.hasclass(csel[1])){
-							args.sel.shift();
-							args.found=par;
-						} 
-						break;
-					case '#':
-						if (par.id==csel[1]){
-							args.sel.shift();
-							args.found=par;						
-						}
-						break;
-					default:
-						if (par.tagName.toLowerCase()==csel[1]){
-							args.sel.shift();
-							args.found=par;					
-						}
-						break;
-				}
-			} else {
-				args.sel=[];
-			}
-			if (args.sel.length){
-				args=par.findargs(args)	
-			}
-			break;
-		default:
-			var tar=[],	
-				csel=args.sel[0];
-				
-			switch (csel[0]){
-				case '.':
-					tar=this.getElementsByClassName(csel[1]);
-					break;
-				case '#':
-					tar.push(document.getElementById(csel[1]) || '');
-					break;
-				default:
-					tar=this.getElementsByTagName(csel[1]);
-					break;
-			}
-			
-			args.sel.shift();					
-			args.found=tar;
-			//find more
-			if (args.sel.length){	
-				for (var nr =0;nr<tar.length;nr++){
-					args=tar[nr].findargs(args)			
-					if (!args.sel.length) break;
-				}
-			}
-			break;
-	}
-	return args;
-}
-Element.prototype.next=function(changescope){
-	var found=false;
-	if (changescope){
-		found=this.children[0] || this.nextSibling;
-		if (found==null){
-			var obj=this;
-			//stop if body
-			while (found==null){
-				obj=obj.parentElement;
-				if (obj==document.body){
-					found=document.body;
-				} else {
-					found=obj.nextSibling;
-				}
-			}
-		}		
-	} else {
-		found=this.nextSibling;
-	}
-	return found;
-}
-Element.prototype.prev=function(changescope){
-	var found=false;	
-	if (changescope){
-		found=this.children[this.children.length-1] || this.previousSibling;
-		if (found==null){
-			var obj=this;
-			//stop if body
-			while (found==null){
-				obj=obj.parentElement;
-				if (obj==document.body){
-					found=document.body;
-				} else {
-					found=obj.previousSibling;
-				}
-			}
-		}
-		
-	} else {
-		found=this.previousSibling;
-	}
-	return found;
-}
 //Nodelist
 NodeList.prototype.toarray=function(){
 	var arr = [];
@@ -333,7 +302,6 @@ NodeList.prototype.toarray=function(){
 	}
 	return arr;
 }
-
 //dom0
 var dom0=(function(){
 	var obj={
@@ -440,7 +408,7 @@ var loop=function(tar,fn,how){
 			break;
 	}
 }
-
+/*
 //example loops return false will break out of loop
 var list=['a','b','c','d','e']
 var obj={a:'a1',b:'b1',c:'c1',d:'d1',e:'e1'}

@@ -50,64 +50,18 @@ dom0.ready(function(){
 			list.removeChild(list.children[list.children.length-1])
 		}
 	})
-	e4=list.add('div').add('div').add('div',{
+	e4=list.add('span').add('div').add('span').add('div').add('a').add('span',{
 		class:'class1',
 		id:'id1',
 		html: 'lalalal',
 		style:{
 			'background-color': 'red'
 		}
-	});	
+	}).add('span');	
 	e4.on('showhide',function(e){
 		console.log('showhide');
 	});
 	e4.show();
 	e4.off('showhide');
 	e4.show();
-	
-	/*
-	function fireEvent(element,event){
-		if (document.createEventObject){
-		// dispatch for IE
-		var evt = document.createEventObject();
-		return element.fireEvent('on'+event,evt)
-		}
-		else{
-		// dispatch for firefox + others
-		var evt = document.createEvent("HTMLEvents");
-		evt.initEvent(event, true, true ); // event type,bubbling,cancelable
-		return !element.dispatchEvent(evt);
-		}
-	}
-	Event.observe(e4,'change',function(){alert('hi');});
-	fireEvent(e4,'change');	
-	/**/
-	/*
-	e4.onshowhide=function trigger(e){
-		console.log('trigger showhide',e.vis);
-	}
-	/**/
-	/*
-	db.onshowhide=function(e){
-		console.log('body onshow triggered:',e.target,e.showhide);
-	}	
-	
-	//e4.addEventListener("showhide", e4.onshowhide, false);
-	e4.show();
-	e4.onshowhide=function(e){
-		console.log('onshow triggered:',e.target,e.showhide);
-	}
-	e4.show();
-	e4.on('click',function(e){
-		console.log('click',e.target);
-		e.target.show();
-	})
-	e4.on('showhide',function(e){
-		console.log('showhide',e.target);
-	})
-	/*
-	var evt = document.createEvent("HTMLEvents");
-	evt.initEvent('show', true, true ); // event type,bubbling,cancelable	
-	e4.dispatchEvent(evt);
-	/**/
 })
