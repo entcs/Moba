@@ -1,82 +1,46 @@
 var db,ele,e1,e2,ele1,e3,e4,act;
 var list;
+/*
+document.head.add('script',{
+	src: 'dom0ui.js'
+})
+/**/
+
 dom0.ready(function(){	
+	dh=document.head;
 	db=document.body;
-	
-	document.head.add('script',{
-		src: 'dom0ui.js'
+	db.add('div',{
+		html: 'div1',
+		class: 'div1'
 	})
-	act=db;
-	but=db.add('button',{
-		html: 'Prev',
-		onclick: function(e){
-			act.rem('class','act');
-			act=act.prev(1);
-			act.set('class','act');		
-		}
+	db.add('div',{
+		html: 'div2',
+		class: 'div2'
+	})
+	db.add('button',{
+		html: 'but1'
 	})
 	
-	but=db.add('button',{
-		html: 'Next',
-		class: 'next c1 c2 c3 c4 c5',
-		onclick: function(e){
-			act.rem('class','act');
-			act=act.next(1);
-			act.add('class','act');		
-		}
-	})
+	//style sheet
+	var sh1=dom0.addsheet('sh1',{}),
+		red='#fa0',
+		blu='#0af';
 	
-	
-	
-	list=db.add('div',{
-		class: 'list'
-	})
-	list.add('button',{
-		html: 'Add child',
-		onclick: function(e){
-			loop(5,function(ind){
-				list.add('div',{
-					html: 'new div '+list.children.length,
-					style: {
-						border: '1px solid grey'
-					}
-				})
-			})
-		}
-	})	
-	list.add('button',{
-		html: 'rem last child',
-		onclick: function(){
-			list.removeChild(list.children[list.children.length-1])
-		}
-	})
-	e4=list.add('div',{
-		class:'class1',
-		id:'id1',
-		html: 'lalalal',
-		style:{
-			'background-color': 'red'
-		},
-		onclick: function(e){
-			console.log('click');
-		}
-	});	
-	/*
-	e4.on('showhide',function(e){
-		console.log('showhide');
+	console.log(sh1);
+
+	sh1.addstyle({
+		selector: 'body',
+		background: red
 	});
-	e4.show();
-	e4.off('showhide');
-	e4.show();
-	/**/
-	e4.on('click',function(e){
-		console.log(this,e,'now');
-	})
-	e4.set('onmousemove',function(e){
-		console.log(this);
-	})
-	e4.onmousemove=function(e){
-		console.log('move');
-	}
+	sh1.addstyle({
+		selector: '.div1',
+		background: '#af0'
+	});
+	sh1.addstyle({
+		selector: '.div2',
+		background: blu
+	});
+	
+	sh1.render()
 	
 })

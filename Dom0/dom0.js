@@ -106,7 +106,7 @@ Element.prototype.prev=function(changescope){
 			var obj=this;
 			//stop if body
 			while (found==null){
-				obj=obj.parentNode;
+				obj=obj.parentN;
 				if (obj==document.body){
 					found=document.body;
 				} else {
@@ -309,17 +309,59 @@ var dom0=(function(){
 		ready: function(fn){
 			this.doonready.push(fn);
 		},
-		add: function(tag,data){
-			var ele=document.createElement(tag);
-			if (data) ele.set(data);
-			return ele;			
-		},
 		extend: function(o1,o2){
 			for(var k in o2) o1[k]=o2[k];
+		},
+		sheets: {},
+		addsheet: function(id,conf){
+			sheet={
+				id: id,
+				styles: [],
+				addstyle: function(style){
+					if (style.selector){						
+						this.styles.push(style);
+					} else {
+						console.log('style selector missing');
+					}
+				},
+				render: function(){
+					var sheet=document.body.parentNode.find('#'+this.id),
+						style,
+						val;
+						
+					if (sheet) sheet.rem()
+					sheet=document.head.add('style',{
+						id: this.id
+					})
+					
+					for(var key in this.styles){
+						style=this.styles[key];
+						sheet.innerHTML+=style.selector+'{\n';
+						for(var name in style){
+							switch (name){
+								case('selector'):
+									break;
+								default:
+									val=style[name];
+									sheet.innerHTML+='\t'+name+':'+val+';\n';
+									break;
+							}
+						}
+						sheet.innerHTML+='}\n';
+						sheet.innerHTML=unescape(sheet.innerHTML)
+					}
+				}
+				
+			};
+			
+			this.extend(sheet,conf);
+			this.sheets[id]=sheet;			
+			return sheet;
 		}
+		
 	}	
 	document.addEventListener( "DOMContentLoaded", function(){
-		//document.removeEventListener( "DOMContentLoaded", arguments.callee, false );
+		document.removeEventListener( "DOMContentLoaded", arguments.callee, false );
 		for(var nr in dom0.doonready){
 			dom0.doonready[nr]();
 		}		

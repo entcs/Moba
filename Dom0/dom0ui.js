@@ -1,5 +1,6 @@
 /* requires dom0 */
-(function(dom0){
+dom0.ready(function(){	
+(function(dom0){	
 	var db=document.body,
 		dui={
 		edit: false,
@@ -20,7 +21,8 @@
 			var dx=p1.x-p2.x,
 				dy=p1.y-p2.y;
 			return dist=Math.sqrt(dx*dx+dy*dy)
-		}
+		},
+		
 	}	
 	/*
 	document.body.add('div',{
@@ -177,8 +179,7 @@
 		onclick: function(e){
 			console.log('style mode')
 		}
-	})
-	
+	})	
 	dui.loop=function(){
 		dui.timo=setTimeout(function(){			
 			dui.loop();
@@ -232,3 +233,4 @@
 	})
 	dom0.ui=dui;
 }(dom0))
+})
