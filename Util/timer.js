@@ -1,53 +1,3 @@
-﻿var socket = io.connect('http://localhost:8080');
-socket.on('news', function (data) {
-	console.log(data);
-	socket.emit('my other event', { my: 'data' });
-});
-socket.on('echo', function (data) {
-	document.getElementById('res').innerHTML=data;
-});
-function send(method){
-	var but=document.getElementById('but'),
-		inp=document.getElementById('inp');
-	Net.get(inp.value,function(){
-		console.log('req:', unescape(this.responseText));
-	})
-	/*	
-	var req=new XMLHttpRequest();
-	req.open("GET",inp.value,true);
-	req.send();	
-	req.onreadystatechange=function() {
-		console.log('req:',req.readyState, req.status, req.responseText);
-	}	
-	/**/
-}
-
-function sendsock(){
-	socket.emit('echo', document.getElementById('inp1').value);
-}
-
-
-
-var Net;
-(function(){
-	Net={
-		get: function (url,callback,async){
-			return Net.XMLHR('GET',url,async,callback);
-		},
-		post: function (url,callback,async){
-			return Net.XMLHR('POST',url,async,callback);
-		},
-		XMLHR: function (method,url,async,callback){
-			async=async || true;
-			var req=new XMLHttpRequest();
-			req.open(method,url,async);
-			req.send();	
-			req.onreadystatechange=callback;	
-			return req;
-		}	
-	}
-})();
-
 var Timer;
 (function(){
 	var ct=new Date().getTime();
@@ -125,19 +75,4 @@ var Timer;
 	}
 	Timer.run();
 })();
-
-var nt1=Timer.add({
-	life: 2,
-	//count: 0.4,
-	freq: 0.5,
-	fn: function(){
-		console.log('tick',this.id,this.count,this.lasttime);
-	},
-	onbirth: function(){
-		console.log('birth',this.id);
-	},
-	ondeath: function(){
-		console.log('death',this.id);
-	}
-});
-
+if (typeof exports !== undefined) exports.Timer =Timer;

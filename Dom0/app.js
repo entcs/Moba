@@ -1,12 +1,8 @@
 var db,ele,e1,e2,ele1,e3,e4,act;
 var list;
-/*
-document.head.add('script',{
-	src: 'dom0ui.js'
-})
-/**/
 
-dom0.ready(function(){	
+document.onready(function(){	
+	console.log('dom0 ready');
 	dh=document.head;
 	db=document.body;
 	db.add('div',{
@@ -22,7 +18,7 @@ dom0.ready(function(){
 	})
 	
 	//style sheet
-	var sh1=dom0.addsheet('sh1',{}),
+	var sh1=dui.addsheet('sh1',{}),
 		red='#fa0',
 		blu='#0af';
 	

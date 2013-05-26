@@ -24,27 +24,34 @@ function handler (req, res) {
 	ext=extname(req.url);
 	console.log('req url:',req.url,contenttype[ext]);
 	if (contenttype[ext]){				
-		//if (req.url=='/') req.url='/index.html';
+		//req.url='/index.html';
 		fs.readFile(__dirname + req.url, function (err, data) {
 			if (err) {
 			  res.writeHead(500);
-			  return res.end('Error loading index.html');
+			  return res.end('Error loading:',req.url);
 			} else {
 				var path=req.url.split('/'),
 					plen=path.length,
 					ctype=path[plen-1].split();
 					
 				res.writeHead(200,contenttype[extname(req.url)]);
-				res.end(data,'utf-8');
+				return res.end(data,'utf-8');
 			}
 		});
+	//action
+	} else {
+		res.writeHead(200);
+		return res.end(req.url.substring(1));		
 	}
 	/**/
 }
 
 io.sockets.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
+	socket.emit('news', { hello: 'world' });
+	socket.on('my other event', function (data) {
+		console.log(data);
+	});
+	socket.on('echo', function (data) {
+		socket.emit('echo', data);
+	});
 });

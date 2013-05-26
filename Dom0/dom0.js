@@ -1,3 +1,20 @@
+//document
+document.onready=function(fn){
+	this.doonready.push(fn);
+}
+document.doonready=[];
+document.onreadystatechange=function(fn){
+	if (this.readyState=='complete'){
+		for(var nr in this.doonready){
+			this.doonready[nr]();
+		}
+		this.doonready=[];
+	}
+}
+document.extend=function(o1,o2){
+	for(var k in o2) o1[k]=o2[k];
+};
+
 //node
 Node.prototype.find=function(sel){
 	return this.findall(sel)[0];
@@ -49,9 +66,7 @@ Node.prototype.findall=function(sel){
 	}		
 	return  found;
 }
-Node.prototype.__defineGetter__("firstborne", function(){
-        return this.children[0];
-});
+
 //element
 Element.prototype.findup=function(sel){
 	if (!sel) {
@@ -120,6 +135,7 @@ Element.prototype.prev=function(changescope){
 	}
 	return found;
 }
+
 //element
 Element.prototype.visibilityevent=true;
 Element.prototype.to=function(parent,loc){
@@ -294,6 +310,7 @@ Element.prototype.off=function(name,fn,flag){
 	this.removeEventListener(name,fn, flag || false);
 	return this;
 }
+
 //Nodelist
 NodeList.prototype.toarray=function(){
 	var arr = [];
@@ -302,182 +319,3 @@ NodeList.prototype.toarray=function(){
 	}
 	return arr;
 }
-//dom0
-var dom0=(function(){
-	var obj={
-		doonready: [],
-		ready: function(fn){
-			this.doonready.push(fn);
-		},
-		extend: function(o1,o2){
-			for(var k in o2) o1[k]=o2[k];
-		},
-		sheets: {},
-		addsheet: function(id,conf){
-			sheet={
-				id: id,
-				styles: [],
-				addstyle: function(style){
-					if (style.selector){						
-						this.styles.push(style);
-					} else {
-						console.log('style selector missing');
-					}
-				},
-				render: function(){
-					var sheet=document.body.parentNode.find('#'+this.id),
-						style,
-						val;
-						
-					if (sheet) sheet.rem()
-					sheet=document.head.add('style',{
-						id: this.id
-					})
-					
-					for(var key in this.styles){
-						style=this.styles[key];
-						sheet.innerHTML+=style.selector+'{\n';
-						for(var name in style){
-							switch (name){
-								case('selector'):
-									break;
-								default:
-									val=style[name];
-									sheet.innerHTML+='\t'+name+':'+val+';\n';
-									break;
-							}
-						}
-						sheet.innerHTML+='}\n';
-						sheet.innerHTML=unescape(sheet.innerHTML)
-					}
-				}
-				
-			};
-			
-			this.extend(sheet,conf);
-			this.sheets[id]=sheet;			
-			return sheet;
-		}
-		
-	}	
-	document.addEventListener( "DOMContentLoaded", function(){
-		document.removeEventListener( "DOMContentLoaded", arguments.callee, false );
-		for(var nr in dom0.doonready){
-			dom0.doonready[nr]();
-		}		
-	}, false );	
-	return obj;
-})();
-
-//util
-var loop=function(tar,fn,how){
-	var type=typeof(tar);
-	switch(type){
-		case 'number':
-			for (var nr=0;nr<tar;nr++){
-				if (fn(nr)==false) break;
-			}
-			break;
-		case 'string':
-			if (how){				
-				var nr=0,
-					seq=tar.substring(nr,nr+fn || tar.length),
-					len=Math.ceil(tar.length/fn);				
-				for (var nr=0;nr<len;nr++){
-					seq=tar.substring(nr*fn,(nr+1)*fn || tar.length);
-					if (how(nr,seq)==false) break;
-				}
-			} else {
-				for(var nr in tar){
-					if (fn(nr,tar[nr])==false) break;				
-				};
-			}
-			break;
-		case 'object':
-			if (how){
-				if (tar.length!=undefined){
-					//array
-					var nr=0,
-						seq=tar.slice(nr,fn);
-						len=Math.ceil(tar.length/fn);				
-					for (var nr=0;nr<len;nr++){		
-						seq=tar.slice(nr*fn,(nr+1)*fn);
-						if (how(nr,seq)==false) break;
-					}	
-				} else {
-					//object
-					var seq=[],ind=0,obj;
-					for (var key in tar){
-						if(seq.length==fn) {
-							if (how(seq,ind)==false) {
-								seq=[];
-								break;
-							}				
-							seq=[];
-							obj={};
-							obj[key]=tar[key];
-							seq.push(obj);
-							ind++;							
-						} else {
-							obj={};
-							obj[key]=tar[key];
-							seq.push(obj);						
-						}
-					}
-					if (seq.length) how(seq,ind++)
-				}
-			} else {
-				var res;
-				if (tar.length==undefined){
-					var ind=0;
-					for (var nr in tar){
-						if (fn(nr,tar[nr],ind)==false) break;
-						ind++;
-					}			
-				} else {
-					for (var nr in tar){
-						if (fn(nr,tar[nr])==false) break;
-					}			
-				}			
-			}
-			break;
-		default :
-			fn=tar;
-			var nr=0
-			while (fn(nr)!=false){
-				nr++;
-			}
-			break;
-	}
-}
-/*
-//example loops return false will break out of loop
-var list=['a','b','c','d','e']
-var obj={a:'a1',b:'b1',c:'c1',d:'d1',e:'e1'}
-
-loop(list,function(ind,ele){
-	console.log('list looping:',list,ind,ele)	
-})
-loop(list,2,function(ind,ele){
-	console.log('list sequence looping:',list,ind,ele)	
-})
-loop(5,function(ind){
-	console.log('int looping:',ind);
-})
-loop(obj,function(key,val,ind){
-	console.log('obj looping:',obj,key,val,ind);
-})
-loop(obj,2,function(seq,ind){
-	console.log('obj sequence looping:',obj,seq,ind);
-})
-loop('abcdefg',function(ind,str){
-	console.log('string looping:','abcdefg',ind,str);
-})
-loop('abcdefg',3,function(ind,str){
-	console.log('string sequnce looping:','abcdefg',ind,str);
-})
-loop(function(ind){
-	console.log('while looping:',ind);
-	if (ind==5) return false;
-})
-/**/
