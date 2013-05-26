@@ -1,20 +1,20 @@
 //document
 document.onready=function(fn){
-	this.doonready.push(fn);
+	document.doonready.push(fn);
 }
 document.doonready=[];
 document.onreadystatechange=function(fn){
-	if (this.readyState=='complete'){
-		for(var nr in this.doonready){
-			this.doonready[nr]();
+	console.log(document.readyState)
+	if (document.readyState=='complete'){
+		for(var nr in document.doonready){
+			document.doonready[nr]();
 		}
-		this.doonready=[];
+		document.doonready=[];
 	}
 }
 document.extend=function(o1,o2){
 	for(var k in o2) o1[k]=o2[k];
 };
-
 //node
 Node.prototype.find=function(sel){
 	return this.findall(sel)[0];
