@@ -4,7 +4,7 @@ document.onready=function(fn){
 }
 document.doonready=[];
 document.onreadystatechange=function(fn){
-	console.log(document.readyState)
+	//console.log(document.readyState)
 	if (document.readyState=='complete'){
 		for(var nr in document.doonready){
 			document.doonready[nr]();
@@ -319,4 +319,4 @@ NodeList.prototype.toarray=function(){
 	}
 	return arr;
 }
-console.log('dom0 arrived');
+console.log('Loaded dom0');

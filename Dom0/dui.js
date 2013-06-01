@@ -83,6 +83,7 @@ document.onready(function(){
 				 
 		})
 		/**/
+		
 		dui.drawfloatingcontrols=function(mode){
 			if (dui.floatingcontrols) dui.floatingcontrols.rem();
 			fc=db.add('div',{
@@ -162,10 +163,10 @@ document.onready(function(){
 						}],
 						count=0;
 					var style;
-					for(var nr in rows){
+					for(var nr=0;nr<rows;nr++){
 						div=fc.add('div',{
 						})
-						for(var nr2 in cols){
+						for(var nr2=0;nr2<cols;nr2++){
 							style={
 									display: 'table-cell',
 									fontFamily: 'Open Sans Condensed, sans-serif',
@@ -190,7 +191,9 @@ document.onready(function(){
 			}
 			return fc;
 		}
+		/**/
 		dui.floatingcontrols=dui.drawfloatingcontrols('nav');
+		
 		dui.root.add('button',{
 			html: 'nav',
 			style: {
