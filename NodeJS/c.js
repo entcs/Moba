@@ -14,23 +14,27 @@ function sendsock(){
 /**/
 
 
+
 var d=document;
 d.on('ready', function(){
 	console.log('Document ready');
-	d.body.add('div').add('button',{
-		html: 'require/dnet',		
-		onclick: function(){				
-			dnet.post(this.innerHTML)/*,function(e){					
-				if (e.readyState==4 && e.status==200){
-					console.log('res:',e.response);
-				}/**/				
+	dnet.post('load/sapp')
+	dnet.post('sethandler/sapp.handler')		
+	d.body.add('input',{
+		onkeypress:	function(e){
+			console.log(e.keyCode);
+			if(e.keyCode==13) {
+				dnet.post(this.value,function(req){
+					
+					div.innerHTML=req.response.replace(/[\n]/g,'<br>');
+					console.log('div:',div,req.response)
+				});
+				this.value='';
+			}
 		}
-	})			
-	d.body.add('div').add('button',{
-		html: 'drop/dnet',		
-		onclick: function(){				
-			dnet.post(this.innerHTML)				
-		}		
-	})			
+	},'last');
+	var div=d.body.add('div');
+	
+	
 	
 })
