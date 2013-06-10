@@ -5,6 +5,7 @@ var fs = require('fs'),
 			dns.modules[name]=require(name);
 			dns.modules[name].dns=dns;
 			var fpath='./node_modules/'+name+'.js';
+			fs.unwatchFile(fpath);
 			fs.watchFile(fpath,{ persistent: true, interval: 1000 }, function (curr, prev) {
 				if (curr.mtime!=prev.mtime){					
 					delete require.cache[path.resolve(__dirname, fpath)];
@@ -22,10 +23,8 @@ var fs = require('fs'),
 			console.log('dropped module:',name);	
 		},
 		log: function(){
-			console.log('--- SERVER modules ---',new Date());
-			var list=['list of modules:']
+			var list=['server has modules:']
 			for(var key in dns.modules){
-				//console.log('module:', key);
 				list.push(key);
 			}
 			return list.join('\n');
@@ -34,7 +33,9 @@ var fs = require('fs'),
 			'html': { 'Content-Type':'text/html'},
 			'js':   { 'Content-Type':'text/javascript'},
 			'css':  { 'Content-Type':'text/css'},
-			'png':  { 'Content-Type':'image/png'}
+			'png':  { 'Content-Type':'image/png'},
+			'ico':  { 'Content-Type':'image/gif'},
+			'gif':  { 'Content-Type':'image/gif'}
 			
 		},	
 		extname: function (url){
@@ -61,9 +62,9 @@ var fs = require('fs'),
 				mes='module not found: '+p[0];				
 			}
 			return mes;
-		},
-		sethandlerstr: '',
-		modules:{}
+		},		
+		modules:{},
+		dirname: __dirname
 	},
 	handler=function(req,res){		
 		var p=req.url.split('/'),
@@ -96,30 +97,43 @@ var fs = require('fs'),
 						res.writeHead(404,{ 'Content-Type':'text/html'});
 						res.end('Error loading: '+req.url,'utf-8');				
 					} else {
+						
 						var path=req.url.split('/'),
 							plen=path.length,
 							ctype=path[plen-1].split();
-							
+						
+						//ds load
+						if (path[plen-1]=='ds.js'){
+							dns.load('ds');
+						}						
 						res.writeHead(200,dns.contenttype[dns.extname(req.url)]);
 						res.end(data,'utf-8');
 					}
 				});	
 			} 
-			else if (dns.handler){//action					
-				dns.handler(req,res);
-			} else {
-				res.writeHead(200);
-				res.end('handler not defined:'+p[1]);			
+			else {				
+				//ds				
+				if(p[1].substr(0,2)=='ds' && dns.modules.ds){
+					dns.modules.ds.handler(req,res)
+				//action
+				} else if (dns.handler){
+					dns.handler(req,res);
+				//not handled
+				} else {
+					res.writeHead(200);
+					res.end('handler not defined:'+p[1]);
+				}
+				
 			}
 		} else {
 			res.writeHead(200);
 			res.end(mes);
 		}
 	},
-	app = require('http').createServer(handler),
-	io = require('socket.io').listen(app);	
+	app = require('http').createServer(handler)/*,
+	io = require('socket.io').listen(app);
 
-io.set('log level', 1);	
+io.set('log level', 1);	/**/
 app.listen(8080);
 /*
 var rh=dns.load('rhandler');
