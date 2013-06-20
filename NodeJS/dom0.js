@@ -49,22 +49,22 @@ Node.prototype.findall=function(sel){
 	}		
 	return  found;
 }
-Node.prototype.trigger=function(name,args){
+Node.prototype.trigger=function(n,a){
 	var e = document.createEvent("HTMLEvents");
-	e.initEvent(name, true, true ); // event type,bubbling,cancelable		
-	if (args) e.args=args;
+	e.initEvent(n, true, true ); // event type,bubbling,cancelable		
+	if (a) e.args=a;
 	this.dispatchEvent(e);	
 	return this;
 }
-Node.prototype.on=function(name,fn,flag){
-	this.addEventListener(name,fn, flag || false);
+Node.prototype.on=function(n,fn,f){
+	this.addEventListener(n,fn, f || false);
 	if (!this.eventfunctions) this.eventfunctions={};
-	this.eventfunctions['efn-'+name]=fn;
+	this.eventfunctions['efn-'+n]=fn;
 	return this;
 }
-Node.prototype.off=function(name,fn,flag){
-	var fn=this.eventfunctions['efn-'+name];
-	this.removeEventListener(name,fn, flag || false);
+Node.prototype.off=function(n,fn,f){
+	var fn=this.eventfunctions['efn-'+n];
+	this.removeEventListener(n,fn, f || false);
 	return this;
 }
 //document
@@ -160,10 +160,9 @@ Element.prototype.prev=function(changescope){
 	}
 	return found;
 }
-Element.prototype.visibilityevent=true;
-Element.prototype.to=function(parent,loc){
+Element.prototype.to=function(parent,l){
 	var p=parent.parentElement;
-	switch(loc){		
+	switch(l){		
 		case 'first':
 			if (parent.children.length){
 				parent.insertBefore(this,parent.children[0])				
@@ -182,139 +181,115 @@ Element.prototype.to=function(parent,loc){
 	}
 	return this;
 }
-Element.prototype.add=function(tag,attr,loc){
-		switch(tag){
-			case 'class':
-				var nlist=this.className.split(' ');
-				if (attr.indexOf(' ')!=-1){
-					dlist=attr.split(' ');
-					for(var nr in dlist){
-						nlist.push(dlist[nr]);
-					}
-				} else {
-					nlist.push(attr);
-				}
-				this.className=nlist.join(' ');
-				break;
-			default:
-				var ele=document.createElement(tag);
-				if (attr) ele.set(attr);
-				ele.to(this,loc);
-				return ele;		
-		}
+Element.prototype.add=function(t,a,l){
+	var e=document.createElement(t);
+	if (a) e.set(a);
+	e.to(this,l);
+	return e;		
 }
-Element.prototype.rem=function(key,val){
-	switch (key){
-		case 'class':
-			if (val){
-				var nlist=this.className.split(' ');
-				if (val.indexOf(' ')!=-1){
-					vlist=val.split(' ')
-					var ind;
-					for (var nr in vlist){
-						ind=nlist.indexOf(vlist[nr]);
-						nlist.splice(ind,1);						
-					}
-				} else {
-					var ind=nlist.indexOf(val);
-					nlist.splice(ind,1);
-				}
-				this.className=nlist.join(' ');			
-			} else {
-				this.className='';
-			}
-			return this;
-			
-		default:
-			this.parentNode.removeChild(this);
-			break;
-	}	
+Element.prototype.rem=function(){
+	this.parentNode.removeChild(this);
 }
-Element.prototype.set = function (attr,val) {
-    if (typeof(attr)=='object'){
-		var val;
-		for (key in attr) {
-			val = attr[key];
-			this.set(key,val);
+Element.prototype.set = function (a,v) {
+    if (typeof(a)=='object'){
+		var v;
+		for (var k in a) {
+			v = a[k];
+			this.set(k,v);
 		}
 	} else {	
-		switch (attr) {
+		switch (a) {
 			case 'html':
-				this.innerHTML = val;
+				this.innerHTML = v;
 				break;
 			case 'style':
-				for (var name in val) {
-					this.style[name] = val[name];
+				for (var n in v) {
+					this.style[n] = v[n];
 				}
 				break;
-			case 'onclick':
-			case 'onmouseup':
-			case 'onmousedown':
-			case 'onkeypress':
-			case 'onkeyup':
-			case 'onkeydown':
-			case 'onmousemove':
-			case 'onmousewheel':
-			case 'onmouseout':
-			case 'onmouseover':
-				this[attr]=val;
-			break;
 			default:
-				this.setAttribute(attr, val);
+				this.setAttribute(a, v);
 				break;
 		};
 	}
 };
-Element.prototype.get = function (name,name2){
-	switch(name){
+Element.prototype.get = function (n,n2){
+	switch(n){
 		case 'html':
-			attr=this.innerHTML;
+			n=this.innerHTML;
 			break;
 		case 'style':
-			if (name2) {
-				attr=this.style[name2];
+			if (n2) {
+				n=this.style[n2];
 			} else {
-				attr=this.style;
-			}
-			break;
-		case 'class':
-			if (name2) {
-				console.log('return specific style:',name2);
-				attr=this.getAttribute(name).indexOf(name2)+1;
-			} else {	
-				attr=this.getAttribute(name)
+				n=this.style;
 			}
 			break;
 		default:
-			attr=this.getAttribute(name)
+			n=this.getAttribute(n)
 			break;
 	}	
-	return attr;
+	return n;
 };
-Element.prototype.hasclass=function(name){
-	return this.get('class').indexOf(name)+1;
-}
-Element.prototype.show = function (tag) {	
+Element.prototype.show = function () {	
 	this.style.display = this.display || window.getComputedStyle(this).display;
 	delete this.display;
-	if (tag!=undefined) this.visibilityevent=tag;
-	if (this.visibilityevent){
-		var e = document.createEvent("HTMLEvents");
-		e.initEvent('showhide', true, true ); // event type,bubbling,cancelable
-		e.showhide='show';
-		this.dispatchEvent(e);		
-	}
+	var e = document.createEvent("HTMLEvents");
+	e.initEvent('show', true, true ); // event type,bubbling,cancelable
+	this.dispatchEvent(e);		
 };
-Element.prototype.hide = function (tag) {
+Element.prototype.hide = function () {
 	this.display=window.getComputedStyle(this).display;
 	this.style.display = 'none';
-	if (this.visibilityevent){
-		var e = document.createEvent("HTMLEvents");
-		e.initEvent('showhide', true, true ); // event type,bubbling,cancelable
-		e.showhide='hide';
-		this.dispatchEvent(e);		
-	}	
+	var e = document.createEvent("HTMLEvents");
+	e.initEvent('hide', true, true ); // event type,bubbling,cancelable
+	this.dispatchEvent(e);		
 };
+Element.prototype.addclass=function(n){
+	var cl=this.className.split(' '),
+		nl=n.split(' ');
+	if (cl[0]=='') cl.shift()
+	for(var nr in nl){
+		n=nl[nr]
+		if (cl.indexOf(n)==-1){
+			cl.push(n)
+		}
+	}	
+	this.className=cl.join(' ');
+	return this;
+}
+Element.prototype.remclass=function(n){
+	if (n){
+		var nl=this.className.split(' ');
+		if (n.indexOf(' ')!=-1){
+			var vl=n.split(' '),
+				i;
+			for (var nr in vl){
+				i=nl.indexOf(vl[nr]);
+				nl.splice(i,1);						
+			}
+		} else {
+			var i=nl.indexOf(n);
+			nl.splice(i,1);
+		}
+		this.className=nl.join(' ');			
+	} else {
+		this.className='';
+	}
+	return this;	
+}
+Element.prototype.hasclass=function(n){
+	var nl=this.className.split(' '),
+		ns=n.split(' '),
+		o=1;
+	for(var nr in ns){
+		n=ns[nr]
+		if (nl.indexOf(n)==-1){
+			o=0
+		}
+	}
+	return o;
+}
 
 //Nodelist
 NodeList.prototype.toarray=function(){

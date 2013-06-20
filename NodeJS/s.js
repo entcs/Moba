@@ -3,14 +3,12 @@ var fs = require('fs'),
 	dns={
 		load: function (name){
 			dns.modules[name]=require(name);
-			dns.modules[name].dns=dns;
 			var fpath='./node_modules/'+name+'.js';
 			fs.unwatchFile(fpath);
 			fs.watchFile(fpath,{ persistent: true, interval: 1000 }, function (curr, prev) {
 				if (curr.mtime!=prev.mtime){					
 					delete require.cache[path.resolve(__dirname, fpath)];
 					dns.modules[name]=require(name);
-					dns.modules[name].dns=dns;
 				}
 			});	
 			return dns.modules[name];
@@ -73,13 +71,16 @@ var fs = require('fs'),
 		if (p[1]=='load'){
 			dns.load(p[2])
 			inner=1;
-		} else if(p[1]=='drop'){
+		} 
+		else if(p[1]=='drop'){
 			dns.drop(p[2])
 			inner=1;
-		} else if(p[1]=='log'){
+		} 
+		else if(p[1]=='log'){
 			mes=dns.log()
 			inner=1;
-		} else if(p[1]=='sethandler'){
+		} 
+		else if(p[1]=='sethandler'){
 			var mes=dns.sethandler(p[2],req,res)
 			if(mes!='ok') {
 				res.writeHead(404);
@@ -90,7 +91,9 @@ var fs = require('fs'),
 		
 		if(inner==0){
 			if (req.url=='/') req.url='/index.html';
+			
 			ext=dns.extname(req.url);	
+			
 			if (dns.contenttype[ext]){
 				fs.readFile(path.resolve(__dirname+req.url), function (err, data) {
 					if (err) {
@@ -98,13 +101,14 @@ var fs = require('fs'),
 						res.end('Error loading: '+req.url,'utf-8');				
 					} else {
 						
-						var path=req.url.split('/'),
-							plen=path.length,
-							ctype=path[plen-1].split();
+						var cpath=req.url.split('/'),
+							plen=cpath.length,
+							ctype=cpath[plen-1].split();
 						
 						//ds load
-						if (path[plen-1]=='ds.js'){
+						if (cpath[plen-1]=='ds.js'){
 							dns.load('ds');
+							fs.mkdir(path.resolve(__dirname+'/ds'));								
 						}						
 						res.writeHead(200,dns.contenttype[dns.extname(req.url)]);
 						res.end(data,'utf-8');
@@ -125,7 +129,8 @@ var fs = require('fs'),
 				}
 				
 			}
-		} else {
+		} 
+		else {
 			res.writeHead(200);
 			res.end(mes);
 		}
