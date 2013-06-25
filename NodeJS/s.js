@@ -139,7 +139,7 @@ var fs = require('fs'),
 	io = require('socket.io').listen(app);
 
 io.set('log level', 1);	/**/
-app.listen(8080);
+app.listen(2222);
 /*
 var rh=dns.load('rhandler');
 dns.handler=rh.handler;

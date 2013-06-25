@@ -68,24 +68,6 @@ Node.prototype.off=function(n,fn,f){
 	return this;
 }
 //document
-/*
-document.onready=function(fn){
-	document.doonready.push(fn);
-}
-document.doonready=[];
-document.onreadystatechange=function(fn){
-	//console.log(document.readyState)
-	document.trigger(document.readyState);
-	//if (document.readyState=='complete') document.trigger('ready');
-	
-	if (document.readyState=='complete'){
-		for(var nr in document.doonready){
-			document.doonready[nr]();
-		}
-		document.doonready=[];
-	}
-}
-/**/
 document.extend=function(o1,o2){
 	for(var k in o2) o1[k]=o2[k];
 };

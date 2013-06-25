@@ -1,121 +1,107 @@
-﻿//var socket = io.connect('http://localhost:8080');
-/*
-socket.on('news', function (data) {
-	console.log(data);
-	socket.emit('my other event', { my: 'data' });
-});
-socket.on('echo', function (data) {
-	document.getElementById('res').innerHTML=data;
-});
-
-function sendsock(){
-	socket.emit('echo', document.getElementById('inp1').value);
-}
-/**/
-
-var d=document,
-	gmap,
-	db;
+﻿var d=document
 d.on('ready', function(){
 	console.log('Document ready');
-	db=document.body;
-	
-	d.body.on('show',function(e){
-		console.log('body show');
-	})
-	d.body.on('hide',function(e){
-		console.log('body hide');
-	})
-	
-	d.body.set({
-		style:{
-			margin: 0
-		}
-	})
+	/*
 	dnet.post('load/sapp')
 	dnet.post('sethandler/sapp.handler')
-
-	d.body.add('div',{
-		style:{
-			'text-align': 'center'
-		}
-	}).add('div',{
-		id: 'logo',
-		html: 'Tëëkond',
-		style:{
-			'font-family': 'Jolly Lodger',
-			'font-size': '76px',
-			color:'#6C8541',
-			margin: '0 auto'
-		}
+	/**/
+		
+	var logo=d.body.add('div',{
+		'class':'logowrap'
 	})
+	logo.add('div',{
+		id: 'logo',
+		'class':'logo',
+		//html: ('Tëökoda').toUpperCase()
+		html: ('Teokoda').toUpperCase()
+	})
+	logo.add('div',{
+		'class':'img'
+	})	
 			
-	
 	var nav=d.body.add('div',{
-		style:{
-			'text-align':'center',
-			'padding':'10px 30px',
-			border: '2px solid #6C8541',
-			'border-radius': '64px',
-			margin: '10px auto',
-			display: 'table'
-		}
+		'class':'nav'
 	});
-	var but;
-	loop(8,function(){
-		but=nav.add('div',{
-			'class':'but',
-			style: {
-				width: '64px',
-				height: '64px',
-				'border-radius':'74px',
-				'background-color':'#6C8541',
-				border:'32px solid #9EC261',
-				display: 'inline-block',
-				cursor: 'pointer',
-				margin: '5px',
-				'box-sizing':'border-box',
-				'vertical-align' : 'top',
-				'-webkit-transition': 'all 0.5s'
-			}
-		})	
-		but.onmouseover=function(){
-				this.set({
-					style: {
-						'border-width': '3px'
-					}
-				})
-			}
-		but.onmouseout=function(){
-				this.set({
-					style: {
-						'border-width': '32px'
-					}
-				})
-			}
-	
-	})		
-
-	
-	var initmap=function(){		
-		d.body.add('div').add('div',{
-			style:{
-				padding: '10px',
-				margin: '50px',
-				'border-radius': '15px',
-				border: '2px solid #6C8541',
-				width: '512px',
-				height: '512px',
-				margin: '0px auto'
-			}
-		}).add('div',{
-			id: 'gmap',
-			style: {
-				width: '100%',
-				height: '100%'
+	var teokoda=ds.add('teokoda'),
+		selected=0
+	teokoda.add('hoiud')
+	teokoda.add('aiad')
+	teokoda.add('hoidjad')
+	teokoda.add('trennid')
+	teokoda.add('ringid')
+		
+	teokoda.get(function(res){
+		var but,
+			groups=[];
+		loop(JSON.parse(res),function(ind,ele){		
+			but=nav.add('button',{
+				html: ele.toUpperCase()
+			})
+			dnet.post(teokoda.add(ele))
+			but.on('click',function(){
+				if (selected) selected.remclass('selected')
+				this.addclass('selected')
+				selected=this
+				if (activemarker) {
+					activemarker.setMap(null)
+					activemarker=0
+				}		
+				getgroup(selected.innerHTML.toLowerCase())				
+			})
+		})			
+	});
+	function getgroup(name){
+		dnet.post('ds.teokoda.'+name+'.get()',function(res){
+			if (res){
+				for(var nr in markers) markers[nr].setMap(null)
+				markers.length=0
+				var data=JSON.parse(res),
+					item,
+					pos
+				for(var nr in data){
+					item=JSON.parse(data[nr])
+					pos=new google.maps.LatLng(item.pos[0],item.pos[1]);
+					var marker = new google.maps.Marker({
+						position: pos,
+						map: map,
+						icon: '/images/'+icomap[selected.innerHTML.toLowerCase()]+'.png',
+						shadow: '/images/shadow.png',
+						animation: google.maps.Animation.DROP,
+						title: item.nimi
+					})		
+					google.maps.event.addListener(marker, 'click', function(e) {
+						console.log('show details');
+						mapd.hide()
+						modalw.show()								
+					})
+					markers.push(marker)
+				}
 			}
 		})
-
+	
+	}
+	
+	
+	
+	var activemarker=0,
+		markers=[],
+		mapd,
+		mapwrap,
+		icomap={
+			hoidjad: 'hoidja',
+			hoiud: 'hoid',
+			aiad: 'aed',
+			trennid: 'trenn',
+			ringid: 'ring',
+		};
+	(function(){		
+		mapwrap=d.body.add('div',{
+			'class': 'mapwrap'
+		})
+		mapd=mapwrap.add('div',{
+			id: 'map',
+			'class':'map'
+		})
 
 		function initialize() {
 			var mapOptions = {
@@ -124,86 +110,132 @@ d.on('ready', function(){
 				mapTypeId: google.maps.MapTypeId.ROADMAP,
 				disableDefaultUI: true
 			};
-			gmap = new google.maps.Map(document.getElementById("gmap"),mapOptions);
-		}
-		google.maps.event.addDomListener(window, 'load', initialize);
-	}();
-	/**/
-	/*
-	var ds1=ds.add('ds1',function(res){
-		console.log('add:',res);
-		var users=ds1.add('users',function(res){
-			console.log('add:',res);
-			var user=users.add({
-				name: 'user3',
-				ext:'.js',
-				status:'idle'
-				
-			},function(res){
-				console.log('add:',res);
-				users.get(function(res){
-					console.log('get all items:',JSON.parse(res).length);
-					//users.rem()
-				});
-				
-				users.get('1371318555073',function(res){
-					console.log('get item by id:',res);
-					//users.rem()
-				});
-				
-				
-				users.get('name!=user2',function(res){
-					console.log('get items by cond:',res);
-					//users.rem()
-				});
+			map = new google.maps.Map(document.getElementById("map"),mapOptions);		
 
-			})					
-		})		
-	})	
-	var hist=[],
-		hind=0;
-	d.body.add('textarea',{
-		value: "",
-		id: 'req',
-		onkeydown:	function(e){
-			if(e.which==13) {
-				e.preventDefault()
-				
-				//console.log(eval(this.value))
-				//res.value=eval(this.value)
-				
-				dnet.post(this.value,function(req){					
-					res.value=req;					
-				});			
-				hist.push(this.value);
-				hind=hist.length
-				this.value=''
-				
-			} else if(e.which==38) {
-				if (hind) hind-=1;
-				req.value=hist[hind]
-			} else if(e.which==40) {
-				if(hind<hist.length-1) hind+=1
-				req.value=hist[hind]
+			google.maps.event.addListener(map, 'click', function(e) {
+				if (selected && !activemarker){
+					var marker = new google.maps.Marker({
+						position: e.latLng,
+						map: map,
+						icon: '/images/'+icomap[selected.innerHTML.toLowerCase()]+'-.png',
+						shadow: '/images/shadow.png',
+						draggable:true,
+						animation: google.maps.Animation.DROP,					
+						title: 'Lisa uus'
+					})		
+					google.maps.event.addListener(marker, 'click', function(e) {
+						mapd.hide()
+						modalw.show()						
+					})
+					activemarker=marker		
+				}
+			})
+			google.maps.event.addListener(map, 'dragstart', function() {
+				if (activemarker) {
+					activemarker.setMap(null)
+					activemarker=0
+				}					
+			})
+		}
+		google.maps.event.addDomListener(window, 'load', initialize);		
+	})();	
+	//modal
+	var modalw=mapwrap.add('div',{
+			'class': 'modalwrap'
+		}),
+		modal=modalw.add('div',{
+			'class':'modal'
+		})
+	modalw.hide()
+	var modalh=modal.add('div',{
+		'class':'header',
+		html: 'modal header',
+	})
+	var modalc=modal.add('div',{
+		'class':'content'
+	})
+	//form
+	var mform=modalc.add('form')
+	function addfield(name,tag){
+		tag=tag || 'input'
+		var field=document.createElement('div')
+		field.className='field'				
+		field.add('label',{
+			'for': 'name',
+			html: name,
+			style:{
+				display: 'block'
+			}
+		})
+		field.add(tag,{
+			id: 'name',
+			name: name,
+			style:{
+				display: 'block',
+				width: '100%'
 			}
 			
-		},
-		style: {
-			width: '512px',
-			height: '256px'
-		}
-	});
-	var res=d.body.add('textarea',{
-		id: 'res',
-		disabled: 'disabled',
-		style: {
-			width: '512px',
-			height: '256px'
-		}		
+		})		
+		return field
+	}
+	
+	addfield('nimi').to(mform)
+	addfield('aadress').to(mform)
+	addfield('tel').to(mform)
+	addfield('lisa info','textarea').to(mform)
+	
+	//controls
+	var controls=modal.add('div',{
+		'class': 'controls'
 	})
-	/**/
-	
-	
-	
+	controls.add('button',{
+		'class':'cancel grey',
+		html: ('Katkesta').toUpperCase()
+	}).on('click',function(){
+		if (activemarker) {
+			activemarker.setMap(null)
+			activemarker=0
+		}
+		modalw.hide()
+		mapd.show()
+	})
+	controls.add('button',{
+		'class':'save',
+		html: ('Salvesta').toUpperCase()
+	}).on('click',function(){
+		var data=formdata(mform),
+			pos
+		data.id=selected.innerHTML.toLowerCase()+new Date().getTime()
+		pos=activemarker.getPosition()
+		data.pos=[pos.jb,pos.kb]
+		data=JSON.stringify(data)
+		console.log('data:',data)
+		
+		dnet.post('ds.teokoda.'+selected.innerHTML.toLowerCase()+'.add('+data+')',function(res){
+			console.log('added:',res);
+			modalw.hide()
+			mapd.show()				
+			getgroup(selected.innerHTML.toLowerCase())
+		})						
+		if (activemarker) {
+			activemarker.setMap(null)
+			activemarker=0
+		}		
+		
+		
+	})
+	function formdata(form){
+		var fields=form.findall('.field'),
+			field,
+			label,
+			inp=[],
+			data={}
+		for(var nr in fields){
+			field=fields[nr]
+			inp=field.find('input') || field.find('textarea')				
+			data[inp.get('name')]=inp.value				
+		}
+		return data
+	}
 	
 })
