@@ -1,0 +1,11 @@
+<body>
+</body>
+<script src='dom0.js'></script>
+<script>
+d.on('ready',function(e){
+	console.log('ready')
+	d.body.r('div html=lalala class=class1')
+		.r('div html=subdiv id=lalala data-this=new data')
+			.s('width:12px')
+})
+</script>
