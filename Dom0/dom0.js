@@ -1,4 +1,53 @@
-var d=document
+var d=document,
+	o,
+	odp=Object.defineProperty,
+	op=Object.prototype,
+	ep=Element.prototype,
+	ap=Array.prototype,
+	sp=String.prototype,
+	np=Number.prototype
+
+//array
+odp(ap,'last',{
+	get:function(){
+		return this[this.length-1]
+	},
+	set:function(v){
+		this[this.length-1]=v
+	}
+})
+odp(ap,'pick',{
+	get:function(){
+		var val,
+			e=this
+		loop(10,function(i){
+			val=Math.floor(Math.random()*e.length)			
+			if(val!=e.length){
+				return false
+			}
+			
+		})
+		return this[val]
+	}
+})
+//object
+odp(op,'len',{
+	get:function(){
+		var len=0
+		loop(this,function(k,v){
+			len+=1
+		})
+		return len	
+	}
+})
+odp(op,'extend',{
+	set:function(obj){
+		var e=this
+		loop(obj,function(k,v){
+			e[k]=v
+		})
+	}
+})
 //node
 Node.prototype.find=function(sel){
 	return this.querySelector(sel)
@@ -153,19 +202,28 @@ Element.prototype.rem=function(){
 	this.parentNode.removeChild(this);
 	return this
 }
-//set get attributes
 Element.prototype.set = function (a,v) {
-	if(a=='class'){
+	if(a=='class' || a=='c'){
 		this.addclass(v)
-	} else if(a=='html'){
+	} else if(a=='html' || a=='h'){
 		this.innerHTML=v
+	} else if(a=='value' || a=='val' || a=='v'){
+		this.value=v
 	} else {
 		this.setAttribute(a,v)
 	}
 	return this
 }
 Element.prototype.get = function (a){
-	return this.getAttribute(a)
+	if(a=='class' || a=='c'){
+		return this.className
+	} else if(a=='html' || a=='h'){
+		return this.innerHTML
+	} else if(a=='value' || a=='val' || a=='v'){
+		return this.value
+	} else {
+		return this.getAttribute(a)
+	}
 }
 Element.prototype.show = function () {			
 	this.style.display = this.display || window.getComputedStyle(this).display;
@@ -224,14 +282,14 @@ Element.prototype.remclass=function(n){
 Element.prototype.hasclass=function(n){
 	var nl=this.className.split(' '),
 		ns=n.split(' '),
-		o=1;
+		res=1;
 	for(var nr in ns){
 		n=ns[nr]
 		if (nl.indexOf(n)==-1){
-			o=0
+			res=0
 		}
 	}
-	return o;
+	return res
 }
 Element.prototype.r=function(str){
 	var ele=document.r(str)
@@ -259,9 +317,26 @@ Element.prototype.s=function(str){
 }
 Element.prototype.__defineGetter__("p", function(){
 	return this.parentNode;
-});
+})
 Element.prototype.__defineSetter__("p", function(p){
 	this.to(p)
+})
+Element.prototype.__defineGetter__("val", function(){
+	if(this.type=='checkbox' || this.type=='radio'){
+		return this.checked
+	} else {
+		return this.value
+	}
+})
+Element.prototype.__defineSetter__("val", function(val){
+	if(this.type=='checkbox' || this.type=='radio'){
+		this.checked=val
+	} else {
+		this.value=val
+	}
+})
+Element.prototype.__defineGetter__("tag", function(){
+	return this.tagName.toLowerCase()
 });
 Element.prototype.h=function(val){
 	if (val) {
@@ -274,19 +349,85 @@ Element.prototype.h=function(val){
 Element.prototype.fn=function(callback){
 	callback(this)
 	return this
-}	
-//getters setters
-d.on('ready',function(e){
-	var styles=window.getComputedStyle(d.body)
-	loop(styles,function(name,val){
-		Element.prototype.__defineGetter__(name, function(){
-			return window.getComputedStyle(this)[name]
-		})
-		Element.prototype.__defineSetter__(name, function(val){
-			this.style[name]=val
-		})			
-	})		
-})		
+}
+Element.prototype.getform=function(fn){
+	//fn(field){} for altering values
+	var data={},
+		name,
+		fields=[],
+		val
+		
+	fields=fields.concat(this.findall('input').toarray())	
+	fields=fields.concat(this.findall('select').toarray())
+	fields=fields.concat(this.findall('textarea').toarray())
+	
+	loop(fields,function(i,field){				
+			if(fn){
+				val=fn(field)
+			} else {
+				val=field.val				
+			}
+			if(!(field.type=='radio' && !val)){
+				data[field.id]=field.val
+			}
+	})
+	return data
+}
+Element.prototype.setform=function(json,fn){
+	//fn(field){} for altering values
+	if(typeof(json)=='string'){
+		json=JSON.parse(json)
+	}
+	var field,
+		ele=this
+	loop(json,function(k,v){
+		field=ele.find('#'+k)
+		if(field){
+			if(fn){
+				field.val=fn(field)
+			} else {
+				field.val=v
+			}
+		}
+	})
+	
+}
+Element.prototype.caret=function(start,end){
+	if(end){
+		this.setSelectionRange(start,end)
+	} else if (start){
+		/*
+		var range = this.createTextRange()
+		range.collapse(true)
+		range.moveEnd('character', start)
+		range.moveStart('character', start)
+		range.select()
+		/**/
+		//this.focus()
+		this.setSelectionRange(start,start)
+	} else {
+		return this.selectionStart
+	}
+}
+Element.prototype.append=function(obj){
+	this.appendChild(obj)
+	return this
+}
+Element.prototype.loop=function(obj,fn){
+	if(obj){
+		if(fn===undefined){
+			var count=0
+			while(obj(this,count)!==false) count+=1		
+		} else if(typeof(obj)=='number'){
+			for(var nr=0;nr<obj;nr++) if(fn(this,nr)===false) break		
+		} else if(obj.length){		
+			for(var nr=0;nr<obj.length;nr++) if(obj.hasOwnProperty(nr)) if(fn(this,nr,obj[nr])===false) break					
+		} else {
+			for(var key in obj) if(fn(this,key,obj[key])===false) break		
+		}	
+	}
+	return this
+}
 //Nodelist
 NodeList.prototype.toarray=function(){
 	var arr = [];
@@ -331,26 +472,6 @@ Element.prototype.setpos=function(pos,tar){
 		this.style.top=pos.y+'px'
 	}
 }	
-//Array
-Array.prototype.last=function(){
-	return this[this.length-1]
-}
-Array.prototype.pick=function(count){
-	var res=[]
-	count=count||1
-	if(count<this.length){
-		var arr=this.slice(),				
-			val=arr.length
-			
-		loop(count,function(i){			
-			while(val==arr.length){
-				val=Math.floor(Math.random()*arr.length)				
-			}
-			res.push(arr.splice(val,1)[0])
-		})					
-	}
-	return res		
-}
 //number
 Number.prototype.px=function(){
 	return this+'px'
@@ -362,20 +483,43 @@ String.prototype.int=function(){
 String.prototype.float=function(){		
 	return parseFloat(this.replace('px',''))
 }
+String.prototype.splice=function(index,count,add){
+	add=add || ''
+	var text=this.toString()
+	text=text.slice(0,index)+add+text.slice(index+count)
+	return text
+}
 //document
-document.extend=function(o1,o2){
-	for(var k in o2) o1[k]=o2[k];
-};
-document.on('DOMContentLoaded',function(){
-	document.trigger('ready');
+d.on('ready',function(e){//style setters and getters
+	var styles=window.getComputedStyle(d.body)
+	loop(styles,function(name,val){
+		Element.prototype.__defineGetter__(name, function(){
+			return window.getComputedStyle(this)[name]
+		})
+		Element.prototype.__defineSetter__(name, function(val){
+			this.style[name]=val
+		})			
+	})		
+})		
+d.on('DOMContentLoaded',function(){
+	document.trigger('ready')
 })	
-document.new=function(tag,attrs){
-	var ele=document.createElement(tag)
-	ele.tn=document.createTextNode('')
+d.new=function(tag,attrs){
+	var ele
+	if(tag=='check'){
+		ele=document.createElement('input')
+		ele.set('type','checkbox')
+	} else if(tag=='radio'){
+		ele=document.createElement('input')
+		ele.set('type','radio')	
+	} else {
+		ele=document.createElement(tag)
+	}
+	//ele.tn=document.createTextNode('')
 	if (attrs) ele.set(attrs)
 	return ele
 }
-document.r=function(str){
+d.r=function(str){
 	var split=str.split('='),
 		parts,
 		tonext,
@@ -396,15 +540,8 @@ document.r=function(str){
 	//ele.to(this)
 	return ele
 }	
-document.len=function(o){
-	var len=0
-	loop(o,function(k,v,i){
-		len=i+1
-	})
-	return len
-}
 //dynamic style sheets
-document.dss={
+d.dss={
 	sheets:{},
 	new:function(id){
 		var sh={
@@ -458,8 +595,7 @@ document.dss={
 		return ele
 	},
 	names:[
-		'transition',
-		'border-radius',			
+		'transition',			
 		'box-shadow'			
 	],
 	prefixes:[
@@ -504,17 +640,100 @@ document.dss={
 	}		
 }
 //loop
-var loop=function(obj,fn){	
-	if(fn===undefined){
-		var count=0
-		while(obj(count)!==false) count+=1		
-	} else if(typeof(obj)=='number'){
-		for(var nr=0;nr<obj;nr++) if(fn(nr)===false) break		
-	} else if(obj.length){		
-		for(var nr=0;nr<obj.length;nr++) if(obj.hasOwnProperty(nr)) if(fn(nr,obj[nr])===false) break					
-	} else {
-		for(var key in obj) if(fn(key,obj[key])===false) break		
+var loop=function(obj,fn){
+	if(obj){
+		if(fn===undefined){
+			var count=0
+			while(obj(count)!==false) count+=1		
+		} else if(typeof(obj)=='number'){
+			for(var nr=0;nr<obj;nr++) if(fn(nr)===false) break		
+		} else if(obj.length){		
+			for(var nr=0;nr<obj.length;nr++) if(obj.hasOwnProperty(nr)) if(fn(nr,obj[nr])===false) break					
+		} else {
+			for(var key in obj) if(fn(key,obj[key])===false) break		
+		}	
+	}
+}
+//net
+d.send=function(){
+	//url,fn
+	//url,data,fn
+	var len=arguments.length,
+		req=new XMLHttpRequest(),
+		callback=arguments[2] || arguments[1],
+		url=arguments[0]
+		
+	if(typeof(url)=='object') url=JSON.stringify(url)
+		
+	if(len==2){
+		req.open('GET',url,true)
+		req.setRequestHeader("X-Requested-With","XMLHttpRequest")
+		req.send()
+	} else if(len==3){
+		var data=arguments[1]
+		if(typeof(data)=='object') data=JSON.stringify(data)
+		req.open('POST',url,true)
+		req.setRequestHeader("X-Requested-With","XMLHttpRequest")
+		req.send(arguments[1])
+	}
+	req.onreadystatechange=function(e){				
+		if(req.readyState==4){// && req.status==200){
+			callback(req.responseText)
+		} else {
+			//handle errors
+		}
 	}	
 }
+//node js homebrew dont use
+d.add=function(path,filedata,fn){
+	var data={
+		type:'fs',
+		action:'add',
+		path:path,
+		data:filedata
+	}
+	d.send(data,fn)		
+}
+d.rem=function(path,fn){
+	var data={
+		type:'fs',
+		action:'rem',
+		path:path
+	}
+	d.send(data,fn)			
+},
+d.get=function(path,fn){
+	var data={
+		type:'fs',
+		action:'get',
+		path:path
+	}
+	d.send(data,fn)					
+}
+d.getfiles=function(path,fn){
+	var data={
+		type:'fs',
+		action:'getfiles',
+		path:path
+	}
+	d.send(data,fn)						
+}
+d.set=function(path,filedata,fn){
+	var send={
+		type:'fs',
+		action:'set',
+		path:path,
+		filedata:filedata
+	}
+	d.send(data,fn)					
+}
+d.getscript=function(path,fn){
+	var script
+	d.get(path,function(res){		
+		script=eval(res)		
+		fn(script)
+	})
+}
+//node js homebrew dont use
 
 console.log('loaded dom0')
