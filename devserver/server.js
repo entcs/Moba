@@ -163,7 +163,7 @@ app.post('*',function(req,res){
 	handle(req,res)
 })
 
-app.listen(2222);
+app.listen(2222)
 console.log('Listening on port 2222')
 /* empty handler
 var loop=require(process.cwd()+'/loop.js').loop,

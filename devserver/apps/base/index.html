@@ -2,9 +2,8 @@
 <script src='dom0.js'></script>
 <style>
 .selected {
-	color:green;
-	font-weight:bold;
-	text-transform:uppercase;
+	color:green;	
+	background:lightgreen;
 }
 .section {
 	border:1px solid #aaa;
@@ -31,8 +30,15 @@ table td {
 }
 button {
 	color:#666;
+	cursor:pointer;
 	border:2px solid #aaa;	
 	background-color:#eee;
+}
+button:hover{
+	background:lightgreen;
+}
+.iblocks > * {
+	display:inline-block;
 }
 </style>
 <script>
@@ -44,22 +50,91 @@ d.on('ready',function(e){
 		bases:[],
 		selected:'',
 		tables:[],
+		schemafields:['Field','Type','Null','Key','Default','Extra'],
 		show:function(){
 			base.html=d.body.r('div class=base')
-			base.html.r('div class=bases section')
-			var tables=base.html.r('div class=tables section')
+			var bases=base.html.r('div class=bases section')
+			bases.r('div class=list section')
+			bases.r('div class=controls')
+				.r('input').p
+				.r('button class=add html=add new database')
+					.on('click',function(e){
+						var data={
+							base:d.find('.bases .controls input').value,
+							columns:base.gettabledata()
+						}
+						if(data.base){
+							d.send('bases/add',data,function(res){
+								console.log('res:',res)
+								var data=JSON.parse(res)					
+								base.bases=data.bases
+								base.selected=data.selected
+								base.tables=data.tables
+								
+								base.showbases()
+								base.showschema([])								
+							},'json')						
+						}
+					}).p
+				.r('button class=rem html=drop database')
+					.on('click',function(e){
+						var data={
+							base:d.find('.bases .list .selected').h()							
+						}
+						d.send('bases/rem',data,function(res){
+							console.log('res:',res)
+							var data=JSON.parse(res)					
+							base.bases=data.bases
+							base.selected=data.selected
+							base.tables=data.tables
+							
+							base.showbases()
+							base.showschema([])								
+							
+						},'json')						
+					})
+			
+			var tables=base.html.r('div class=tables section')			
 			tables.r('div class=existing')
 				.r('div class=list section').p
-				.r('div class=schema section')
-			tables.r('div class=addnew cols')				
-				.r('div class=tablename section')
-					.s('width:256px')
+				.r('div class=controls iblocks')
 					.r('input').p
-					.r('button html=addnew table').p.p
+					.r('button class=add html=add new table')
+						.on('click',function(e){
+							var data={
+								table:d.find('.tables .controls input').value,
+								columns:base.gettabledata()
+							}
+							d.send('tables/add',data,function(res){
+								console.log('res:',res)
+							},'json')							
+						}).p						
+					.r('button class=save html=save changes to table')
+						.on('click',function(e){
+							var data={
+								table:d.find('.existing .list .selected').h(),
+								columns:base.gettabledata()
+							}
+							d.send('tables/set',data,function(res){
+								console.log('res:',res)
+							},'json')							
+						}).p
+					.r('button class=droptable html=drop table')
+						.on('click',function(e){
+							var data={
+								table:d.find('.existing .list .selected').h()
+							}
+							if(data.table){
+								d.send('tables/rem',data,function(res){
+									console.log('res:',res)
+								},'json')	
+							}
+						}).p
 				.r('div class=schema section')
+				
 		},
 		showbases:function(){				
-				var bases=base.html.find('.bases')
+				var bases=base.html.find('.bases .list')
 				bases.h('')
 				bases.r('div html=bases')
 				loop(base.bases,function(i,item){								
@@ -68,13 +143,15 @@ d.on('ready',function(e){
 						.on('click',function(e){
 							var tar=e.target
 							d.send('bases/use?base='+item.Database,function(res){
-								tar.p.find('.selected').remclass('selected')
+								var act=tar.p.find('.selected')
+								if(act) act.remclass('selected')
 								tar.addclass('selected')
 								
 								var data=JSON.parse(res)
 								base.selected=data.selected
 								base.tables=data.tables								
-								base.showtables()
+								base.showtables()								
+								base.showschema([])
 							})
 						})
 						
@@ -95,26 +172,20 @@ d.on('ready',function(e){
 						.h(v)
 						//.s('display:block')
 						.on('click',function(e){
+							var tar=e.target,
+								act=tar.p.find('.selected')
+							if(act){
+								act.remclass('selected')
+							}
+							tar.addclass('selected')							
 							console.log('get schema')
 							d.send('tables/get?table='+v,function(res){
 								var data=JSON.parse(res)
-								var table=base.showschema(data)
-								var cont=d.find('.tables .existing .schema')
-								cont.h('')
-								table.to(cont)
+								base.showschema(data)
 							})
 						})
 				})
 			})				
-			/*
-			tables.r('div class=controls')
-				.r('button class=add html=add table').p
-				.r('input class=tablename')
-			
-			//rows
-			var table=base.showschema()
-			table.to(tables)			
-			/**/
 		},
 		showschema:function(data){
 			var table=d.r('table'),
@@ -122,23 +193,26 @@ d.on('ready',function(e){
 				tbody=table.r('tbody'),
 				tfoot=table.r('tfoot'),
 				tr=thead.r('tr'),
-				td,
-				fields=['Field','Type','Null','Key','Default','Extra']
-						
-			loop(fields,function(i,name){
+				td
+				
+			
+			table.s('table-layout:fixed')
+			
+			loop(base.schemafields,function(i,name){
 				td=tr.r('td class='+name)
 					.h(name)
 			})
 			tr.r('td')
+				.s('width:27px')
 			function addrow(data){
 				var tr=tbody.r('tr')				
-				loop(fields,function(i,name){					
+				loop(base.schemafields,function(i,name){					
 					tr.r('td')
 						.r('input')
 							.s('width:100%')
 				})
 				tr.r('td')						
-					.s('background-color:#fff width:1px')
+					.s('background-color:#fff')
 					.r('button html=X')
 					.on('click',function(e){
 						var tar=e.target,
@@ -151,7 +225,7 @@ d.on('ready',function(e){
 			if(data){
 				loop(data,function(i,item){
 					var tr=tbody.r('tr')
-					console.log('item:',item)
+					//console.log('item:',item)
 					loop(item,function(k,v){
 						tr.r('td')
 							.r('input')
@@ -177,7 +251,10 @@ d.on('ready',function(e){
 						.on('click',function(e){
 							addrow()
 						})
-			return table
+									
+			var cont=d.find('.tables .existing .schema')
+			cont.h('')
+			table.to(cont)			
 		},
 		getbases:function(){
 			d.send('bases/list',function(res){
@@ -187,8 +264,22 @@ d.on('ready',function(e){
 				base.tables=data.tables
 				
 				base.showbases()
+				base.showschema([])
 			})		
-		}		
+		},
+		gettabledata:function(){
+			var data=[],
+				rows=d.findall('.schema table tbody tr'),
+				item={}			
+			loop(rows,function(i1,row){				
+				item={}
+				loop(base.schemafields,function(i2,name){
+					item[name]=row.children[i2].find('input').value
+				})
+				data.push(item)
+			})			
+			return data
+		},
 	}
 	base.show()
 	base.getbases()
