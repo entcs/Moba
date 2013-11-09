@@ -2,28 +2,47 @@
 </body>
 <script src='dom0.js'></script>
 <script>
-d.body.s('margin:0px')
-var page=d.body.r('div class=page')
-	.s('display:table width:100% height:100% background:#eee')
 
-page.r('tr class=top')
-	.s('display:table-row background:#ddd')
-	.r('td html=top')
-		.s('width:100% height:64px')
-page.r('tr class=mid')
-	.s('display:table-row background:#ccc')
-	.r('td class=contentwrap')
-		.s('width:100%')
-		.r('div class=content')
-			.s('height:100% overflow:auto')
-page.r('tr class=bot')
-	.s('display:table-row background:#ddd')
-	.r('td html=bottom')
-		.s('width:100% height:64px')
+var o={},
+a=[],
+time
 
-var content=page.find('.content')
-loop(200,function(i){
-	content.r('div')
-		.h('test'+i)
+alert('-33')
+
+loop(10000000,function(i){
+	o[i]=i
+	a.push(i)
 })
+start = new Date().getTime()
+var x=o[9999999]
+time=new Date().getTime()-start
+alert(time)
+
+
+start = new Date().getTime()
+loop(a,function(i,e){
+	if (e==9999999){
+		time=new Date().getTime()-start
+		alert(time)
+	}
+})
+/*
+pmas
+p6llud
+tegevused
+ptegevused
+selct * from pmas where pmas_id in(
+	select pmas_id from p6llud where p6ld_id in(
+		select p6ld_id from tegevused where tegevus_id=(select id from mistehti where vabatekst='kyndmine')
+	)
+)
+
+select *
+from pmas 
+left join p6llud on (pmas.pmas_id = p6llud.pmas_id)
+left join p6ld 
+
+
+/**/
+
 </script>

@@ -1,11 +1,12 @@
-﻿var mysql=require('mysql')
-var connection=mysql.createConnection({
-	host: 'localhost',
-	port:3333,
-	user:'root',
-	password:'',
-	database:'mydb'
-})
+﻿var mysql=require('mysql'),
+	loop=require('./loop.js').loop,
+	connection=mysql.createConnection({
+		host: 'localhost',
+		port:3333,
+		user:'root',
+		password:'',
+		database:'mydb'
+	})
 
 connection.connect()
 /*
@@ -41,24 +42,37 @@ connection.query(query,function(err,res){
 	console.log(res)
 })
 /**/
+/*
 function add(table,item){	
 	connection.query('INSERT INTO '+table+' SET ?', item, function(err, result) {
 	  // Neat!
 	  console.log(err,result)
 	});	
 }
-function getall(table,fn){
-	connection.query("SELECT * FROM t1",function(err,res){
-		if(fn) fn(res)
-	})	
-}
 var item={
 	id:123,
 	nimi:'123'
 }
 add('t1',item)
+/**/
+/*
+function getall(table,fn){
+	connection.query("SELECT * FROM t1",function(err,res){
+		if(fn) fn(res)
+	})	
+}
 getall('t1',function(res){
 	console.log(res)
 })
-
+/**/
+connection.query("SHOW COLUMNS FROM t1",function(err,res){		
+		loop(res,function(i,e){
+			console.log(e)
+			/*
+			loop(e,function(i2,e2){
+				console.log(i2,e2)
+			})
+			/**/
+		})
+	})	
 connection.end()

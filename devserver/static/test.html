@@ -1,0 +1,235 @@
+<html><head><style id="sh1">
+body{
+	margin:0px;
+	text-align:center;
+	background:#000;
+	color:#666;
+	font-family: Verdana;
+}
+.but{
+	min-width:48px;
+	margin:0px;
+	height:48px;
+	text-align:center;
+	font-size:36px;
+	box-sizing:border-box;
+	border:1px solid aaa;
+	border-radius:15px;
+	background:#eee;
+	cursor:pointer;
+	font-family: fantasy;
+}
+.but.selected{
+	border:1px solid green;
+	background:lightgreen;
+}
+.line{
+	text-align:center;
+	box-sizing:border-box;
+	border:1px solid aaa;
+}
+.col1{
+	background:#eee;
+}
+.cols{
+	display:table;
+	width:100%;
+	table-layout:fixed;
+}
+.cols>*{
+	display:table-cell;
+}
+.dot{
+	width:16px;
+	height:16px;
+	box-sizing:border-box;
+	border-radius:15px;
+	display:inline-block;
+	border:2px solid aaa;
+}
+.time{
+	background:pink;
+	font-family: Monospace;
+	font-weight:bold;
+	font-size:42px;
+}
+.time.running{
+	background:lightgreen;
+}
+.line td{
+	border-bottom:1px solid #eee;
+}
+.last{
+	background:lightgreen;
+}
+</style></head><body>
+<div class="basket" style="display: table; width: 320px; height: 480px; background-color: rgb(255, 255, 255);">
+  <tr style="width: inherit;">
+    <td class="top" style="width: inherit; height: 1px;">
+      <div class="teams cols">
+        <span class="team">
+          <div class="name but">
+            team1
+          </div>
+          <div class="score line">
+            0
+          </div>
+          <div class="faults cols">
+            <span class="dot">
+            </span>
+            <span class="dot">
+            </span>
+            <span class="dot">
+            </span>
+            <span class="dot">
+            </span>
+          </div>
+        </span>
+        <span class="team">
+          <div class="name but">
+            team2
+          </div>
+          <div class="score line">
+            0
+          </div>
+          <div class="faults cols">
+            <span class="dot">
+            </span>
+            <span class="dot">
+            </span>
+            <span class="dot">
+            </span>
+            <span class="dot">
+            </span>
+          </div>
+        </span>
+      </div>
+      <div class="pls" style="width: inherit;">
+        <div class="plname line">
+          player name
+        </div>
+        <div class="plslist" style="overflow: auto; white-space: nowrap; width: inherit;">
+          <div class="but" title="player name0" style="display: inline-block;">
+            1
+          </div>
+          <div class="but" title="player name1" style="display: inline-block;">
+            2
+          </div>
+          <div class="but" title="player name2" style="display: inline-block;">
+            3
+          </div>
+          <div class="but" title="player name3" style="display: inline-block;">
+            4
+          </div>
+          <div class="but" title="player name4" style="display: inline-block;">
+            5
+          </div>
+          <div class="but" title="player name5" style="display: inline-block;">
+            6
+          </div>
+          <div class="but" title="player name6" style="display: inline-block;">
+            7
+          </div>
+          <div class="but" title="player name7" style="display: inline-block;">
+            8
+          </div>
+          <div class="but" title="player name8" style="display: inline-block;">
+            9
+          </div>
+          <div class="but" title="player name9" style="display: inline-block;">
+            10
+          </div>
+          <div class="but" title="player name10" style="display: inline-block;">
+            11
+          </div>
+          <div class="but" title="player name11" style="display: inline-block;">
+            12
+          </div>
+        </div>
+      </div>
+      <div class="actions" style="width: inherit;">
+        <div class="wrap" style="overflow: auto; white-space: nowrap; width: inherit;">
+          <div class="but" title="point" style="display: inline-block;">
+            1
+          </div>
+          <div class="but" title="points" style="display: inline-block;">
+            2
+          </div>
+          <div class="but" title="points" style="display: inline-block;">
+            3
+          </div>
+          <div class="but" title="miss" style="display: inline-block;">
+            -
+          </div>
+          <div class="but" title="fault" style="display: inline-block;">
+            F
+          </div>
+          <div class="but" title="technical fault" style="display: inline-block;">
+            TF
+          </div>
+          <div class="but" title="rebound" style="display: inline-block;">
+            R
+          </div>
+          <div class="but" title="steal" style="display: inline-block;">
+            S
+          </div>
+          <div class="but" title="block" style="display: inline-block;">
+            B
+          </div>
+          <div class="but" title="assist" style="display: inline-block;">
+            A
+          </div>
+          <div class="but" title="timeout" style="display: inline-block;">
+            T
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr style="width: inherit; font-family: Verdana;">
+    <td class="mid" style="width: inherit; overflow: auto;">
+      <div class="scroll" style="overflow: auto;">
+        <div class="game">
+          <div class="lines" style="display: table; width: 100%;">
+            <tr class="headers">
+              <td>
+                team
+              </td>
+              <td>
+                nr
+              </td>
+              <td>
+                action
+              </td>
+              <td>
+                time
+              </td>
+            </tr>
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr style="width: inherit;">
+    <td class="bot" style="width: inherit; height: 1px;">
+      <div class="cols">
+        <div class="but time1 gametime" style="font-family: monospace; font-weight: bold; font-size: 42px;">
+          12:00
+        </div>
+        <div class="quarter but" style="width: 96px;">
+          Q1
+        </div>
+      </div>
+      <div class="cols">
+        <div class="but time offencetime">
+          24
+        </div>
+        <div class="reset but" style="width: 96px;">
+          24
+        </div>
+      </div>
+    </td>
+  </tr>
+</div>
+</body>
+</html>

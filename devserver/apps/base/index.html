@@ -1,0 +1,197 @@
+<body><h1>BASE</h1><a href='/'>home</a></body>
+<script src='dom0.js'></script>
+<style>
+.selected {
+	color:green;
+	font-weight:bold;
+	text-transform:uppercase;
+}
+.section {
+	border:1px solid #aaa;
+	padding:10px;
+}
+table {
+	border-collapse:collapse;
+	width:100%;
+	background-color:#eee;
+}
+input{
+	background-color:#fff;
+	text-align:right;
+}
+table td {
+	border:1px solid #aaa;	
+}
+.cols {
+	display:table;
+	width:100%;
+}
+.cols > *{
+	display:table-cell;
+}
+button {
+	color:#666;
+	border:2px solid #aaa;	
+	background-color:#eee;
+}
+</style>
+<script>
+d.on('ready',function(e){
+	console.log('ready')
+	
+	var base={		
+		html:'',
+		bases:[],
+		selected:'',
+		tables:[],
+		show:function(){
+			base.html=d.body.r('div class=base')
+			base.html.r('div class=bases section')
+			var tables=base.html.r('div class=tables section')
+			tables.r('div class=existing')
+				.r('div class=list section').p
+				.r('div class=schema section')
+			tables.r('div class=addnew cols')				
+				.r('div class=tablename section')
+					.s('width:256px')
+					.r('input').p
+					.r('button html=addnew table').p.p
+				.r('div class=schema section')
+		},
+		showbases:function(){				
+				var bases=base.html.find('.bases')
+				bases.h('')
+				bases.r('div html=bases')
+				loop(base.bases,function(i,item){								
+					var but=bases.r('button')
+						.h(item.Database)
+						.on('click',function(e){
+							var tar=e.target
+							d.send('bases/use?base='+item.Database,function(res){
+								tar.p.find('.selected').remclass('selected')
+								tar.addclass('selected')
+								
+								var data=JSON.parse(res)
+								base.selected=data.selected
+								base.tables=data.tables								
+								base.showtables()
+							})
+						})
+						
+					if(item.selected) {
+						bases.selected=item.Database
+						but.addclass('selected')					
+					}
+				})
+				base.showtables()
+		},
+		showtables:function(){
+			var list=base.html.find('.tables .existing .list')
+			list.h('')
+			d.find('.tables .existing .schema').h('')							
+			loop(base.tables,function(i,item){
+				loop(item,function(k,v){
+					list.r('button')
+						.h(v)
+						//.s('display:block')
+						.on('click',function(e){
+							console.log('get schema')
+							d.send('tables/get?table='+v,function(res){
+								var data=JSON.parse(res)
+								var table=base.showschema(data)
+								var cont=d.find('.tables .existing .schema')
+								cont.h('')
+								table.to(cont)
+							})
+						})
+				})
+			})				
+			/*
+			tables.r('div class=controls')
+				.r('button class=add html=add table').p
+				.r('input class=tablename')
+			
+			//rows
+			var table=base.showschema()
+			table.to(tables)			
+			/**/
+		},
+		showschema:function(data){
+			var table=d.r('table'),
+				thead=table.r('thead'),
+				tbody=table.r('tbody'),
+				tfoot=table.r('tfoot'),
+				tr=thead.r('tr'),
+				td,
+				fields=['Field','Type','Null','Key','Default','Extra']
+						
+			loop(fields,function(i,name){
+				td=tr.r('td class='+name)
+					.h(name)
+			})
+			tr.r('td')
+			function addrow(data){
+				var tr=tbody.r('tr')				
+				loop(fields,function(i,name){					
+					tr.r('td')
+						.r('input')
+							.s('width:100%')
+				})
+				tr.r('td')						
+					.s('background-color:#fff width:1px')
+					.r('button html=X')
+					.on('click',function(e){
+						var tar=e.target,
+							tr=tar.findup('tr')
+						
+						tar.findup('tr').rem()	
+					})					
+				
+			}
+			if(data){
+				loop(data,function(i,item){
+					var tr=tbody.r('tr')
+					console.log('item:',item)
+					loop(item,function(k,v){
+						tr.r('td')
+							.r('input')
+								.s('width:100%')
+								.val=v
+					})
+					td=tr.r('td')						
+						.s('background-color:#fff width:1px')
+						.r('button html=X')
+						.on('click',function(e){
+							var tar=e.target,
+								tr=tar.findup('tr')
+							
+							tar.findup('tr').rem()							
+						})
+				})
+			}
+			tfoot.r('tr')
+				.r('td colspan=7')
+					.s('background-color:#fff')
+					.r('button html=add new field')
+						.s('width:100%')
+						.on('click',function(e){
+							addrow()
+						})
+			return table
+		},
+		getbases:function(){
+			d.send('bases/list',function(res){
+				var data=JSON.parse(res)					
+				base.bases=data.bases
+				base.selected=data.selected
+				base.tables=data.tables
+				
+				base.showbases()
+			})		
+		}		
+	}
+	base.show()
+	base.getbases()
+	
+})
+</script>

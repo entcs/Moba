@@ -1,0 +1,35 @@
+<script src='dom0.js'></script>
+<script>
+d.on('ready',function(e){
+	console.log('ready')
+	var args=['add','rem','get','set','list']
+	var basket={
+		tables:{
+			seasons:{},
+			leagues:{},
+			games:{},
+			teams:{},
+			players:{},
+			actions:{}
+		}
+	}
+	var ele=d.body.r('div class=controls'),
+		wrap
+	loop(basket.tables,function(k,v){
+		wrap=ele.r('div')
+			.h(k)
+			.addclass(k)
+		loop(args,function(i,name){
+			wrap.r('button')
+				.h(name)
+				.addclass(name)
+				.set('data-action',name)
+				.on('click',function(e){
+					d.send(['basket',k,name].join('/'),function(res){
+						console.log('res:',res)
+					})
+				})
+		})
+	})
+})
+</script>
