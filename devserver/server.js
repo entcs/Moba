@@ -9,8 +9,8 @@ var express = require('express'),
 		host: 'localhost',
 		port:3333,
 		user:'root',
-		password:'',
-		database:'test'
+		password:''//,
+		//database:'test'
 	}),
 	fs=require('fs'),
 	apps={},
@@ -34,9 +34,9 @@ var express = require('express'),
 			action=parts[2],
 			query=req.query,
 			hres='',
-			referer=req.headers.referer
-				
+			referer=req.headers.referer		
 		if(referer){
+			referer=referer.split('?')[0]
 			referer=referer.split('/').pop()
 		}
 		
@@ -44,21 +44,27 @@ var express = require('express'),
 			if(referer){
 				appname=referer
 			}
-			req.url=tolocalurl(req.url,appname)
+			req.url=tolocalurl(req._parsedUrl.pathname,appname)
 			var ap=apps[appname]
-			if(ap.handler){
-				try {				
-					apps[appname].handler(req,res)			
-				} catch(err){
-					res.send('CORE\n'+err.stack)
-				}					
+			if(ap){
+				if(ap.handler){
+					try {				
+						apps[appname].handler(req,res)			
+					} catch(err){
+						res.send('CORE\n'+err.stack)
+					}					
+				} else {
+					res.send('no handler: '+appname)
+				}
 			} else {
-				res.send('no handler: '+appname)
+				console.log('no app:',appname,apps)
+				res.send('no app:'+appname)
 			}
 		} else {
 			//file
 			var path=pth.resolve([__dirname,req.url].join('/'))	
 			if(fs.existsSync(path) && fs.statSync(path).isFile()){
+				console.log('server send file:',path)
 				res.sendfile(path)
 			} else {
 			//action
@@ -166,35 +172,38 @@ app.post('*',function(req,res){
 app.listen(2222)
 console.log('Listening on port 2222')
 /* empty handler
-var loop=require(process.cwd()+'/loop.js').loop,
-	fs=require('fs')
-
-var handle={}
-	
-exports.handler=function(req,res){
-	var parts=req._parsedUrl.pathname.split('/'),
-		appname=parts[1],
-		controller=parts[2],
-		action=parts[3]
+exports.handler=function(req,res){	
+	if(req.url=='' || req.url=='/'){
+		req.url='/index.html'
+	}
+	var parts=req.url.split('?')[0].split('/'),
+		controller=parts[1],
+		action=parts[2]
 		query=req.query,
 		method=req.method.toLowerCase(),
-		hres='not handled'
+		hres='not handled',
+		referer=req.headers.referer		
 	
-	if(controller==undefined){
-		res.send( fs.readFileSync(__dirname+'/index.html','utf-8'))		
-	} else if(controller in handle){
-		if(action in handle[controller]){
-			if(method in handle[controller][action]){
-				handle[controller][action][method](req,res)		
-			} else {
-				res.send(appname+' '+controller+' '+action+' no method: '+method)
-			}
-			
-		} else {
-			res.send( appname+' '+controller+' no action: '+action)
-		}
+	//file
+	var path=pth.resolve([__dirname,req.url].join('/'))		
+	if(fs.existsSync(path) && fs.statSync(path).isFile()){
+		res.sendfile(path)
 	} else {
-		res.send( appname+' no controller: '+controller)
+	//action
+		if(controller in handle){
+			if(action in handle[controller]){
+				if(method in handle[controller][action]){
+					handle[controller][action][method](req,res)		
+				} else {
+					res.send(appname+' '+controller+' '+action+' no method: '+method)
+				}
+				
+			} else {
+				res.send( appname+' '+controller+' no action: '+action)
+			}
+		} else {
+			res.send( appname+' no controller: '+controller)
+		}		
 	}
 }
 */

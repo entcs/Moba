@@ -1,0 +1,31 @@
+<script>
+/*
+function show() {
+	console.log(arguments);
+}
+
+show.apply(null,[1,2,3,4,5,'aaa'])
+/*
+function run(f) {
+  // use splice to get all the arguments after 'f'
+  var args = Array.prototype.splice.call(arguments, 1);
+  f.apply(null, ['lalala']);
+}
+
+run(show, 'foo', 'bar','more');
+/**/
+var a={
+	x:'ax'
+}
+var b={
+	x:'bx',
+	fn:function(){
+		console.log(this.x)
+	}
+}
+b.fn()
+var c=b.fn.bind(a,1)
+c()
+c()
+b.fn()
+</script>

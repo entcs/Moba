@@ -634,7 +634,8 @@ var Kinetic = {};
         _fillColor: function(shape) {
             var context = this.context, fill = shape.getFill();
             context.fillStyle = fill;
-            context.fill(context);
+            //context.fill(context);
+			context.fill();
         },
         _fillPattern: function(shape) {
             var context = this.context, fillPatternImage = shape.getFillPatternImage(), fillPatternX = shape.getFillPatternX(), fillPatternY = shape.getFillPatternY(), fillPatternScale = shape.getFillPatternScale(), fillPatternRotation = shape.getFillPatternRotation(), fillPatternOffset = shape.getFillPatternOffset(), fillPatternRepeat = shape.getFillPatternRepeat();
@@ -767,8 +768,9 @@ var Kinetic = {};
         _fill: function(shape) {
             var context = this.context;
             context.save();
-            context.fillStyle = '#' + shape.colorKey;
-            context.fill(context);
+            context.fillStyle = '#' + shape.colorKey;            
+            //context.fill(context);
+			context.fill();			
             context.restore();
         },
         _stroke: function(shape) {

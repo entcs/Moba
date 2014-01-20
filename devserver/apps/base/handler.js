@@ -2,23 +2,26 @@
 var appname='base',
 	loop=require(process.cwd()+'/loop.js').loop,
 	fs=require('fs'),
-	pth=require('path'),
-	ARGSL=['add','rem','get','set','list'],
+	pth=require('path'),	
 	mysql=require('mysql'),	
 	connection=mysql.createConnection({
 		host: 'localhost',
 		port:3333,
 		user:'root',
-		password:'',
-		database:'test'
+		password:''/*,
+		database:'basket'/**/
 	}),
 	selected={
-		base:'test',
+		base:'',
 		table:''
 	},
 	validatequery=function(str){
 		return str
 	}
+
+/*
+ALTER TABLE seasons CHANGE id id INT(10)AUTO_INCREMENT PRIMARY KEY;
+/**/
 	
 var handle={}
 
@@ -47,10 +50,8 @@ handle.bases={
 		use:{
 			get:function(req,res){
 				var query=validatequery('use '+req.query.base+';')
-				console.log('query:',query)
 				connection.query(query,function(err,qres){
 					var data={}
-					console.log('qres:',qres)
 					data.tables=qres
 					data.selected=query.base
 					connection.query("show tables",function(err,tables){
@@ -130,7 +131,7 @@ handle.tables={
 				line=[]	
 				query=['create table '+data.table],				
 				loop(data.columns,function(i,fi){					
-					line.push([fi.Field,fi.Type].join(' '))
+					line.push([fi.Field,fi.Type,fi.Extra].join(' '))
 				})				
 				query.push('('+line.join(',')+')')
 				query=query.join(' ')+';'
@@ -218,12 +219,12 @@ handle.tables={
 							if(err) console.log(err)
 						})
 					}
-					
+					console.log(tomod)
 					if(tomod.length){
 						query=['alter table '+data.table],
 						line=[]
 						loop(tomod,function(i,fi){
-							line.push(['modify column',fi.Field,fi.Type].join(' '))
+							line.push(['modify column',fi.Field,fi.Type,fi.Extra].join(' '))
 						})
 						query.push(line.join(','))
 						query=query.join(' ')+';'
@@ -237,7 +238,7 @@ handle.tables={
 						query=['alter table '+data.table],
 						line=[]
 						loop(toadd,function(i,fi){
-							line.push(['add column',fi.Field,fi.Type].join(' '))
+							line.push(['add column',fi.Field,fi.Type,fi.Extra].join(' '))
 						})
 						query.push(line.join(','))
 						query=query.join(' ')+';'
@@ -252,6 +253,14 @@ handle.tables={
 
 			}
 		},
+		tabledata:{
+			get:function(req,res){
+				var table=req.query.table
+				connection.query('select * from '+table,function(err,qres){						
+					res.send(JSON.stringify(qres))
+				})				
+			}
+		},
 		list:{
 			get:function(req,res){				
 				connection.query("show tables",function(err,qres){						
@@ -260,14 +269,13 @@ handle.tables={
 			}
 		}
 	}
-/**/	
+/**/
+console.log('handle:',handle)	
 exports.handler=function(req,res){	
 	if(req.url=='' || req.url=='/'){
 		req.url='/index.html'
 	}
-	var //parts=req._parsedUrl.pathname.split('/'),
-		parts=req.url.split('?')[0].split('/'),
-		//appname=parts[1],
+	var parts=req.url.split('?')[0].split('/'),
 		controller=parts[1],
 		action=parts[2]
 		query=req.query,

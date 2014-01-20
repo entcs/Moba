@@ -1,69 +1,23 @@
 var d=document,
-	o,
-	odp=Object.defineProperty,
-	op=Object.prototype,
 	ep=Element.prototype,
-	ap=Array.prototype,
-	sp=String.prototype,
-	np=Number.prototype
-/*
-//array
-odp(ap,'last',{
-	get:function(){
-		return this[this.length-1]
-	},
-	set:function(v){
-		this[this.length-1]=v
-	}
-})
-odp(ap,'pick',{
-	get:function(){
-		var val,
-			e=this
-		loop(10,function(i){
-			val=Math.floor(Math.random()*e.length)			
-			if(val!=e.length){
-				return false
-			}
-			
-		})
-		return this[val]
-	}
-})
-//object
-odp(op,'len',{
-	get:function(){
-		var len=0
-		loop(this,function(k,v){
-			len+=1
-		})
-		return len	
-	}
-})
-odp(op,'extend',{
-	set:function(obj){
-		var e=this
-		loop(obj,function(k,v){
-			e[k]=v
-		})
-	}
-})
-/**/
+	sp=String.prototype,	
+	np=Node.prototype
+
 //node
-Node.prototype.find=function(sel){
+np.find=function(sel){
 	return this.querySelector(sel)
 }
-Node.prototype.findall=function(sel){	
-	return this.querySelectorAll(sel)
+np.findall=function(sel){	
+	return this.querySelectorAll(sel).toarray()
 }
-Node.prototype.trigger=function(n,a){
+np.trigger=function(n,a){
 	var e = document.createEvent("HTMLEvents");
 	e.initEvent(n, true, true ); // event type,bubbling,cancelable		
 	if (a) e.args=a;
 	this.dispatchEvent(e);	
 	return this;
 }
-Node.prototype.on=function(name,fn,haveselector){
+np.on=function(name,fn,haveselector){
 	var sel
 	if(haveselector){			
 		sel=fn			
@@ -91,13 +45,13 @@ Node.prototype.on=function(name,fn,haveselector){
 	}
 	return this;
 }
-Node.prototype.off=function(n,fn,f){
+np.off=function(n,fn,f){
 	var fn=this.eventfunctions['efn-'+n];
 	this.removeEventListener(n,fn, f || false);
 	return this;
 }
 //element
-Element.prototype.findup=function(sel){
+ep.findup=function(sel){
 	if(this==document.body.p || !sel){
 		return false
 	} else {
@@ -122,7 +76,7 @@ Element.prototype.findup=function(sel){
 		}
 	}
 }
-Element.prototype.next=function(changescope){
+ep.next=function(changescope){
 	var found=false;
 	if (changescope){
 		found=this.children[0] || this.nextSibling;
@@ -143,7 +97,7 @@ Element.prototype.next=function(changescope){
 	}
 	return found;
 }
-Element.prototype.prev=function(changescope){
+ep.prev=function(changescope){
 	var found=false;	
 	if (changescope){
 		found=this.children[this.children.length-1] || this.previousSibling;
@@ -165,7 +119,7 @@ Element.prototype.prev=function(changescope){
 	}
 	return found;
 }
-Element.prototype.to=function(parent,l){
+ep.to=function(parent,l){
 	var p=parent.parentElement;
 	switch(l){		
 		case 'first':
@@ -186,7 +140,7 @@ Element.prototype.to=function(parent,l){
 	}
 	return this;
 }
-Element.prototype.new=function(tag,attrs,loc){
+ep.new=function(tag,attrs,loc){
 	var ele=document.createElement(tag);
 	ele.tn=document.createTextNode('')
 	if (attrs) {
@@ -199,11 +153,11 @@ Element.prototype.new=function(tag,attrs,loc){
 	ele.to(this,loc);
 	return ele;		
 }
-Element.prototype.rem=function(){
+ep.rem=function(){
 	this.parentNode.removeChild(this);
 	return this
 }
-Element.prototype.set = function (a,v) {
+ep.set = function (a,v) {
 	if(a=='class' || a=='c'){
 		this.addclass(v)
 	} else if(a=='html' || a=='h'){
@@ -215,7 +169,7 @@ Element.prototype.set = function (a,v) {
 	}
 	return this
 }
-Element.prototype.get = function (a){
+ep.get = function (a){
 	if(a=='class' || a=='c'){
 		return this.className
 	} else if(a=='html' || a=='h'){
@@ -226,14 +180,14 @@ Element.prototype.get = function (a){
 		return this.getAttribute(a)
 	}
 }
-Element.prototype.show = function () {			
+ep.show = function () {			
 	this.style.display = this.display || window.getComputedStyle(this).display;
 	delete this.display;
 	var e = document.createEvent("HTMLEvents");
 	e.initEvent('show', true, true ); // event type,bubbling,cancelable
 	this.dispatchEvent(e);		
 };
-Element.prototype.hide = function () {
+ep.hide = function () {
 	if(this.style.display!='none'){
 		this.display=window.getComputedStyle(this).display;
 		this.style.display = 'none';
@@ -242,13 +196,13 @@ Element.prototype.hide = function () {
 		this.dispatchEvent(e);		
 	}
 };
-Element.prototype.isvis=function(toggle){
+ep.isvis=function(toggle){
 	if (toggle=='toggle'){
 		this.isvis() == true ? this.hide() : this.show()
 	}
 	return this.style.display == 'none'?false:true
 }
-Element.prototype.addclass=function(n){
+ep.addclass=function(n){
 	var cl=this.className.split(' '),
 		nl=n.split(' ');
 	if (cl[0]=='') cl.shift()
@@ -260,7 +214,7 @@ Element.prototype.addclass=function(n){
 	this.className=cl.join(' ');
 	return this;
 }
-Element.prototype.remclass=function(n){
+ep.remclass=function(n){
 	if (n){
 		var nl=this.className.split(' ');
 		if (n.indexOf(' ')!=-1){
@@ -280,7 +234,7 @@ Element.prototype.remclass=function(n){
 	}
 	return this;	
 }
-Element.prototype.hasclass=function(n){
+ep.hasclass=function(n){
 	var nl=this.className.split(' '),
 		ns=n.split(' '),
 		res=1;
@@ -292,12 +246,12 @@ Element.prototype.hasclass=function(n){
 	}
 	return res
 }
-Element.prototype.r=function(str){
+ep.r=function(str){
 	var ele=document.r(str)
 	ele.to(this)
 	return ele
 }
-Element.prototype.s=function(str){
+ep.s=function(str){
 	var split=str.split(':'),
 		parts,
 		tonext,
@@ -316,55 +270,51 @@ Element.prototype.s=function(str){
 	})
 	return this
 }
-Element.prototype.__defineGetter__("o", function(){
-	o=this
-	return this
-})
-Element.prototype.__defineGetter__("p", function(){
+ep.__defineGetter__("p", function(){
 	return this.parentNode;
 })
-Element.prototype.__defineSetter__("p", function(p){
+ep.__defineSetter__("p", function(p){
 	this.to(p)
 })
-Element.prototype.__defineGetter__("val", function(){
+ep.__defineGetter__("val", function(){
 	if(this.type=='checkbox' || this.type=='radio'){
 		return this.checked
 	} else {
 		return this.value
 	}
 })
-Element.prototype.__defineSetter__("val", function(val){
+ep.__defineSetter__("val", function(val){
 	if(this.type=='checkbox' || this.type=='radio'){
 		this.checked=val
 	} else {
 		this.value=val
 	}
 })
-Element.prototype.__defineGetter__("tag", function(){
+ep.__defineGetter__("tag", function(){
 	return this.tagName.toLowerCase()
 });
-Element.prototype.h=function(val){
-	if (val) {
+ep.h=function(val){
+	if (val!=undefined) {
 		this.innerHTML=val
 		return this
 	} else {
 		return this.innerHTML
 	}
 }
-Element.prototype.fn=function(callback){
+ep.fn=function(callback){
 	callback(this)
 	return this
 }
-Element.prototype.getform=function(fn){
+ep.getform=function(fn){
 	//fn(field){} for altering values
 	var data={},
 		name,
 		fields=[],
 		val
 		
-	fields=fields.concat(this.findall('input').toarray())	
-	fields=fields.concat(this.findall('select').toarray())
-	fields=fields.concat(this.findall('textarea').toarray())
+	fields=fields.concat(this.findall('input'))	
+	fields=fields.concat(this.findall('select'))
+	fields=fields.concat(this.findall('textarea'))
 	
 	loop(fields,function(i,field){				
 			if(fn){
@@ -373,12 +323,15 @@ Element.prototype.getform=function(fn){
 				val=field.val				
 			}
 			if(!(field.type=='radio' && !val)){
-				data[field.id]=field.val
+				console.log('ignore:',field.get('data-ignore'))
+				if(!field.get('data-ignore')){
+					data[field.id]=field.val
+				}
 			}
 	})
 	return data
 }
-Element.prototype.setform=function(json,fn){
+ep.setform=function(json,fn){
 	//fn(field){} for altering values
 	if(typeof(json)=='string'){
 		json=JSON.parse(json)
@@ -397,7 +350,7 @@ Element.prototype.setform=function(json,fn){
 	})
 	
 }
-Element.prototype.caret=function(start,end){
+ep.caret=function(start,end){
 	if(end){
 		this.setSelectionRange(start,end)
 	} else if (start){
@@ -414,11 +367,11 @@ Element.prototype.caret=function(start,end){
 		return this.selectionStart
 	}
 }
-Element.prototype.append=function(obj){
+ep.append=function(obj){
 	this.appendChild(obj)
 	return this
 }
-Element.prototype.loop=function(obj,fn){
+ep.loop=function(obj,fn){
 	if(obj){
 		if(fn===undefined){
 			var count=0
@@ -433,10 +386,10 @@ Element.prototype.loop=function(obj,fn){
 	}
 	return this
 }
-Element.prototype.getstyle=function(style){
+ep.getstyle=function(style){
 	return window.getComputedStyle(this)[style]
 }
-Element.prototype.toggle=function(style,val1,val2){
+ep.toggle=function(style,val1,val2){
 	var val=this.getstyle(style)
 	if(val2){
 		if(val==val2){
@@ -470,7 +423,7 @@ HTMLCollection.prototype.toarray=function(){
 Event.prototype.__defineGetter__("t", function(){
 	return this.target
 })
-Element.prototype.getpos=function(tar){		
+ep.getpos=function(tar){		
 	var pos={
 			x:this.offsetLeft,
 			y:this.offsetTop
@@ -482,7 +435,7 @@ Element.prototype.getpos=function(tar){
 	}
 	return pos
 }	
-Element.prototype.setpos=function(pos,tar){	
+ep.setpos=function(pos,tar){	
 	if(tar){
 		ppos=this.p.getpos(d.body)
 		var x=pos.x-ppos.x,
@@ -499,13 +452,13 @@ Number.prototype.px=function(){
 	return this+'px'
 }
 //string
-String.prototype.int=function(){		
+sp.int=function(){		
 	return parseInt(this.replace('px',''))
 }
-String.prototype.float=function(){		
+sp.float=function(){		
 	return parseFloat(this.replace('px',''))
 }
-String.prototype.splice=function(index,count,add){
+sp.splice=function(index,count,add){
 	add=add || ''
 	var text=this.toString()
 	text=text.slice(0,index)+add+text.slice(index+count)
@@ -515,10 +468,10 @@ String.prototype.splice=function(index,count,add){
 d.on('ready',function(e){//style setters and getters
 	var styles=window.getComputedStyle(d.body)
 	loop(styles,function(name,val){
-		Element.prototype.__defineGetter__(name, function(){
+		ep.__defineGetter__(name, function(){
 			return window.getComputedStyle(this)[name]
 		})
-		Element.prototype.__defineSetter__(name, function(val){
+		ep.__defineSetter__(name, function(val){
 			this.style[name]=val
 		})			
 	})		
@@ -691,12 +644,15 @@ d.send=function(){
 		req.open('GET',url,true)
 		req.setRequestHeader("X-Requested-With","XMLHttpRequest")
 		req.send()
-	} else if(len==3){
+	} else if(len>=3){
 		var data=arguments[1]
 		if(typeof(data)=='object') data=JSON.stringify(data)
 		req.open('POST',url,true)
-		req.setRequestHeader("X-Requested-With","XMLHttpRequest")
-		req.send(arguments[1])
+		req.setRequestHeader("X-Requested-With","XMLHttpRequest")		
+		if(arguments[3]=='json'){
+			req.setRequestHeader('Content-Type','application/json;charset=UTF-8')
+		}
+		req.send(data)
 	}
 	req.onreadystatechange=function(e){				
 		if(req.readyState==4){// && req.status==200){
@@ -706,56 +662,5 @@ d.send=function(){
 		}
 	}	
 }
-//node js homebrew dont use
-d.add=function(path,filedata,fn){
-	var data={
-		type:'fs',
-		action:'add',
-		path:path,
-		data:filedata
-	}
-	d.send(data,fn)		
-}
-d.rem=function(path,fn){
-	var data={
-		type:'fs',
-		action:'rem',
-		path:path
-	}
-	d.send(data,fn)			
-},
-d.get=function(path,fn){
-	var data={
-		type:'fs',
-		action:'get',
-		path:path
-	}
-	d.send(data,fn)					
-}
-d.getfiles=function(path,fn){
-	var data={
-		type:'fs',
-		action:'getfiles',
-		path:path
-	}
-	d.send(data,fn)						
-}
-d.set=function(path,filedata,fn){
-	var send={
-		type:'fs',
-		action:'set',
-		path:path,
-		filedata:filedata
-	}
-	d.send(data,fn)					
-}
-d.getscript=function(path,fn){
-	var script
-	d.get(path,function(res){		
-		script=eval(res)		
-		fn(script)
-	})
-}
-//node js homebrew dont use
 
-console.log('loaded dom0')
+console.log('loaded dom0 in basket')

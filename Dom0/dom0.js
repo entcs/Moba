@@ -312,9 +312,9 @@ ep.getform=function(fn){
 		fields=[],
 		val
 		
-	fields=fields.concat(this.findall('input').toarray())	
-	fields=fields.concat(this.findall('select').toarray())
-	fields=fields.concat(this.findall('textarea').toarray())
+	fields=fields.concat(this.findall('input'))	
+	fields=fields.concat(this.findall('select'))
+	fields=fields.concat(this.findall('textarea'))
 	
 	loop(fields,function(i,field){				
 			if(fn){
@@ -447,6 +447,11 @@ ep.setpos=function(pos,tar){
 //number
 Number.prototype.px=function(){
 	return this+'px'
+}
+Number.prototype.round=function(rounding){
+	rounding=rounding || 0
+	var r=Math.pow(10,rounding)
+	return Math.round(this*r)/r
 }
 //string
 sp.int=function(){		
@@ -626,6 +631,13 @@ var loop=function(obj,fn){
 		}	
 	}
 }
+//extend
+var ext=function(a,b){
+	loop(b,function(k,v){
+		a[k]=b[k]
+	})
+	return a
+}
 //net
 d.send=function(){
 	//url,fn
@@ -641,12 +653,15 @@ d.send=function(){
 		req.open('GET',url,true)
 		req.setRequestHeader("X-Requested-With","XMLHttpRequest")
 		req.send()
-	} else if(len==3){
+	} else if(len>=3){
 		var data=arguments[1]
 		if(typeof(data)=='object') data=JSON.stringify(data)
 		req.open('POST',url,true)
-		req.setRequestHeader("X-Requested-With","XMLHttpRequest")
-		req.send(arguments[1])
+		req.setRequestHeader("X-Requested-With","XMLHttpRequest")		
+		if(arguments[3]=='json'){
+			req.setRequestHeader('Content-Type','application/json;charset=UTF-8')
+		}
+		req.send(data)
 	}
 	req.onreadystatechange=function(e){				
 		if(req.readyState==4){// && req.status==200){

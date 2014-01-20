@@ -637,7 +637,7 @@ var g={
 				x:Math.random()*g.world.rect.getWidth(),
 				y:Math.random()*g.world.rect.getWidth(),
 				color: group[nr%4],
-				speed: 50,
+				speed: 100,
 				aggro: 350,
 				hp: 50+Math.random()*150,
 				range: 50+50*(nr%2),

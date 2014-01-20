@@ -108,11 +108,10 @@ loop(2,function(i){
 				this.addclass('selected')
 			}).p
 		.r('div class=score line html=0').p
-		.r('div class=faults cols').o
-		
-	loop(4,function(i){
-		o.r('span class=dot')
-	})			
+		.r('div class=faults cols')
+			.loop(4,function(o,i){
+				o.r('span class=dot')
+			})			
 })
 
 var pls=topw.r('div class=pls')
@@ -281,9 +280,9 @@ var basket={
 					console.log('stop')
 					basket.stop()					
 				}
-				basket.otimebut.h((basket.otime/1000).toFixed(2))
-				var ftime=[parseInt(basket.gtime/60000),((basket.gtime/1000)%60).toFixed(2)].join(':')
-				basket.gtimebut.h(ftime)
+				basket.otimebut.h((basket.otime/1000).toFixed(1).replace('.',':'))
+				var ftime=[parseInt(basket.gtime/60000),((basket.gtime/1000)%60).toFixed(1)].join(':')
+				basket.gtimebut.h(ftime.replace('.',':'))
 			}			
 			basket.run()			
 		},10)

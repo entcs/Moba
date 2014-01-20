@@ -323,10 +323,7 @@ ep.getform=function(fn){
 				val=field.val				
 			}
 			if(!(field.type=='radio' && !val)){
-				console.log('ignore:',field.get('data-ignore'))
-				if(!field.get('data-ignore')){
-					data[field.id]=field.val
-				}
+				data[field.id]=field.val
 			}
 	})
 	return data
@@ -450,6 +447,14 @@ ep.setpos=function(pos,tar){
 //number
 Number.prototype.px=function(){
 	return this+'px'
+}
+Number.prototype.round=function(rounding){
+	rounding=rounding || 0
+	var nr=Math.pow(10,rounding)
+		val=this*nr
+	val=Math.round(val)
+	val/=nr
+	return val
 }
 //string
 sp.int=function(){		
@@ -663,4 +668,4 @@ d.send=function(){
 	}	
 }
 
-console.log('loaded dom0 in basket')
+console.log('loaded dom0')

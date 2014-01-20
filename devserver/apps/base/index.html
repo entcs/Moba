@@ -59,10 +59,12 @@ d.on('ready',function(e){
 				.r('input').p
 				.r('button class=add html=add new database')
 					.on('click',function(e){
-						var data={
-							base:d.find('.bases .controls input').value,
-							columns:base.gettabledata()
+						var inp=d.find('.bases .controls input')
+							data={
+							base:inp.value,
+							columns:base.gettableschema()
 						}
+						inp.value=''
 						if(data.base){
 							d.send('bases/add',data,function(res){
 								console.log('res:',res)
@@ -101,10 +103,12 @@ d.on('ready',function(e){
 					.r('input').p
 					.r('button class=add html=add new table')
 						.on('click',function(e){
-							var data={
-								table:d.find('.tables .controls input').value,
-								columns:base.gettabledata()
+							var inp=d.find('.tables .controls input'),
+								data={
+								table:inp.value,
+								columns:base.gettableschema()
 							}
+							inp.value=''
 							d.send('tables/add',data,function(res){
 								console.log('res:',res)
 							},'json')							
@@ -113,7 +117,7 @@ d.on('ready',function(e){
 						.on('click',function(e){
 							var data={
 								table:d.find('.existing .list .selected').h(),
-								columns:base.gettabledata()
+								columns:base.gettableschema()
 							}
 							d.send('tables/set',data,function(res){
 								console.log('res:',res)
@@ -131,7 +135,16 @@ d.on('ready',function(e){
 							}
 						}).p
 				.r('div class=schema section')
-				
+			var tabledata=tables.r('div class=tabledata')
+			tabledata.r('button html=get table data')
+				.on('click',function(e){
+					var url='base/tables/tabledata?table='+d.find('.existing .list .selected').h()
+					d.send(url,function(res){
+						console.log('data list:',res)
+						base.showtabledata(res)
+					})
+				})
+			tabledata.r('div class=result')
 		},
 		showbases:function(){				
 				var bases=base.html.find('.bases .list')
@@ -204,12 +217,13 @@ d.on('ready',function(e){
 			})
 			tr.r('td')
 				.s('width:27px')
+				
 			function addrow(data){
 				var tr=tbody.r('tr')				
 				loop(base.schemafields,function(i,name){					
-					tr.r('td')
-						.r('input')
-							.s('width:100%')
+					td=tr.r('td')
+					td.r('input')
+						.s('width:100%')
 				})
 				tr.r('td')						
 					.s('background-color:#fff')
@@ -223,14 +237,34 @@ d.on('ready',function(e){
 				
 			}
 			if(data){
+				var select
 				loop(data,function(i,item){
 					var tr=tbody.r('tr')
-					//console.log('item:',item)
+					console.log('item:',item)
 					loop(item,function(k,v){
-						tr.r('td')
-							.r('input')
+						td=tr.r('td')
+						/*
+						if(k=='Null'){
+							select=td.r('select')
+							select.s('width:100%')
+							select.r('option value=YES html=YES')
+							select.r('option value=NO html=NO')
+							select.value=v
+						} else if(k=='Key'){
+							select=td.r('select')
+							select.s('width:100%')
+							select.r('option')
+							select.r('option value=PRI html=PRI')
+							select.value=v	
+						} else {
+							td.r('input')
 								.s('width:100%')
 								.val=v
+						}
+						/**/
+						td.r('input')
+							.s('width:100%')
+							.val=v						
 					})
 					td=tr.r('td')						
 						.s('background-color:#fff width:1px')
@@ -267,7 +301,7 @@ d.on('ready',function(e){
 				base.showschema([])
 			})		
 		},
-		gettabledata:function(){
+		gettableschema:function(){
 			var data=[],
 				rows=d.findall('.schema table tbody tr'),
 				item={}			
@@ -280,6 +314,32 @@ d.on('ready',function(e){
 			})			
 			return data
 		},
+		showtabledata:function(data){
+			data=JSON.parse(data)
+			var cont=d.find('.tabledata .result')				
+			cont.h('')
+			var table=d.r('table'),
+				thead=table.r('thead'),
+				tbody=table.r('tbody'),
+				row
+			
+			loop(data,function(i,line){
+				if(!i){
+					row=thead.r('tr')
+					loop(line,function(k,v){
+						row.r('td')
+							.h(k)
+					})
+				}
+				console.log('line:',line)
+				row=tbody.r('tr')
+				loop(line,function(k,v){
+					row.r('td')
+						.h(v)
+				})
+			})
+			table.to(cont)
+		}
 	}
 	base.show()
 	base.getbases()

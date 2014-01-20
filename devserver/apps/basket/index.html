@@ -1,8 +1,41 @@
 <script src='dom0.js'></script>
+<!---->
+<style>
+.sec,
+.form{
+	border:1px solid #aaa;
+	background-color: #eee;
+}
+.cols{
+	display:table;
+	table-layout:fixed;
+	width:100%;
+}
+.cols>*{
+	display:table-cell;
+}
+.bo{
+	border:1px solid #aaa;
+}
+.bt{
+	border-top:1px solid #aaa;
+}
+.bb{
+	border-bottom:1px solid #aaa;
+}
+.bl{
+	border-left:1px solid #aaa;
+}
+.br{
+	border-right:1px solid #aaa;
+}
+
+</style>
 <script>
 d.on('ready',function(e){
 	console.log('ready')
-	var args=['add','rem','get','set','list']
+	var appname='basket'
+	var actions=['add','rem','get','set','list']
 	var basket={
 		tables:{
 			seasons:{},
@@ -13,21 +46,235 @@ d.on('ready',function(e){
 			actions:{}
 		}
 	}
+	d.body.on('keyup',function(e){
+		var wrap=d.find('.args-wrap')
+		if(wrap && e.keyCode==27){
+			wrap.rem()
+		}		
+	})
+	
+	var args={
+		draw:function(name,action,data){
+			var cont=d.find('.args-wrap')
+			if(!cont){
+				cont=d.body.r('div class=args-wrap')
+					.s('position:absolute width:100% height:100% top:0px left:0px text-align:center background-color:rgba(0,0,0,0.5) padding:30px box-sizing:border-box')
+			}
+			cont.h('')			
+			var form=cont.r('form class=form')
+				.s('display:inline-block')
+			var header=form.r('div class=header')
+				.h(name+' '+action)
+			var content=form.r('div class=content')
+				.s('text-align:left')
+			var controls=form.r('div class=controls')
+				.s('text-align:right margin-top:20px')
+				
+			if(action=='add'){
+				var lab,
+					inp,
+					field
+										
+				loop(data,function(i,inf){
+					field=content.r('div class=field')
+					lab=field.r('label')
+						.h(inf.Field)
+					inp=field.r('input')
+						.set('id',inf.Field)
+						.set('data-type',inf.Type)
+					if(inf.Field=='id'){
+						field.s('display:none')
+						field.rem()
+					}				
+				})
+				controls.r('button class=add html=add type=button')
+					.on('click',function(e){						
+						validate=function(field){
+							console.log('validate:',field)
+						}
+						var tar=e.target,
+							form=tar.findup('.form'),
+							fdata=form.getform(validate)						
+						var url=['basket',name,'add'].join('/')
+						
+						d.send(url,fdata,function(res){
+							console.log('res:',res)
+						},'json')
+					})
+			} 
+			else if (action=='list'){
+				var row,field,types={},type
+				
+				//get types
+				loop(data.fields,function(i,e){					
+					types[e.Field]=e.Type
+				})
+				
+				loop(data.list,function(i,e){
+					if(!i){
+						var fields=content.r('div class=fields'),
+							field
+						loop(e,function(k,v){
+							field=fields.r('input class=cell disabled=true')								
+							field.val=k							
+						})						
+					}					
+					row=content.r('div class=row')
+					loop(e,function(k,v){
+						field=row.r('input class=cell')
+						type=types[k]
+						field.set('data-type',type)
+						if(type.indexOf('int')!=-1){
+							field.set('type','number')
+						}
+						field.val=v
+						field.id=k
+						if(k=='id'){
+							field.set('disabled','true')
+							field.set('data-ignore',true)
+						}						
+					})			
+					//set
+					row.r('button type=button html=set')
+						.set('data-action','set')
+						.set('data-url',[appname,name,'set'].join('/'))						
+						.set('data-name',name)
+						.set('data-want','list')						
+						.on('click',function(e){
+							this.p.find('#id').set('data-ignore','')
+							this.data=this.p.getform()							
+							args.send(e.target,'json')
+						})
+					//rem
+					row.r('button type=button html=rem')
+						.set('data-action','rem')
+						.set('data-url',[appname,name,'rem'].join('/'))						
+						.set('data-name',name)
+						.set('data-want','list')
+						.on('click',function(e){
+							this.p.find('#id').set('data-ignore','')
+							this.data=this.p.getform()
+							args.send(e.target,'json')
+						})					
+				})
+				//add row								
+				row1=content.r('div class=row bt')
+					.s('margin-top:10px')
+				row=content.r('div class=row')
+								
+				loop(data.fields,function(i,v){
+					field=row1.r('input class=cell disabled=true')								
+					field.val=v.Field												
+				
+					field=row.r('input class=cell')
+					field.id=v.Field
+					type=types[v.Field]
+					field.set('data-type',type)
+					if(type.indexOf('int')!=-1){
+						field.set('type','number')
+					}
+					
+					if(v.Extra=='auto_increment' || v.Field=='id'){
+						field.set('disabled',true)
+						field.set('data-ignore',true)
+						field.val=0
+					}
+					
+				})	
+				//add
+				row.r('button type=button html=add')
+					.set('data-action','add')
+					.set('data-url',[appname,name,'add'].join('/'))					
+					.set('data-name',name)
+					.set('data-want','list')
+					.on('click',function(e){
+						this.data=this.p.getform()
+						args.send(e.target,'json')
+					})				
+				
+				
+				
+			}
+			else if (action=='error'){
+				content.r('div')
+					.h(data)
+			}
+			else {
+				content.r('div')
+					.h(['no draw for:',name,action].join(' '))
+			}
+
+			controls.r('button class=cancel html=cancel type=button')
+				.on('click',function(e){
+					var tar=e.target
+					tar.findup('.args-wrap').rem()
+					tar.findup('.form').rem()
+					
+				})
+			form.to(cont)					
+			
+		},
+		send:function(tar,json){
+			
+			var action=tar.get('data-action'),
+				url=tar.get('data-url'),
+				want=tar.get('data-want'),
+				sdata={
+					req:tar.data,
+					want:want
+				},
+				name=tar.get('data-name')				
+													
+			function callback(res){
+				var data=''
+				try{
+					data=JSON.parse(res)							
+				} catch (err){
+					console.log('res not JSON')					
+					args.draw('ERROR','error',res)
+				}
+				if(data){
+					if(data.err){
+						console.log('ERROR:',data.err)
+					} else {						
+						action=want || action						
+						args.draw(name,action,data)
+					}
+				}
+				
+			}		
+			if(sdata.req){
+				if(json){
+					d.send(url,sdata,callback,json)
+				} else {
+					d.send(url,sdata,callback)
+				}
+			} else {
+				if(json){
+					d.send(url,callback,json)
+				} else {
+					d.send(url,callback)
+				}
+			}		
+		}
+	}
+	
 	var ele=d.body.r('div class=controls'),
 		wrap
-	loop(basket.tables,function(k,v){
+	loop(basket.tables,function(name,v){
 		wrap=ele.r('div')
-			.h(k)
-			.addclass(k)
-		loop(args,function(i,name){
+			.h(name)
+			.addclass(name)
+		loop(actions,function(i,action){
 			wrap.r('button')
-				.h(name)
-				.addclass(name)
-				.set('data-action',name)
+				.h(action)
+				.addclass(action)
+				.set('data-action',action)
+				.set('data-url',[appname,name,action].join('/'))
+				.set('data-data','')
+				.set('data-name',name)
 				.on('click',function(e){
-					d.send(['basket',k,name].join('/'),function(res){
-						console.log('res:',res)
-					})
+					args.send(e.target)
 				})
 		})
 	})
