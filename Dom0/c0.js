@@ -4,13 +4,16 @@ var globalcooldown=1000
 
 var c0={
 	init:function(){
+		this.nodes=[]
 		this.canvas=document.createElement('canvas')
 		this.canvas.id='c0'
 		document.body.appendChild(this.canvas)
 		this.c=this.canvas.getContext('2d')
-		this.root=this.addnode('root')
+		this.root=this.newnode('root')
 		this.addevents()
+		
 	},
+	//events
 	addevents:function(){	
 		window.onresize=function(){
 			c0.canvas.width=window.innerWidth-2	
@@ -130,307 +133,65 @@ var c0={
 		}
 		return hits
 	},
-	canvas:0,
-	root:0,
-	nodes:[],
-	//util
-	util:{
-		dist:function(a,b){
-			var dx=a.x-b.x,
-				dy=a.y-b.y
-			return Math.sqrt(dx*dx+dy*dy)			
-		},
-		an:function(a,b){
-			if(a.type=='node'){
-				a=a.getpos(c0.root)
-			}
-			if(b.type=='node'){
-				b=b.getpos(c0.root)
-			}
-			
-			b.sub(a)
-			var an=c0.rtoa(Math.atan(b.x/b.y))
-			if(b.x>0){
-				if(b.y<0){
-					an=-an
-				} else {
-					an=180-an
-				}
-			} else {
-				if(b.y>0){
-					an=180-an
-				} else {
-					an=360-an
-				}						
-			}
-			return an
-		},
-		rot:function(p,an){
-			var rad=this.ator(an),
-				sin=Math.sin(rad).round(15),
-				cos=Math.cos(rad).round(15)
-				
-			return {
-				x:p.x*cos-p.y*sin,
-				y:p.x*sin+p.y*cos
-			}
-		},
-		ator:function(an){
-			return (an*Math.PI/180)%(Math.PI*2)
-		},
-		rtoa:function(rad){
-			return (180*rad/Math.PI)%360
-		}	
-	},
-	//new objs
-	newpos:function(a){
-		var pos={
-			type:'pos',
-			x:a.x,
-			y:a.y,
-			dist:function(p){
-				var dx=this.x-p.x,
-					dy=this.y-p.y
-				return Math.sqrt(dx*dx+dy*dy)				
-			},
-			add:function(p){
-				this.x+=p.x
-				this.y+=p.y
-				/*
-				return c0.newpos({
-					x:this.x+p.x,
-					y:this.y+p.y
-				})
-				/**/
-			},
-			sub:function(p){
-				this.x-=p.x
-				this.y-=p.y
-				/*
-				return c0.newpos({
-					x:this.x-p.x,
-					y:this.y-p.y
-				})
-				/**/
-			},
-			an:function(p){				
-				var an=0
-				if(p){
-					an=this.dif(p).an()
-				} else {					
-					an=c0.rtoa(Math.atan(this.x/this.y))
-					if(this.x>0){
-						if(this.y<0){
-							an=-an
-						} else {
-							an=180-an
-						}
-					} else {
-						if(this.y>0){
-							an=180-an
-						} else {
-							an=360-an
-						}						
-					}
-				}
-				return an
-			},
-			rot:function(an){
-				var rad=c0.ator(an),
-					sin=Math.sin(rad).round(15),
-					cos=Math.cos(rad).round(15),
-					x=this.x*cos-this.y*sin,
-					y=this.x*sin+this.y*cos
-				
-				this.x=x
-				this.y=y
-			}
-		}
-		return pos
-	},
-	newnode:function(a){
-		var node={
-			type:'node',
-			parent:0,		
-			children:[],
-			visible:true,
-			x:0,
-			y:0,			
-			an:0,
-			scalex:1,
-			scaley:1,
-			tail:0,			
-			to:function(parent){
-				parent=parent || c0.root
-				if(this.parent){
-					loop(this.parent.children,function(i,e){
-						if(e==this){
-							this.parent.children.splice(i,1)
-							return false
-						}
-					})
-				}
-				parent.children.push(this)
-				this.parent=parent				
-				return this
-			},
-			render:function(){//a=pos,an,scale
-				if(this.visible){
-					if(this.draw){
-						this.draw()
-					}
-					loop(this.children,function(i,e){
-						e.render()
-					})
-				}
-			},
-			rem:function(){
-				var ind=this.parent.children.indexOf(this)
-				this.parent.children.splice(ind,1)
-
-				ind=c0.nodes.indexOf(this)
-				c0.nodes.splice(ind,1)
-				
-				return this
-			},
-			getpos:function(parent,pos){
-				if(pos){
-					pos.rot(this.an)
-					pos.add(this.getpos())
-				} else {
-					pos=c0.newpos({
-						x:this.x,
-						y:this.y
-					})					
-				}				
-				if(parent && parent!=this.parent){
-					pos=this.parent.getpos(parent,pos)
-				}
-				return pos
-			},			
-			setpos:function(a,parent){
-			},
-			getan:function(parent,an){
-				if(an){
-					an+=this.an
-				} else {
-					an=this.an
-				}				
-				if(parent && parent!=this.parent){
-					an=this.parent.getan(parent,an)
-				}
-				return an
-			},
-			setan:function(an,parent){
-				
-			},
-			pos:function(a){
-				if(a){
-					this.x=a.x
-					this.y=a.y
-				} else {
-					return {x:this.x,y:this.y}
-				}
-			},
-			scale:function(a){
-				if(a){
-					this.scalex=a.x
-					this.scaley=a.y
-				} else {
-					return {x:this.scalex,y:this.scaley}
-				}				
-			},
-			look:function(a){
-				//gets an
-				var an=0
-				return an
-			},
-			lookat:function(a){
-				//sets an
-			},
-			fol:function(p,speed){
-				var p1=this.pos(),
-					p2=p,
-					dif=c0.sub(p2,p1),
-					norm=c0.norm(dif),
-					dist=c0.dist(p1,p2),			
-					move={
-						x:norm.x*speed*c0.time.td,
-						y:norm.y*speed*c0.time.td
-					}		
-				if(Math.abs(move.x)>Math.abs(dif.x)){
-					move.x=dif.x
-				}
-				if(Math.abs(move.y)>Math.abs(dif.y)){
-					move.y=dif.y
-				}		
-				move=c0.add(p1,move)	
-				this.pos(move)		
-			},
-			dist:function(a){
-				//p == point || node				
-				var dist=0,
-					p1=this.getpos(c0.root),
-					p2					
-				if(a.type=='pos'){
-					
-				}else{
-					
-				}
-				return dist
-			},
-			ishit:function(p){
-				var b=this.bounds
-				if(this.type=='circ'){
-					if(c0.dist(this.pos(),p)<=this.rad){
-						return true
-					}
-				} else {
-					var a1=this.getarea(),
-						a2=this.dotarea(p).round(5)
-					console.log(a1,a2)
-					if(a1>=a2){
-						return true
-					}
-		
-				}
-				return false
-			},
-			on:function(name,callback){
-				this.events[name]=callback
-			},
-			off:function(name){
-				delete this.events[name]
-			},
-			events:{
-			}
-		}
-		this.nodes.push(node)
-		return node		
-	},
 	polyarea:function(p,pts){
 		var a,b,c,p2,s,area=0
 		loop(pts,function(i,p1){
 			if(i<pts.length-1){
 				p2=pts[i+1]
-				a=Math.abs(c0.sub(p,p1))
-				b=Math.abs(c0.sub(p,p2))
-				c=Math.abs(c0.sub(p1,p2))
+				a=Math.abs(p.sub(p1))
+				b=Math.abs(p.sub(p2))
+				c=Math.abs(p1.sub(p2))
 				s=(a+b+c)/2
 				area+=Math.sqrt(s(s-a)(s-b)(s-c))
 			}
 		})
 		return area
 	},
+	//util
+	dist:function(a,b){
+		var dx=a.x-b.x,
+			dy=a.y-b.y
+		return Math.sqrt(dx*dx+dy*dy)			
+	},
+	an:function(a,b){		
+		if(a.getpos){
+			a=a.getpos(c0.root)
+		} else {
+			a=c0.newpos({x:a.x,y:a.y})			
+		}
+		if(b.getpos){
+			b=b.getpos(c0.root)
+		} else {
+			b=c0.newpos({x:b.x,y:b.y})			
+		}
+		b=b.sub(a)
+		
+		var an=c0.rtoa(Math.atan(b.x/b.y))			
+		if(b.x>0){
+			if(b.y<0){
+				an=-an
+			} else {
+				an=180-an
+			}
+		} else {
+			if(b.y>0){
+				an=180-an
+			} else {
+				an=360-an
+			}						
+		}
+		console.log('an:',an)
+		return an
+	},
 	rot:function(p,an){
 		var rad=this.ator(an),
 			sin=Math.sin(rad).round(15),
 			cos=Math.cos(rad).round(15)
 			
-		return {
+		return this.newpos({
 			x:p.x*cos-p.y*sin,
 			y:p.x*sin+p.y*cos
-		}
+		})
 	},
 	ator:function(an){
 		return (an*Math.PI/180)%(Math.PI*2)
@@ -438,22 +199,17 @@ var c0={
 	rtoa:function(rad){
 		return (180*rad/Math.PI)%360
 	},
-	dist:function(a,b){
-		var dx=a.x-b.x,
-			dy=a.y-b.y
-		return Math.sqrt(dx*dx+dy*dy)
-	},
 	sub:function(a,b){
-		return {
+		return this.newpos({
 			x:a.x-b.x,
 			y:a.y-b.y
-		}
+		})
 	},
 	add:function(a,b){
-		return {
+		return this.newpos({
 			x:a.x+b.x,
 			y:a.y+b.y
-		}
+		})
 	},
 	norm:function(p){
 		var one=Math.max(Math.abs(p.x),Math.abs(p.y))
@@ -465,6 +221,170 @@ var c0={
 		}
 		return p
 	},
+	//new objs
+	newpos:function(a){
+		a=a || {x:0,y:0}
+		var pos={
+			init:function(){				
+				this.type='pos'
+				this.x=a.x
+				this.y=a.y
+			},
+			dist:function(p){
+				return c0.dist(this,p)
+			},
+			add:function(p){
+				return c0.add(this,p)
+			},
+			sub:function(p){
+				return c0.sub(this,p)
+			},
+			an:function(p){
+				return c0.an(this,p)
+			},
+			rot:function(an){
+				return c0.rot(this,an)
+			}
+		}
+		pos.init()
+		return pos
+	},
+	newnode:function(name){
+		var node=this.newpos(),		
+			ext={
+				init:function(){
+					this.type='node'
+					this.parent=0	
+					this.children=[]
+					this.visible=true
+					this.an=0
+					this.sx=1
+					this.sy=1
+					this.tail=0
+				},
+				//rendering
+				to:function(parent){
+					parent=parent || c0.root
+					if(this.parent){
+						loop(this.parent.children,function(i,e){
+							if(e==this){
+								this.parent.children.splice(i,1)
+								return false
+							}
+						})
+					}
+					parent.children.push(this)
+					this.parent=parent				
+					return this
+				},
+				render:function(){//a=pos,an,scale
+					if(this.visible){
+						if(this.draw){
+							this.draw()
+						}
+						loop(this.children,function(i,e){
+							e.render()
+						})
+					}
+				},
+				rem:function(){
+					var ind=this.parent.children.indexOf(this)
+					this.parent.children.splice(ind,1)
+
+					ind=c0.nodes.indexOf(this)
+					c0.nodes.splice(ind,1)
+					
+					return this
+				},
+				//util
+				getpos:function(parent,pos){
+					if(pos){
+						pos=pos.rot(this.an)
+						pos=pos.add(this.getpos())
+					} else {
+						pos=c0.newpos({
+							x:this.x,
+							y:this.y
+						})					
+					}				
+					if(parent && parent!=this.parent){
+						pos=this.parent.getpos(parent,pos)
+					}
+					return pos
+				},			
+				setpos:function(a,parent){
+				},
+				getan:function(parent,an){
+					if(an){
+						an+=this.an
+					} else {
+						an=this.an
+					}				
+					if(parent && parent!=this.parent){
+						an=this.parent.getan(parent,an)
+					}
+					return an%360
+				},
+				setan:function(an,p){				
+					if(p){
+						an-=this.parent.getan(p)
+					}
+					this.an=an
+				},
+				fol:function(p,speed){
+					var p1=this.pos(),
+						p2=p,
+						dif=p2.sub(p1),
+						norm=c0.norm(dif),
+						dist=c0.dist(p1,p2),			
+						move={
+							x:norm.x*speed*c0.time.td,
+							y:norm.y*speed*c0.time.td
+						}		
+					if(Math.abs(move.x)>Math.abs(dif.x)){
+						move.x=dif.x
+					}
+					if(Math.abs(move.y)>Math.abs(dif.y)){
+						move.y=dif.y
+					}		
+					move=c0.add(p1,move)	
+					this.pos(move)		
+				},
+				//events
+				ishit:function(p){
+					var b=this.bounds
+					if(this.type=='circ'){
+						if(c0.dist(this.pos(),p)<=this.rad){
+							return true
+						}
+					} else {
+						var a1=this.getarea(),
+							a2=this.dotarea(p).round(5)
+						console.log(a1,a2)
+						if(a1>=a2){
+							return true
+						}
+			
+					}
+					return false
+				},
+				on:function(name,callback){
+					this.events[name]=callback
+				},
+				off:function(name){
+					delete this.events[name]
+				},
+				events:{
+				}
+			}
+		loop(ext,function(k,v){
+			node[k]=v
+		})
+		node.init()
+		this.nodes.push(node)
+		return node
+	},
+	//rendering
 	clear:function(){
 		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
 	},
@@ -472,36 +392,19 @@ var c0={
 		var x,y			
 		node=node || c0.root
 		if(node.visible){
-			//rotation			
-			
-			//console.log('node an:',node.an,this.ator(node.an))
-			//this.c.translate(-node.x,-node.y)
 			if(node.type=='rect'){
 				x=node.x-node.wid/2
 				y=node.y-node.hig/2
 			} else {
 				x=node.x
 				y=node.y
-			}
-			//this.c.translate(x,y)
-			
-			//this.c.rotate(this.ator(node.an))
-			
+			}			
 			if(node.draw){
 				node.draw()
 			}
-			//this.c.rotate(-Math.PI/100)
-			//this.c.translate(node.x,node.y)
 			loop(node.children,function(i,e){
 				c0.render(e)
 			})
-			//this.c.rotate(this.ator(-node.an))
-			//this.c.translate(-x,-y)				
-			
-			
-			
-		} else {
-		
 		}		
 	},
 	redraw:function(node){
@@ -509,150 +412,7 @@ var c0={
 		this.clear()
 		node.render()		
 	},
-	addnode:function(name){
-		var node={
-			type:'node',
-			parent:0,		
-			children:[],
-			visible:true,
-			x:0,
-			y:0,			
-			an:0,
-			scalex:1,
-			scaley:1,
-			tail:0,			
-			to:function(parent){
-				parent=parent || c0.root
-				if(this.parent){
-					loop(this.parent.children,function(i,e){
-						if(e==this){
-							this.parent.children.splice(i,1)
-							return false
-						}
-					})
-				}
-				parent.children.push(this)
-				this.parent=parent				
-				return this
-			},
-			render:function(){//a=pos,an,scale
-				if(this.visible){
-					if(this.draw){
-						this.draw()
-					}
-					loop(this.children,function(i,e){
-						e.render()
-					})
-				}
-			},
-			rem:function(){
-				var ind=this.parent.children.indexOf(this)
-				this.parent.children.splice(ind,1)
-
-				ind=c0.nodes.indexOf(this)
-				c0.nodes.splice(ind,1)
-				
-				return this
-			},
-			getpos:function(parent,pos){
-				if(pos){
-					pos.rot(this.an)
-					pos.add(this.getpos())
-				} else {
-					pos=c0.newpos({
-						x:this.x,
-						y:this.y
-					})					
-				}				
-				if(parent && parent!=this.parent){
-					pos=this.parent.getpos(parent,pos)
-				}
-				return pos
-			},
-			
-			setpos:function(a,parent){
-			},
-			getan:function(parent,an){
-				if(an){
-					an+=this.an
-				} else {
-					an=this.an
-				}				
-				if(parent && parent!=this.parent){
-					an=this.parent.getan(parent,an)
-				}
-				return an
-			},
-			pos:function(a){
-				if(a){
-					this.x=a.x
-					this.y=a.y
-				} else {
-					return {x:this.x,y:this.y}
-				}
-			},
-			scale:function(a){
-				if(a){
-					this.scalex=a.x
-					this.scaley=a.y
-				} else {
-					return {x:this.scalex,y:this.scaley}
-				}				
-			},
-			look:function(p){
-				
-			},
-			fol:function(p,speed){
-				var p1=this.pos(),
-					p2=p,
-					dif=c0.sub(p2,p1),
-					norm=c0.norm(dif),
-					dist=c0.dist(p1,p2),			
-					move={
-						x:norm.x*speed*c0.time.td,
-						y:norm.y*speed*c0.time.td
-					}		
-				if(Math.abs(move.x)>Math.abs(dif.x)){
-					move.x=dif.x
-				}
-				if(Math.abs(move.y)>Math.abs(dif.y)){
-					move.y=dif.y
-				}		
-				move=c0.add(p1,move)	
-				this.pos(move)		
-			},
-			rot:function(an){
-				this.an=an
-			},
-			ishit:function(p){
-				var b=this.bounds
-				if(this.type=='circ'){
-					if(c0.dist(this.pos(),p)<=this.rad){
-						return true
-					}
-				} else {
-					var a1=this.getarea(),
-						a2=this.dotarea(p).round(5)
-					console.log(a1,a2)
-					if(a1>=a2){
-						return true
-					}
-		
-				}
-				return false
-			},
-			on:function(name,callback){
-				this.events[name]=callback
-			},
-			off:function(name){
-				delete this.events[name]
-			},
-			events:{
-			}
-		}
-		this.nodes.push(node)
-		return node
-	},
+	//primitives
 	rect:function(a){
 		var wid=a.wid/2,
 			hig=a.hig/2
@@ -705,7 +465,7 @@ var c0={
 		
 	},
 	poly:function(a){
-		var node=this.addnode('rect')
+		var node=this.newnode('rect')
 		node.getarea=function(){
 			return c0.area(this.pts)
 		}
@@ -717,13 +477,13 @@ var c0={
 				ppos=pa.pos()
 
 			//add pa pos			
-			pt=c0.sub(pt,ppos)
+			pt=pt.sub(ppos)
 			pt=c0.rotate(pt,-pa.an)			
 				
 			//rotate point
-			pt=c0.sub(pt,this)
+			pt=pt.sub(this)
 			pt=c0.rotate(pt,-this.an)
-			pt=c0.add(pt,this)
+			pt=pt.add(this)
 			
 			c1.pos(pt)	
 			loop(this.pts,function(i,p1){
@@ -772,20 +532,14 @@ var c0={
 			
 			
 			c.beginPath()			
-			//p=c0.sub(pt,node)
 			
-			p.rot(an)
-			//console.log('p1:',p,pos)			
-			p.add(pos)
-			//console.log('p2:',p)
-			//p=c0.rot(p,pa.an)
+			p=p.rot(an)
+			p=p.add(pos)
 			c.moveTo(p.x,p.y)
 			loop(this.pts,function(i,pt){
 				p=c0.newpos(pt)
-				//p=c0.sub(pt,node)
-				p.rot(an)			
-				p.add(pos)
-				//p=c0.rot(p,pa.an)
+				p=p.rot(an)			
+				p=p.add(pos)
 				c.lineTo(p.x,p.y)
 			})
 			c.closePath()
@@ -804,7 +558,7 @@ var c0={
 		return node	
 	},
 	circ:function(a){
-		var node=this.addnode('circ')		
+		var node=this.newnode('circ')		
 		node.type='circ'
 		loop(a,function(k,v){
 			node[k]=v
@@ -834,7 +588,7 @@ var c0={
 		return node		
 	},
 	line:function(a){
-		var node=this.addnode('line')
+		var node=this.newnode('line')
 		node.type='line'
 		loop(a,function(k,v){
 			node[k]=v
@@ -860,7 +614,7 @@ var c0={
 		return node			
 	},
 	text:function(a){
-		var node=this.addnode('text')
+		var node=this.newnode('text')
 		
 		loop(a,function(k,v){
 			node[k]=v
@@ -883,6 +637,7 @@ var c0={
 		return node			
 	},
 	img:function(a){},
+	//timing
 	timout:0,
 	time:{
 		lt:new Date().getTime(),
@@ -920,20 +675,21 @@ var t1=c0.text({
 	text:'X:0 Y:0'
 })
 t1.to()
-c0.canvas.on('mousemove',function(e){
-	m.x=e.x
-	m.y=e.y	
-	t1.text='X:'+m.x+'Y;'+m.y
-	c0.redraw()	
+var l1=c0.line({
+	p1:{x:0,y:0},
+	p2:{x:0,y:0},
+	linewid:3,
+	linecolor:'red'
 })
+l1.to()
 
 var r1=c0.rect({
 	name:'r1',
 	x:200,
-	y:200,
-	wid:100,
-	an:0,
-	hig:10,
+	y:200,	
+	wid:10,
+	hig:100,
+	an:45,	
 	color:'green',
 	linecolor:'black',
 	linewid:3
@@ -941,10 +697,10 @@ var r1=c0.rect({
 r1.to(c0.root)
 
 var r2=c0.rect({
-	x:100,
-	y:0,
-	wid:100,	
-	hig:10,
+	x:0,
+	y:-100,
+	wid:10,	
+	hig:100,
 	an:0,
 	color:'blue',
 	linecolor:'black',
@@ -954,14 +710,28 @@ r2.to(r1)
 var r3=c0.rect({
 	x:100,
 	y:0,
-	wid:100,	
-	hig:10,
+	wid:10,	
+	hig:100,
 	an:0,
 	color:'red',
 	linecolor:'black',
 	linewid:3
 })
 r3.to(r2)
+
+c0.canvas.on('click',function(e){
+	m.x=e.x
+	m.y=e.y	
+	t1.text='X:'+m.x+'Y;'+m.y
+	var an=c0.an(r2,m)
+	console.log(an)
+	l1.p1=r2.getpos(c0.root)
+	l1.p2=m
+	r2.setan(an,c0.root)
+	c0.redraw()
+})
+
+
 function animloop(){
   window.requestAnimationFrame(animloop)
   c0.run()
@@ -969,66 +739,11 @@ function animloop(){
 animloop()
 var obj=r2
 c0.runlist.push(function(){	
-	r1.an+=1.2
-	//r2.an+=1.2
-	r3.an+=1.2
-	var pos=r2.getpos(c0.root)
+	r1.an+=0.2
+	//r2.an+=0.2
+	//console.log(r1.getan(c0.root),r2.getan(c0.root))
+	r3.an+=0.2
 	
-	var an=c0.util.an(pos,c0.newpos(m))
-	
-	//r2.an=r1.an-an+90
-	
-	/*
-	r2.an+=1
-	r3.an+=1
-	t1.an+=1
-	//l1.p2=mouse
-	
-	//
-	
-	var p1=c0.sub(l1.p2,l1.p1),
-		m1=c0.sub(mouse,l1.p1),
-		p2=c0.sub(l2.p2,l2.p1),
-		m2=c0.sub(mouse,l2.p1),
-		p3=c0.sub(l3.p2,l3.p1),
-		m3=c0.sub(mouse,l3.p1)
-	
-	m1={
-		x:m1.y,
-		y:-m1.x
-	}
-	m2={
-		x:m2.y,
-		y:-m2.x
-	}
-	m3={
-		x:m3.y,
-		y:-m3.x
-	}
-		
-	var dp1=p1.x*m1.x+p1.y*m1.y,
-		dp2=p2.x*m2.x+p2.y*m1.y,
-		dp3=p3.x*m3.x+p3.y*m1.y
-	/*	
-	if(dp1>0){
-		l1.color='blue'
-	} else {
-		l1.color='red'
-	}
-	/*
-	if(dp2>0){
-		l2.color='blue'
-	} else {
-		l2.color='red'
-	}
-	if(dp3>0){
-		l3.color='blue'
-	} else {
-		l3.color='red'
-	}
-	/**/
-	
-	//console.log('dp:',dp1,dp2,dp3)
 })
 /**/
 //c0.redraw()
