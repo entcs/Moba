@@ -1,183 +1,100 @@
-var def = {
-    //turret
-    dam: {
-        val: 200,
-        add: 50,
-        weight: 10,
-        aff: {
-            ammo: -1,
-            rof: -1,
-            acc: -1,
-            pene: 1,
-            tturn: -1
-        }
-    },
-    ammo: {
-        val: 20,
-        add: 5,
-        weight: 10,
-        aff: {
-            spd: -1,
-            turn: -1
-        }
-    },
-    rof: {
-        val: 6,
-        add: 2,
-        weight: 0,
-        aff: {
-            acc: -1,
-            tturn: -1
-        }
-    },
-    acc: {
-        val: 0.5,
-        add: -0.05,
-        weight: 0,
-        aff: {
-            tturn: -1
-        }
-    },
-    pene: {
-        val: 150,
-        add: 35,
-        weight: 10,
-        aff: {
-            dam: -1
-        }
-    },
-    turn: {
-        val: 30,
-        add: 10,
-        weight: 10,
-        aff: {
-            spd: -1
-        }
-    },
-    spd: {
-        val: 30,
-        add: 10,
-        weight: 200,
-        aff: {
-
-        }
-    },
-    armor: {
-        val: 100,
-        add: 50,
-        weight: 2000,
-        aff: {
-            turn: -1,
-            tturn: -1,
-            camo: -1
-        }
-    },
-    camo: {
-        val: 100,
-        add: 20,
-        weight: 20,
-        aff: {
-
-        }
-    },
-    vis: {
-        val: 300,
-        add: 50,
-        weight: 10,
-        aff: {
-            acc: 1
-        }
-    },
-    radio: {
-        val: 600,
-        add: 100,
-        weight: 10,
-        aff: {
-
-        }
-    },
-    repair: {
-        val: 100,
-        add: 20,
-        weight: 50,
-        aff: {
-
-        }
-    },
-    hp: {
-        val: 1000,
-        weight: 1000,
-        add: 300,
-        aff: {}
-    },
-    pts: 12,
-    weight: 10000
-}
-var tank = {}
-for (var key in def) {
-    switch (key) {
-        case 'pts':
-        case 'weight':
-            tank[key] = def[key];
-            break;
-        default:
-            tank[key] = 0;
-            break;
-    }    
-}
-
-function draw() {
-    for (var key in tank) {
-        var lab = '<label for="' + key + '">' + key + '</label>'
-        switch (key) {
-            case 'pts':
-            case 'weight':
-                inp = '<div class="row"><input type="number" id="' + key + '" value="' + def[key] + '" /></div>';
-                break;
-            default:
-                inp = '<div class="row"><input type="number" id="' + key + '" value="' + calc(key) + '" /><button class="add">+</button><button class="sub">-</button></div>';
-                break;
-
-        }
-        $('body').append(lab);
-        $('body').append(inp);
-    }
-}
-function calc(key) {
-    var val = def[key].val + tank[key] * def[key].add;
-    calcweight();
-    return val;
-}
-function calcweight() {
-    var weight=0;
-    for (var key in def) {
-        var obj = def[key];
-        if (obj.weight) {            
-            weight += obj.weight*tank[key];
-        }
-    }
-    weight += def.weight;
-    $('#weight').val(weight);
-    return weight;
-}
-draw();
-$('body').on('click', '.add', function (e) {
-    var key = $(e.target).prev().attr('id');
-    if (tank[key] < 4 && tank.pts>0) {
-        tank[key] += 1;
-        tank.pts -= 1;
-    }
-        
-        
-    $('#' + key).val(calc(key));
-    $('#pts').val(tank.pts);
-});
-$('body').on('click', '.sub', function (e) {
-    var key = $(e.target).prev().prev().attr('id');
-    if (tank[key] > 0) {
-        tank[key] -= 1;
-        tank.pts += 1;
-    }
-    $('#' + key).val(calc(key));
-    $('#pts').val(tank.pts);
-});
+d.on('ready',function(e){
+	var minpts=0,
+		maxpts=12,
+		defpts=minpts+Math.floor((maxpts-minpts)/2)
+		
+	function calcval(pts,min,max,round){
+		var step=(max-min)/(maxpts-minpts)							
+			
+		val=(min+step*(pts-minpts)).round(round || 0)
+		return val
+	}	
+	var tank={
+			hull:{
+				tankmobility:{
+					def:36,
+					getval:function(pts){
+						var val=[
+							'topspeed:'+calcval(pts,20,80)+' km/h',
+							'acceleration:'+calcval(pts,5,20)+' km/h2',
+							'turning:'+calcval(pts,15,60)+' deg/s'
+						].join('<br>')
+						return val
+					}
+				},
+				gun:{
+					def:100,
+					getval:function(pts){
+						var dam=calcval(pts,100,400),
+							rel=calcval(pts,3,15,2),
+							val=[
+							'damage:'+dam,
+							'reload:'+rel+'s',
+							'dps:'+(dam/rel).round(2),							
+							'ammo:'+(6000/dam).round()
+						].join('<br>')
+						return val
+					}					
+				},
+				turret:{
+					def:36,
+					getval:function(pts){
+						var an=calcval(pts,5,20)
+						var val=[
+							'turning:'+calcval(pts,15,60)+' deg/s',
+							'angle: +'+(15+an)+'/-'+an,
+							'accuracy at 100m: '+calcval(pts,0.6,0.2,2)+'m',
+							'aiming time: '+calcval(pts,5,2,2)+'s',
+							'view range: '+calcval(pts,300,600)+'m',
+						].join('<br>')		
+						return val
+					}
+				},
+				armor:{
+					def:100,
+					getval:function(pts){
+						var arm=calcval(pts,100,400)
+						var val=[
+							'front:'+arm,
+							'sides:'+arm/2,
+							'back:'+arm/4,
+							'hp:'+(750+arm)
+						].join('<br>')		
+						return val
+					}					
+				}
+			}
+		}
+	var wrap=d.body.r('div class=tank')
+		.s('display:inline-block')
+	var ele
+	loop(tank,function(i,e){
+		console.log(i,e)
+		ele=wrap.r('div')
+			.addclass(i)
+			.s('display:block margin-bottom:20px')
+		loop(e,function(k,v){
+			ele.r('div')
+				.r('label')
+					.h(k)
+					.s('display:block text-transform:uppercase').p				
+				.r('input type=number class=pts')
+					.set('id',k)
+					.set('val',defpts)
+					.on('change',function(e){
+						if(this.val>maxpts){
+							this.val=maxpts
+						} else if(this.val<minpts){
+							this.val=minpts
+						}
+						console.log(v.getval(this.val))
+						this.p.find('.final').h(v.getval(this.val))
+					})
+					.s('width:48px').p				
+				.r('div class=final')
+					.fn(function(o){												
+						o.h(v.getval(o.p.find('.pts').val))
+					})
+		})
+	})
+})

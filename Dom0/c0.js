@@ -297,6 +297,17 @@ var c0={
 					return this
 				},
 				//util
+				pos:function(p){
+					if(p){
+						this.x=px
+						this.y=p.y
+					} else {
+						return c0.newpos({
+							x:this.x,
+							y:this.y
+						})
+					}
+				},
 				getpos:function(parent,pos){
 					if(pos){
 						pos=pos.rot(this.an)
@@ -313,6 +324,12 @@ var c0={
 					return pos
 				},			
 				setpos:function(a,parent){
+					if(parent){
+						
+					} else {
+						this.x=a.x
+						this.y=a.y
+					}
 				},
 				getan:function(parent,an){
 					if(an){
@@ -466,39 +483,6 @@ var c0={
 	},
 	poly:function(a){
 		var node=this.newnode('rect')
-		node.getarea=function(){
-			return c0.area(this.pts)
-		}
-		node.dotarea=function(pt){
-			var a,b,c,s,
-				area=0,				
-				p2=this.pts[this.pts.length-1],
-				pa=this.parent,
-				ppos=pa.pos()
-
-			//add pa pos			
-			pt=pt.sub(ppos)
-			pt=c0.rotate(pt,-pa.an)			
-				
-			//rotate point
-			pt=pt.sub(this)
-			pt=c0.rotate(pt,-this.an)
-			pt=pt.add(this)
-			
-			c1.pos(pt)	
-			loop(this.pts,function(i,p1){
-				
-				a=c0.dist(pt,p1)
-				b=c0.dist(pt,p2)
-				c=c0.dist(p1,p2)
-				
-				s=(a+b+c)/2
-				area+=Math.sqrt(s*(s-a)*(s-b)*(s-c))				
-				p2=p1
-			})
-			
-			return area
-		}
 		node.type='poly'
 		loop(a,function(k,v){
 			node[k]=v
@@ -593,12 +577,12 @@ var c0={
 		loop(a,function(k,v){
 			node[k]=v
 		})				
-		
+		console.log(node.color)
 		node.draw=function(){		
 			var c=c0.c
 			c.beginPath()
 			c.moveTo(this.p1.x,this.p1.y)
-			c.lineTo(this.p2.x,this.p2.y)
+			c.lineTo(this.p2.x,this.p2.y)			
 			c.strokeStyle = this.color || 'black'
 			if(this.linewid){
 				c.lineWidth = this.linewid				
@@ -637,6 +621,60 @@ var c0={
 		return node			
 	},
 	img:function(a){},
+	//collision
+	pvl:function(p,l){
+		//console.log('lp1',l.p1.x,l.p1.y)
+		//point(axis aligned ray) vs line
+		var h=false,
+			o1={
+				a:0,
+				b:0,
+				c:0
+			}
+			
+		o1.a=l.p2.y-l.p1.y
+		o1.b=l.p1.x-l.p2.x
+		o1.c=o1.a*l.p1.x+o1.b*l.p1.y
+
+		px=(o1.b*p.y-o1.c)/-o1.a
+
+		yy=[l.p1.y,l.p2.y].sort()
+		l2.p1=m
+		l2.p2.x=m.x+100
+		l2.p2.y=m.y
+		
+		if(px>=p.x && p.y>yy[0] && p.y<yy[1]){
+			h=c0.newpos({
+				x:px,
+				y:p.y
+			})
+			console.log('p:',p.x,p.y)
+		}
+		
+		return h		
+	},
+	pvpoly:function(p,py){
+		var hits=[],
+			hits=0,
+			line={
+				p1:c0.newpos(py.pts[py.pts.length-1]),
+				p2:c0.newpos()
+			}
+			
+		//translate p
+		c1.setpos(p)		
+		p=p.sub(py.getpos(c0.root))
+		p=p.rot(-py.getan(c0.root))
+		loop(py.pts,function(i,pt){
+			line.p2=c0.newpos(pt)
+			hit=c0.pvl(p,line)
+			if(hit){
+				hits+=1
+			}			
+			line.p1=line.p2
+		})
+		return hits%2
+	},
 	//timing
 	timout:0,
 	time:{
@@ -675,59 +713,112 @@ var t1=c0.text({
 	text:'X:0 Y:0'
 })
 t1.to()
-var l1=c0.line({
-	p1:{x:0,y:0},
-	p2:{x:0,y:0},
-	linewid:3,
-	linecolor:'red'
-})
-l1.to()
 
+
+
+/*
 var r1=c0.rect({
 	name:'r1',
 	x:200,
 	y:200,	
-	wid:10,
+	wid:50,
 	hig:100,
 	an:45,	
 	color:'green',
 	linecolor:'black',
 	linewid:3
 })
-r1.to(c0.root)
-
-var r2=c0.rect({
+r1.to()
+/**/
+p1=c0.poly({
+	pts:[
+		{x:0,y:0},
+		{x:100,y:0},
+		{x:50,y:20},
+		{x:100,y:40},
+		{x:0,y:60}
+	],
+	color:'green',
+	linecolor:'black',
+	linewid:3	
+})
+p1.x=100
+p1.y=100
+p1.to()
+var c1=c0.circ({
 	x:0,
-	y:-100,
-	wid:10,	
-	hig:100,
-	an:0,
-	color:'blue',
-	linecolor:'black',
-	linewid:3
-})
-r2.to(r1)
-var r3=c0.rect({
-	x:100,
 	y:0,
-	wid:10,	
-	hig:100,
-	an:0,
-	color:'red',
-	linecolor:'black',
-	linewid:3
+	rad:10,
+	color:'red'
 })
-r3.to(r2)
+c1.to()
+var c2=c0.circ({
+	x:0,
+	y:0,
+	rad:10,
+	color:'blue'
+})
+c2.to()
+var l1=c0.line({
+	p1:{x:100,y:100},
+	p2:{x:300,y:200},
+	linewid:10,
+	color:'red'
+})
+l1.to()
+var l2=c0.line({
+	p1:{x:100,y:200},
+	p2:{x:0,y:0},
+	linewid:3,
+	color:'green'
+})
+l2.to()
+l1.p1=c0.newpos(p1.pts[p1.pts.length-1]).add(p1.pos())
+l1.p2=c0.newpos(p1.pts[0]).add(p1.pos())
 
-c0.canvas.on('click',function(e){
+function hitXX(p,l1){
+	var h=false,
+		o1={
+			a:0,
+			b:0,
+			c:0
+		},
+		o2={
+			a:0,
+			b:0,
+			c:0
+		},
+		d
+		
+	o1.a=l1.p2.y-l1.p1.y
+	o1.b=l1.p1.x-l1.p2.x
+	o1.c=o1.a*l1.p1.x+o1.b*l1.p1.y
+
+	px=(o1.b*p.y-o1.c)/-o1.a
+
+	yy=[l1.p1.y,l1.p2.y].sort()
+	
+	var p=m
+	if(px>=p.x && p.y>yy[0] && p.y<yy[1]){
+		h=c0.newpos({
+			x:px,
+			y:p.y
+		})
+	}
+	return h
+}
+
+c0.canvas.on('mousemove',function(e){
 	m.x=e.x
 	m.y=e.y	
 	t1.text='X:'+m.x+'Y;'+m.y
-	var an=c0.an(r2,m)
-	console.log(an)
-	l1.p1=r2.getpos(c0.root)
-	l1.p2=m
-	r2.setan(an,c0.root)
+	var h=c0.pvpoly(m,p1)
+	if(h){
+		c1.setpos(h)
+		p1.color='blue'
+	} else {
+		p1.color='green'
+	}
 	c0.redraw()
 })
 
@@ -737,13 +828,9 @@ function animloop(){
   c0.run()
 }
 animloop()
-var obj=r2
+
 c0.runlist.push(function(){	
-	r1.an+=0.2
-	//r2.an+=0.2
-	//console.log(r1.getan(c0.root),r2.getan(c0.root))
-	r3.an+=0.2
-	
+	p1.an+=0.2
 })
 /**/
 //c0.redraw()

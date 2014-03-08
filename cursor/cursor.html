@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+	<style>
+		html,body {
+			height: 100%;
+			cursor:url("cur3d.cur"),default;
+		}
+		body{
+			margin: 0;
+			height: 100%;
+			width: 100%;
+			text-align: center;
+			cursor:url("cur3d.cur"),default;
+		}
+		.m1 {cursor:url("m1.cur"),default;}
+		.m2 {cursor:url("m2.cur"),default;}
+		.mw {cursor:url("mw.cur"),default;}
+		div{			
+			margin: auto;
+			height: 32px;
+			cursor:url("hand3d.cur"),default;
+		}
+	</style>
+</head>
+<body oncontextmenu="return false;">
+	<div class='wrap'>
+		<div>
+			Over here<br>
+			Click anywhere<br>
+			Wheel anywhere<br>			
+		</div>
+		<div class='hand3d'></div>
+	</div>
+</body>
+<script type="text/javascript">
+document.onmousedown=mc;
+document.onmouseup=mc;
+document.onmousewheel=mc;
+var mt;
+function mc(e){
+	clearTimeout(mt);
+	console.log(e);
+	switch (e.type){
+		case "mousedown":
+			document.body.className='';
+			switch (e.which){
+				case 1:					
+					document.body.className='m1';					
+				break;
+				case 3:
+					document.body.className='m2';
+				break;
+				case 2:
+					document.body.className='mw';
+				break;
+			};
+			return false;
+			break;
+		case "mouseup":			
+			mt=setTimeout(function(){
+				document.body.className='';
+			},200);		
+			break;
+		case "mousewheel":
+			document.body.className=' mw';
+			mt=setTimeout(function(){
+				document.body.className='';
+			},200);				
+			break;
+		return false;
+	};
+};
+
+</script>
+</html>

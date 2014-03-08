@@ -211,8 +211,8 @@ ep.addclass=function(n){
 			cl.push(n)
 		}
 	})	
-	this.className=cl.join(' ');
-	return this;
+	this.className=cl.join(' ')
+	return this
 }
 ep.remclass=function(n){
 	if (n){
