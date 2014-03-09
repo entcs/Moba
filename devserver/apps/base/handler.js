@@ -8,7 +8,7 @@ var appname='base',
 		host: 'localhost',
 		port:3333,
 		user:'root',
-		password:''/*,
+		password:'Loikam22'/*,
 		database:'basket'/**/
 	}),
 	selected={
@@ -20,7 +20,8 @@ var appname='base',
 	}
 
 /*
-ALTER TABLE seasons CHANGE id id INT(10)AUTO_INCREMENT PRIMARY KEY;
+ALTER TABLE seasons MODIFY COLUMN id VARCHAR(255) NOT NULL DEFAULT 'a' AUTO_INCREMENT PRIMARY KEY;
+ALTER TABLE seasons MODIFY COLUMN f int(11) primary key;
 /**/
 	
 var handle={}
@@ -118,8 +119,23 @@ handle.bases={
 					}	
 				})							
 			}			
-		}
-		
+		},
+		query:{
+			get:function(req,res){
+				connection.query(req.query.query,function(err,qres){
+					res.send(JSON.stringify({
+						data:qres,
+						err:err
+					}))
+				})
+				/*
+				connection.query(req.query.query,function(err,qres){
+					console.log('exec query:',req.query.query)					
+					res.send(JSON.stringify({res:qres}))
+				})
+				/**/
+			}
+		}		
 	}
 /**/
 handle.tables={
@@ -214,7 +230,7 @@ handle.tables={
 						})						
 						query.push(line.join(','))
 						query=query.join(' ')+';'
-						console.log('query:',query)						
+						console.log('query:',query.split(','))						
 						connection.query(query,function(err,qres){
 							if(err) console.log(err)
 						})
@@ -228,7 +244,7 @@ handle.tables={
 						})
 						query.push(line.join(','))
 						query=query.join(' ')+';'
-						console.log('query:',query)
+						console.log('query:',query.split(','))
 						connection.query(query,function(err,qres){
 							if(err) console.log(err)
 						})
@@ -242,7 +258,7 @@ handle.tables={
 						})
 						query.push(line.join(','))
 						query=query.join(' ')+';'
-						console.log('query:',query)
+						console.log('query:',query.split(','))
 						connection.query(query,function(err,qres){
 							if(err) console.log(err)
 						})

@@ -158,14 +158,18 @@ ep.rem=function(){
 	return this
 }
 ep.set = function (a,v) {
-	if(a=='class' || a=='c'){
-		this.addclass(v)
-	} else if(a=='html' || a=='h'){
-		this.innerHTML=v
-	} else if(a=='value' || a=='val' || a=='v'){
-		this.value=v
+	if(v===undefined){
+		this.removeAttribute(a)
 	} else {
-		this.setAttribute(a,v)
+		if(a=='class' || a=='c'){
+			this.addclass(v)
+		} else if(a=='html' || a=='h'){
+			this.innerHTML=v
+		} else if(a=='value' || a=='val' || a=='v'){
+			this.value=v
+		} else {
+			this.setAttribute(a,v)
+		}
 	}
 	return this
 }

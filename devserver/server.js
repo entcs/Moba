@@ -9,7 +9,7 @@ var express = require('express'),
 		host: 'localhost',
 		port:3333,
 		user:'root',
-		password:''//,
+		password:'Loikam22'//,
 		//database:'test'
 	}),
 	fs=require('fs'),

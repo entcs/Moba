@@ -1,5 +1,5 @@
 <body><h1>BASE</h1><a href='/'>home</a></body>
-<script src='dom0.js'></script>
+<script src='https://rawgithub.com/entcs/Moba/master/Dom0/dom0.js'></script>
 <style>
 .selected {
 	color:green;	
@@ -42,6 +42,66 @@ button:hover{
 }
 </style>
 <script>
+function nicejson(json){
+	if(typeof(json)=='string'){
+		json=JSON.parse(json)
+	}
+	function maketab(nr){
+		console.log('maketab:',typeof(nr),nr)
+		var str='    ',
+		tab=''
+		loop(nr,function(i){
+			tab+=str
+		})
+		return tab
+	}
+	function recu(obj,str,tab){
+		tab=tab || 0
+		str=str || ''
+		if(obj){
+			var list=[]
+			//console.log('obj:',obj,'str:',str)
+			if(typeof(obj)=='object'){						
+				//str+='\n'			
+				tab+=1
+				if(obj.length==undefined){								
+					list=[]
+					loop(obj,function(k,v){					
+						list.push(maketab(tab)+k+':'+recu(v,str,tab))
+					})							
+					str+='{\n'+list.join(',\n')+'\n'+maketab(tab-1)+'}'
+				} else {
+					list=[]
+					loop(obj,function(k,v){					
+						list.push(maketab(tab)+recu(v,str,tab))
+					})
+					str+='[\n'+list.join(',\n')+'\n'+maketab(tab-1)+']'
+				}			
+				tab-=1
+			} else {
+				str=obj
+			}		
+		} else {
+			str=''
+		}
+		return str
+	}
+	var res=recu(json)	
+	console.log(res)
+	return res
+}
+var obj={
+	name:{
+		v1:1,
+		v2:'2',
+		v3:[1,2,3],
+		v4:{
+			a:1,
+			a:2
+		}
+	}
+}
+nicejson(obj)
 d.on('ready',function(e){
 	console.log('ready')
 	
@@ -54,6 +114,7 @@ d.on('ready',function(e){
 		show:function(){
 			base.html=d.body.r('div class=base')
 			var bases=base.html.r('div class=bases section')
+				
 			bases.r('div class=list section')
 			bases.r('div class=controls')
 				.r('input').p
@@ -95,7 +156,7 @@ d.on('ready',function(e){
 							
 						},'json')						
 					})
-			
+							
 			var tables=base.html.r('div class=tables section')			
 			tables.r('div class=existing')
 				.r('div class=list section').p
@@ -145,6 +206,29 @@ d.on('ready',function(e){
 					})
 				})
 			tabledata.r('div class=result')
+			
+			//custom query
+			base.html.r('div class=customquery section')
+				.r('div html=custom query').p
+				.r('textarea class=query')
+					.s('width:100% display:block resize:vertical')
+					.on('keydown',function(e){
+						if(e.which==13){
+							d.find('.sendquery').trigger('click')							
+						}
+					}).p
+				.r('button class=sendquery html=send query')
+					.on('click',function(e){
+						var ta=d.find('.query')
+						d.send('bases/query?query='+ta.value,function(res){
+							var nice=nicejson(res),
+								breaks=nice.split('\n').length							
+							d.find('.queryres').value=nice
+							d.find('.queryres').set('rows',breaks)
+						})
+					}).p
+				.r('textarea class=queryres')
+					.s('width:100% display:block resize:vertical')				
 		},
 		showbases:function(){				
 				var bases=base.html.find('.bases .list')
@@ -212,6 +296,7 @@ d.on('ready',function(e){
 			table.s('table-layout:fixed')
 			
 			loop(base.schemafields,function(i,name){
+				
 				td=tr.r('td class='+name)
 					.h(name)
 			})
@@ -237,34 +322,19 @@ d.on('ready',function(e){
 				
 			}
 			if(data){
-				var select
+				var inp
 				loop(data,function(i,item){
 					var tr=tbody.r('tr')
 					console.log('item:',item)
 					loop(item,function(k,v){
 						td=tr.r('td')
-						/*
-						if(k=='Null'){
-							select=td.r('select')
-							select.s('width:100%')
-							select.r('option value=YES html=YES')
-							select.r('option value=NO html=NO')
-							select.value=v
-						} else if(k=='Key'){
-							select=td.r('select')
-							select.s('width:100%')
-							select.r('option')
-							select.r('option value=PRI html=PRI')
-							select.value=v	
-						} else {
-							td.r('input')
-								.s('width:100%')
-								.val=v
-						}
-						/**/
-						td.r('input')
+						inp=td.r('input disabled')
 							.s('width:100%')
-							.val=v						
+						inp.val=v						
+						if(k=='Field' || k=='Type' || k=='Extra'){
+							inp.set(disabled)
+						}
+							
 					})
 					td=tr.r('td')						
 						.s('background-color:#fff width:1px')

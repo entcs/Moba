@@ -8,7 +8,7 @@ var appname='basket',
 		host: 'localhost',
 		port:3333,
 		user:'root',
-		password:'',
+		password:'Loikam22',
 		database:'basket'
 	}),	
 	selected={
@@ -114,13 +114,13 @@ var argsl=function(name){
 			post:function(req,res){
 				var data=req.body,
 					q='UPDATE '+name+' SET ? '+'where id='+connection.escape(data.req.id)
-				
+				console.log('q:',data)
 				connection.query(q,data.req,function(err,qres){						
 					if(err){
 						data.err=err
 					} else {
 						data.res=qres
-					}
+					}					
 					if(data.want=='list'){
 						a.list.get(req,res)
 					} else {
