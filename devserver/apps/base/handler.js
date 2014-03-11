@@ -22,270 +22,381 @@ var appname='base',
 /*
 ALTER TABLE seasons MODIFY COLUMN id VARCHAR(255) NOT NULL DEFAULT 'a' AUTO_INCREMENT PRIMARY KEY;
 ALTER TABLE seasons MODIFY COLUMN f int(11) primary key;
+ALTER TABLE seasons DROP PRIMARY KEY;
 /**/
 	
 var handle={}
 
 handle.bases={
-		list:{
-			get:function(req,res){				
-				var data={}
-				connection.query("show databases",function(err,qres){
-					data.bases=qres
-					connection.query("select database()",function(err,sres){
-						loop(qres,function(i,item){
-							if(item.Database==sres[0]['database()']){
-								item.selected=true
-								selected.base=item.Database
-								data.selected=item.Database
-							}
-						})						
-						connection.query("show tables",function(err,tables){
-							data.tables=tables
-							res.send(JSON.stringify(data))
-						})									
-					})					
-				})
-			}
-		},
-		use:{
-			get:function(req,res){
-				var query=validatequery('use '+req.query.base+';')
-				connection.query(query,function(err,qres){
-					var data={}
-					data.tables=qres
-					data.selected=query.base
+	list:{
+		get:function(req,res){				
+			var data={}
+			connection.query("show databases",function(err,qres){
+				data.bases=qres
+				connection.query("select database()",function(err,sres){
+					loop(qres,function(i,item){
+						if(item.Database==sres[0]['database()']){
+							item.selected=true
+							selected.base=item.Database
+							data.selected=item.Database
+						}
+					})						
 					connection.query("show tables",function(err,tables){
 						data.tables=tables
 						res.send(JSON.stringify(data))
-					})						
-				})
-			}
-		},
-		add:{
-			post:function(req,res){
-				var query=validatequery('create database '+req.body.base)
-				connection.query(query,function(err,qres){
-					if(err) {
-						console.log(err)
-						res.send(err)
-					} else {
-						var data={}
-						connection.query("show databases",function(err,qres){
-							data.bases=qres
-							connection.query("select database()",function(err,sres){
-								loop(qres,function(i,item){
-									if(item.Database==sres[0]['database()']){
-										item.selected=true
-										selected.base=item.Database
-										data.selected=item.Database
-									}
-								})						
-								connection.query("show tables",function(err,tables){
-									data.tables=tables
-									res.send(JSON.stringify(data))
-								})									
-							})					
+					})									
+				})					
+			})
+		}
+	},
+	use:{
+		get:function(req,res){
+			var query=validatequery('use '+req.query.base+';')
+			connection.query(query,function(err,qres){
+				var data={}
+				data.tables=qres
+				data.selected=query.base
+				connection.query("show tables",function(err,tables){
+					data.tables=tables
+					res.send(JSON.stringify(data))
+				})						
+			})
+		}
+	},
+	add:{
+		post:function(req,res){
+			var query=validatequery('create database '+req.body.base)
+			connection.query(query,function(err,qres){
+				if(err) {
+					console.log(err)
+					res.send(err)
+				} else {
+					var data={}
+					connection.query("show databases",function(err,qres){
+						data.bases=qres
+						connection.query("select database()",function(err,sres){
+							loop(qres,function(i,item){
+								if(item.Database==sres[0]['database()']){
+									item.selected=true
+									selected.base=item.Database
+									data.selected=item.Database
+								}
+							})						
+							connection.query("show tables",function(err,tables){
+								data.tables=tables
+								res.send(JSON.stringify(data))
+							})									
 						})					
-					}										
-				})							
-			}			
-		},
-		rem:{
-			post:function(req,res){
-				var query=validatequery('drop database '+req.body.base)
-				connection.query(query,function(err,qres){
-					if(err) {
-						console.log(err)
-						res.send(err)
-					} else {
-						var data={}
-						connection.query("show databases",function(err,qres){
-							data.bases=qres
-							connection.query("select database()",function(err,sres){
-								loop(qres,function(i,item){
-									if(item.Database==sres[0]['database()']){
-										item.selected=true
-										selected.base=item.Database
-										data.selected=item.Database
-									}
-								})						
-								connection.query("show tables",function(err,tables){
-									data.tables=tables
-									res.send(JSON.stringify(data))
-								})									
-							})					
+					})					
+				}										
+			})							
+		}			
+	},
+	rem:{
+		post:function(req,res){
+			var query=validatequery('drop database '+req.body.base)
+			connection.query(query,function(err,qres){
+				if(err) {
+					console.log(err)
+					res.send(err)
+				} else {
+					var data={}
+					connection.query("show databases",function(err,qres){
+						data.bases=qres
+						connection.query("select database()",function(err,sres){
+							loop(qres,function(i,item){
+								if(item.Database==sres[0]['database()']){
+									item.selected=true
+									selected.base=item.Database
+									data.selected=item.Database
+								}
+							})						
+							connection.query("show tables",function(err,tables){
+								data.tables=tables
+								res.send(JSON.stringify(data))
+							})									
 						})					
-					}	
-				})							
-			}			
-		},
-		query:{
-			get:function(req,res){
-				connection.query(req.query.query,function(err,qres){
-					res.send(JSON.stringify({
-						data:qres,
-						err:err
-					}))
+					})					
+				}	
+			})							
+		}			
+	},
+	query:{
+		get:function(req,res){
+			connection.query(req.query.query,function(err,qres){
+				res.send(JSON.stringify({
+					data:qres,
+					err:err
+				}))
+			})
+			/*
+			connection.query(req.query.query,function(err,qres){
+				console.log('exec query:',req.query.query)					
+				res.send(JSON.stringify({res:qres}))
+			})
+			/**/
+		}
+	}		
+}
+
+handle.tables={
+	add:{
+		post:function(req,res){
+			var data=req.body,
+				query,
+				line
+			line=[]	
+			query=['create table '+data.table],				
+			loop(data.columns,function(i,fi){					
+				line.push([fi.Field,fi.Type,fi.Extra].join(' '))
+			})				
+			query.push('('+line.join(',')+')')
+			query=query.join(' ')+';'
+			console.log('query:',query)
+			connection.query(query,function(err,qres){
+				if(err) console.log(err)
+			})
+			res.send('added new table')
+		}
+	},
+	rem:{
+		post:function(req,res){
+			var query='drop table '+req.body.table
+			console.log('query:',query)
+			connection.query(query,function(err,qres){
+				if(err) console.log(err)
+			})				
+			res.send('drop table')
+		}
+	},
+	get:{
+		get:function(req,res){
+			var query="show columns from "+req.query.table
+			//console.log(query)
+			connection.query(query,function(err,qres){						
+				res.send(JSON.stringify(qres))
+			})	
+		}
+	},
+	set:{
+		post:function(req,res){
+			var data=req.body
+			//get existing columns
+			var query="show columns from "+data.table				
+			connection.query(query,function(err,qres){						
+				var todel=[],
+					toadd=[],
+					tomod=[],
+					ind
+				loop(data.columns,function(i1,field1){
+					if(!field1.action){
+						field1.action='add'
+						toadd.push(field1)
+					}
+					loop(qres,function(i2,field2){
+						if(!field2.action){
+							field2.action='drop'
+							todel.push(field2)
+						}
+						if(field1.Field==field2.Field){
+							field1.action='modify'
+							field2.action='modify'
+							tomod.push(field1)
+							
+							ind=todel.indexOf(field2)
+							if(ind!=-1){
+								todel.splice(ind,1)
+							}
+							ind=toadd.indexOf(field1)
+							if(ind!=-1){
+								toadd.splice(ind,1)									
+							}																
+						}
+					})
 				})
 				/*
-				connection.query(req.query.query,function(err,qres){
-					console.log('exec query:',req.query.query)					
-					res.send(JSON.stringify({res:qres}))
-				})
+				console.log('todel:',todel.length)
+				console.log('tomod:',tomod.length)
+				console.log('toadd:',toadd.length)
 				/**/
-			}
-		}		
-	}
-/**/
-handle.tables={
-		add:{
-			post:function(req,res){
-				var data=req.body,
-					query,
+				
+				var query,
 					line
-				line=[]	
-				query=['create table '+data.table],				
-				loop(data.columns,function(i,fi){					
-					line.push([fi.Field,fi.Type,fi.Extra].join(' '))
-				})				
-				query.push('('+line.join(',')+')')
-				query=query.join(' ')+';'
-				console.log('query:',query)
-				connection.query(query,function(err,qres){
-					if(err) console.log(err)
-				})
-				res.send('added new table')
-			}
-		},
-		rem:{
-			post:function(req,res){
-				var query='drop table '+req.body.table
-				console.log('query:',query)
-				connection.query(query,function(err,qres){
-					if(err) console.log(err)
-				})				
-				res.send('drop table')
-			}
-		},
-		get:{
-			get:function(req,res){
-				var query="show columns from "+req.query.table
-				//console.log(query)
-				connection.query(query,function(err,qres){						
-					res.send(JSON.stringify(qres))
-				})	
-			}
-		},
-		set:{
-			post:function(req,res){
-				var data=req.body
-				//get existing columns
-				var query="show columns from "+data.table				
-				connection.query(query,function(err,qres){						
-					var todel=[],
-						toadd=[],
-						tomod=[],
-						ind
-					loop(data.columns,function(i1,field1){
-						if(!field1.action){
-							field1.action='add'
-							toadd.push(field1)
-						}
-						loop(qres,function(i2,field2){
-							if(!field2.action){
-								field2.action='drop'
-								todel.push(field2)
-							}
-							if(field1.Field==field2.Field){
-								field1.action='modify'
-								field2.action='modify'
-								tomod.push(field1)
-								
-								ind=todel.indexOf(field2)
-								if(ind!=-1){
-									todel.splice(ind,1)
-								}
-								ind=toadd.indexOf(field1)
-								if(ind!=-1){
-									toadd.splice(ind,1)									
-								}																
-							}
-						})
+					
+				if(todel.length){		
+					query=['alter table '+data.table],
+					line=[]						
+					loop(todel,function(i,fi){
+						line.push('drop column '+fi.Field)
+					})						
+					query.push(line.join(','))
+					query=query.join(' ')+';'
+					console.log('query:',query.split(','))						
+					connection.query(query,function(err,qres){
+						if(err) console.log(err)
 					})
-					/*
-					console.log('todel:',todel.length)
-					console.log('tomod:',tomod.length)
-					console.log('toadd:',toadd.length)
-					/**/
-					
-					var query,
-						line
-						
-					if(todel.length){		
-						query=['alter table '+data.table],
-						line=[]						
-						loop(todel,function(i,fi){
-							line.push('drop column '+fi.Field)
-						})						
-						query.push(line.join(','))
-						query=query.join(' ')+';'
-						console.log('query:',query.split(','))						
-						connection.query(query,function(err,qres){
-							if(err) console.log(err)
-						})
-					}
-					console.log(tomod)
-					if(tomod.length){
-						query=['alter table '+data.table],
-						line=[]
-						loop(tomod,function(i,fi){
-							line.push(['modify column',fi.Field,fi.Type,fi.Extra].join(' '))
-						})
-						query.push(line.join(','))
-						query=query.join(' ')+';'
-						console.log('query:',query.split(','))
-						connection.query(query,function(err,qres){
-							if(err) console.log(err)
-						})
-					}
-					
-					if(toadd.length){
-						query=['alter table '+data.table],
-						line=[]
-						loop(toadd,function(i,fi){
-							line.push(['add column',fi.Field,fi.Type,fi.Extra].join(' '))
-						})
-						query.push(line.join(','))
-						query=query.join(' ')+';'
-						console.log('query:',query.split(','))
-						connection.query(query,function(err,qres){
-							if(err) console.log(err)
-						})
-					}
-					
-					res.send('alter table')
-				})					
+				}
+				console.log(tomod)
+				if(tomod.length){
+					query=['alter table '+data.table],
+					line=[]
+					loop(tomod,function(i,fi){
+						line.push(['modify column',fi.Field,fi.Type,fi.Null,fi.Default,fi.Extra].join(' '))
+					})
+					query.push(line.join(','))
+					query=query.join(' ')+';'
+					console.log('query:',query.split(','))
+					connection.query(query,function(err,qres){
+						if(err) console.log(err)
+					})
+				}
+				
+				if(toadd.length){
+					query=['alter table '+data.table],
+					line=[]
+					loop(toadd,function(i,fi){
+						line.push(['add column',fi.Field,fi.Type,fi.Null,fi.Default,fi.Extra].join(' '))
+					})
+					query.push(line.join(','))
+					query=query.join(' ')+';'
+					console.log('query:',query.split(','))
+					connection.query(query,function(err,qres){
+						if(err) console.log(err)
+					})
+				}
+				
+				res.send('alter table')
+			})					
 
-			}
-		},
-		tabledata:{
-			get:function(req,res){
-				var table=req.query.table
-				connection.query('select * from '+table,function(err,qres){						
-					res.send(JSON.stringify(qres))
-				})				
-			}
-		},
-		list:{
-			get:function(req,res){				
-				connection.query("show tables",function(err,qres){						
-					res.send(JSON.stringify(qres))
-				})
-			}
+		}
+	},
+	tabledata:{
+		get:function(req,res){
+			var table=req.query.table
+			connection.query('select * from '+table,function(err,qres){						
+				res.send(JSON.stringify(qres))
+			})				
+		}
+	},
+	list:{
+		get:function(req,res){
+			connection.query("show tables",function(err,qres){
+				var data={
+					list:qres
+				}
+				res.send(JSON.stringify(data))
+			})
 		}
 	}
-/**/
+}
+handle.items={	
+	add:{
+		post:function(req,res){
+			var data=req.body,
+				q='insert into '+data.tablename+' set ?',
+				columns=[],
+				values=[]				
+			connection.query(q,data.item,function(err,qres){						
+				if(err){
+					data.err=err
+				} else {
+					data.res=qres
+				}
+				if(data.want=='list'){
+					handle.items.list.get({query:{tablename:data.tablename}},res)
+				} else {
+					res.send(JSON.stringify(data))
+				}
+			})
+		}
+	},
+	rem:{
+		post:function(req,res){
+			//DELETE FROM somelog WHERE user = 'jcole'
+			var data=req.body,
+				q='DELETE from '+data.tablename+' where id='+data.id
+			
+			connection.query(q,function(err,qres){						
+				if(err){
+					data.err=err
+				} else {
+					data.res=qres
+				}
+				if(data.want=='list'){
+					a.list.get(req,res)
+				} else {
+					res.send(JSON.stringify(data))
+				}
+			})				
+			//res.send('not handled')
+		}
+	},
+	get:{
+		get:function(req,res,callback){
+			var //q='show columns from '+name,
+				data=req.query,
+				q='show columns from '+data.tablename
+				
+			connection.query(q,function(err,qres){						
+				if(err){
+					console.log(err)
+					data.err=err
+				} else {
+					data.schema=qres
+				}
+				if(callback){
+					callback(err,qres)
+				} else {
+					res.send(JSON.stringify(data))
+				}
+			})				
+		}
+	},
+	set:{
+		post:function(req,res){
+			var data=req.body,
+				q='UPDATE '+data.tablename+' SET ? '+'where id='+data.item.id
+			
+			connection.query(q,data.item,function(err,qres){						
+				if(err){
+					data.err=err
+				} else {
+					data.res=qres
+				}					
+				if(data.want=='list'){
+					handle.items.list.get(req,res)
+				} else {
+					res.send(JSON.stringify(data))
+				}
+			})
+		}
+	},
+	list:{
+		get:function(req,res){			
+			var data=req.query
+					
+			handle.items.get.get(req,res,function(err,qres){
+				if(err){
+					console.log(err)
+					data.err=err
+					res.send(JSON.stringify(data))					
+				} else {
+					data.schema=qres
+					q='select * from '+data.tablename					
+					connection.query(q,function(err,qres){						
+						if(err){
+						console.log(err)
+							data.err=err
+						} else {
+							data.list=qres
+						}
+						res.send(JSON.stringify(data))
+					})
+				}
+			})
+		}
+	}
+}
 console.log('handle:',handle)	
 exports.handler=function(req,res){	
 	if(req.url=='' || req.url=='/'){

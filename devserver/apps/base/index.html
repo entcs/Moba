@@ -1,47 +1,10 @@
+<head>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
+	<script src='https://rawgithub.com/entcs/Moba/master/Dom0/dom0.js'></script>
+</head>
 <body><h1>BASE</h1><a href='/'>home</a></body>
-<script src='https://rawgithub.com/entcs/Moba/master/Dom0/dom0.js'></script>
-<style>
-.selected {
-	color:green;	
-	background:lightgreen;
-}
-.section {
-	border:1px solid #aaa;
-	padding:10px;
-}
-table {
-	border-collapse:collapse;
-	width:100%;
-	background-color:#eee;
-}
-input{
-	background-color:#fff;
-	text-align:right;
-}
-table td {
-	border:1px solid #aaa;	
-}
-.cols {
-	display:table;
-	width:100%;
-}
-.cols > *{
-	display:table-cell;
-}
-button {
-	color:#666;
-	cursor:pointer;
-	border:2px solid #aaa;	
-	background-color:#eee;
-}
-button:hover{
-	background:lightgreen;
-}
-.iblocks > * {
-	display:inline-block;
-}
-</style>
 <script>
+
 function nicejson(json){
 	if(typeof(json)=='string'){
 		json=JSON.parse(json)
@@ -90,32 +53,84 @@ function nicejson(json){
 	console.log(res)
 	return res
 }
-var obj={
-	name:{
-		v1:1,
-		v2:'2',
-		v3:[1,2,3],
-		v4:{
-			a:1,
-			a:2
-		}
-	}
-}
-nicejson(obj)
+var base
 d.on('ready',function(e){
-	console.log('ready')
-	
-	var base={		
+	console.log('ready')	
+	base={		
 		html:'',
 		bases:[],
 		selected:'',
+		tablename:'',
 		tables:[],
 		schemafields:['Field','Type','Null','Key','Default','Extra'],
+		setstyles:function(){
+			var sheet=d.dss.new('basesheet')
+			sheet.new('body',
+				'background-color: #ccc'
+			)
+			sheet.new('body,button,input,table',
+				'font-family:Open Sans Condensed, sans-serif',
+				'font-weight: bold',
+				'color:#666',
+				'text-transform: uppercase'
+			)
+			sheet.new('.section',
+				'border:1px solid #aaa',
+				'padding:3px',
+				'margin-top: 20px',
+				'background: #eee'			
+			)
+			sheet.new('table',
+				'border-collapse:collapse',
+				'width:100%',
+				'background-color:#eee'
+			)
+			sheet.new('input',
+				'text-align:right'
+			)
+			sheet.new('table td',
+				'border:1px solid #aaa'
+			)
+			sheet.new('.cols',
+				'display:table',
+				'width:100%'
+			)
+			sheet.new('.cols > *',
+				'display:table-cell'
+			)
+			sheet.new('button',
+				'color:#666',
+				'cursor:pointer',				
+				'border:2px solid #aaa',
+				'background-color:#eee'
+			)
+			sheet.new('button:hover',
+				'background:lightgreen'
+			)
+			sheet.new('.iblocks > *',
+				'display:inline-block'
+			)
+			sheet.new('.group',
+				'display:inline-block',
+				'border:1px solid #aaa',
+				'background-color: #ccc',
+				'padding:3px',
+				'margin:3px'
+			)
+			sheet.new('.selected',
+				'color:green',
+				'background:lightgreen'
+			)
+			
+			
+			sheet.show()
+			this.sheet=sheet
+		},
 		show:function(){
 			base.html=d.body.r('div class=base')
 			var bases=base.html.r('div class=bases section')
 				
-			bases.r('div class=list section')
+			bases.r('div class=list')
 			bases.r('div class=controls')
 				.r('input').p
 				.r('button class=add html=add new database')
@@ -135,7 +150,7 @@ d.on('ready',function(e){
 								base.tables=data.tables
 								
 								base.showbases()
-								base.showschema([])								
+								//base.showschema([])								
 							},'json')						
 						}
 					}).p
@@ -152,15 +167,14 @@ d.on('ready',function(e){
 							base.tables=data.tables
 							
 							base.showbases()
-							base.showschema([])								
+							//base.showschema([])								
 							
 						},'json')						
 					})
-							
+			
 			var tables=base.html.r('div class=tables section')			
-			tables.r('div class=existing')
-				.r('div class=list section').p
-				.r('div class=controls iblocks')
+				
+			tables.r('div class=controls iblocks')
 					.r('input').p
 					.r('button class=add html=add new table')
 						.on('click',function(e){
@@ -173,7 +187,7 @@ d.on('ready',function(e){
 							d.send('tables/add',data,function(res){
 								console.log('res:',res)
 							},'json')							
-						}).p						
+						}).p
 					.r('button class=save html=save changes to table')
 						.on('click',function(e){
 							var data={
@@ -194,19 +208,14 @@ d.on('ready',function(e){
 									console.log('res:',res)
 								},'json')	
 							}
-						}).p
-				.r('div class=schema section')
-			var tabledata=tables.r('div class=tabledata')
-			tabledata.r('button html=get table data')
-				.on('click',function(e){
-					var url='base/tables/tabledata?table='+d.find('.existing .list .selected').h()
-					d.send(url,function(res){
-						console.log('data list:',res)
-						base.showtabledata(res)
-					})
-				})
-			tabledata.r('div class=result')
-			
+						}).p.p
+						
+			tables.r('div class=existing')
+				.r('div html=tables').p
+				.r('div class=list')
+			tables.r('div class=conthead html=result').p
+			tables.r('div class=cont group').p
+						
 			//custom query
 			base.html.r('div class=customquery section')
 				.r('div html=custom query').p
@@ -248,7 +257,7 @@ d.on('ready',function(e){
 								base.selected=data.selected
 								base.tables=data.tables								
 								base.showtables()								
-								base.showschema([])
+								//base.showschema([])
 							})
 						})
 						
@@ -261,26 +270,51 @@ d.on('ready',function(e){
 		},
 		showtables:function(){
 			var list=base.html.find('.tables .existing .list')
-			list.h('')
-			d.find('.tables .existing .schema').h('')							
+			list.h('')			
 			loop(base.tables,function(i,item){
 				loop(item,function(k,v){
-					list.r('button')
-						.h(v)
-						//.s('display:block')
-						.on('click',function(e){
-							var tar=e.target,
-								act=tar.p.find('.selected')
-							if(act){
-								act.remclass('selected')
-							}
-							tar.addclass('selected')							
-							console.log('get schema')
-							d.send('tables/get?table='+v,function(res){
-								var data=JSON.parse(res)
-								base.showschema(data)
-							})
-						})
+					list.r('div class=group')
+						.s('display:inline-block')
+						.r('div')
+							.h(v).p
+						.r('button')
+							.s('display:block width: 100%')
+							.h('show schema')
+							.on('click',function(e){
+								var tar=e.target,
+									act=tar.p.p.find('.selected')
+								if(act){
+									act.remclass('selected')
+								}
+								tar.p.addclass('selected')
+								base.tablename=v
+								
+								d.send('tables/get?table='+v,function(res){
+									if(res){
+										d.find('.conthead').h(v+' schema')
+										var data=JSON.parse(res)
+										base.showschema(data)
+									}
+								})
+							}).p
+						.r('button')
+							.s('display:block width: 100%')
+							.h('show items')
+							.on('click',function(e){
+								var tar=e.target,
+									act=tar.p.p.find('.selected')
+								if(act){
+									act.remclass('selected')
+								}
+								tar.p.addclass('selected')
+								base.tablename=v
+								
+								url='items/list?tablename='+v						
+								d.send(url,function(res){
+									d.find('.conthead').h(v+' items')									
+									base.showitems(res)
+								})								
+							})							
 				})
 			})				
 		},
@@ -293,12 +327,14 @@ d.on('ready',function(e){
 				td
 				
 			
-			table.s('table-layout:fixed')
+			//table.s('table-layout:fixed')
 			
-			loop(base.schemafields,function(i,name){
-				
+			loop(base.schemafields,function(i,name){				
 				td=tr.r('td class='+name)
 					.h(name)
+				if(name=='Key'){
+					td.s('width:48px')
+				}					
 			})
 			tr.r('td')
 				.s('width:27px')
@@ -328,13 +364,18 @@ d.on('ready',function(e){
 					console.log('item:',item)
 					loop(item,function(k,v){
 						td=tr.r('td')
-						inp=td.r('input disabled')
-							.s('width:100%')
-						inp.val=v						
-						if(k=='Field' || k=='Type' || k=='Extra'){
-							inp.set(disabled)
+						inp=td.r('input')
+							.s('width:100%')									
+						
+						if(k=='Key'){
+							inp.set('disabled',true)
+						} else if(k=='Null'){
+							v=(v=='NO'? 'NOT NULL' : '')
+						} else if(k=='Default'){
+							v=(v ? 'DEFAULT '+v : '')
 						}
-							
+						
+						inp.val=v
 					})
 					td=tr.r('td')						
 						.s('background-color:#fff width:1px')
@@ -356,10 +397,117 @@ d.on('ready',function(e){
 							addrow()
 						})
 									
-			var cont=d.find('.tables .existing .schema')
+			var cont=d.find('.cont')
 			cont.h('')
 			table.to(cont)			
 		},
+		showitems:function(data){
+			data=JSON.parse(data)
+			var cont=d.find('.cont')				
+			cont.h('')
+			var table=d.r('table'),
+				thead=table.r('thead'),
+				tbody=table.r('tbody'),
+				row,
+				addrow,
+				types={},
+				type,
+				inp
+			
+			//render headers
+			row=thead.r('tr')
+			loop(data.schema,function(k,v){
+				types[v.Field]=v.Type					
+				row.r('td')
+					.h(v.Field)
+					.set('data-type',v.Type)
+			})
+			row.r('td')
+			
+			//render items
+			loop(data.list,function(i,line){				
+				row=tbody.r('tr')
+				row.item=line
+				loop(line,function(k,v){
+					type=types[k]
+					inp=row.r('td')
+						.r('input')
+							.set('data-type',type)
+							.s('width:100%')
+					if(type.indexOf('int')!=-1){
+						//inp.set('type','number')
+					} else if(type=='date'){
+						if(v){
+							//format date
+							v=v.split('T')[0].split('-').join('.')
+						}
+					}
+					inp.id=k
+					inp.val=v
+
+				})
+				//controls
+				row.r('td')
+					.s('width:1px white-space:nowrap')
+					.r('button class=set html=set')
+						.on('click',function(e){							
+							var data={
+								item:this.findup('tr').getform(),
+								tablename:base.tablename
+							}
+							d.send('items/set',data,function(res){
+								console.log('res:',res)
+							},'json')
+						})						
+						.p
+					.r('button class=rem html=rem')
+						.on('click',function(e){
+							/*
+							var data={
+								id:this.findup('tr').item.Id,
+								tablename:base.tablename
+							}
+							d.send('items/rem',data,function(res){
+								console.log('res:',res)
+							},'json')
+							/**/
+						})						
+						.p					
+			})
+			//add new row
+			if(data.list.length){
+				row=tbody.r('tr')
+				loop(data.list[0],function(k,v){
+					inp=row.r('td')
+						.r('input')
+							.s('width:100%')
+					inp.id=k
+					inp.val=''
+				})	
+				//controls
+				row.r('td')
+					.s('width:1px white-space:nowrap')
+					.r('button class=add html=add')
+						.s('width:100%')
+						.on('click',function(e){
+							var fdata=this.findup('tr').getform(),
+								id=fdata.id
+							delete fdata.id
+							
+							var data={
+								item:fdata,
+								id:id,
+								tablename:base.tablename,
+								want:'list'
+							}
+							d.send('items/add',data,function(res){
+								console.log('res:',res)
+								base.showitems(res)
+							},'json')							
+						})
+			}
+			table.to(cont)
+		},		
 		getbases:function(){
 			d.send('bases/list',function(res){
 				var data=JSON.parse(res)					
@@ -368,7 +516,7 @@ d.on('ready',function(e){
 				base.tables=data.tables
 				
 				base.showbases()
-				base.showschema([])
+				//base.showschema([])
 			})		
 		},
 		gettableschema:function(){
@@ -384,33 +532,8 @@ d.on('ready',function(e){
 			})			
 			return data
 		},
-		showtabledata:function(data){
-			data=JSON.parse(data)
-			var cont=d.find('.tabledata .result')				
-			cont.h('')
-			var table=d.r('table'),
-				thead=table.r('thead'),
-				tbody=table.r('tbody'),
-				row
-			
-			loop(data,function(i,line){
-				if(!i){
-					row=thead.r('tr')
-					loop(line,function(k,v){
-						row.r('td')
-							.h(k)
-					})
-				}
-				console.log('line:',line)
-				row=tbody.r('tr')
-				loop(line,function(k,v){
-					row.r('td')
-						.h(v)
-				})
-			})
-			table.to(cont)
-		}
 	}
+	base.setstyles()
 	base.show()
 	base.getbases()
 	

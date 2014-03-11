@@ -102,15 +102,9 @@ var argsl=function(name){
 						res.send(JSON.stringify(data))
 					}
 				})				
-			},
-			post:function(req,res){
-				res.send('not handled')
 			}
 		},
 		set:{
-			get:function(req,res){
-				res.send('not handled')
-			},
 			post:function(req,res){
 				var data=req.body,
 					q='UPDATE '+name+' SET ? '+'where id='+connection.escape(data.req.id)
@@ -147,9 +141,6 @@ var argsl=function(name){
 						res.send(JSON.stringify(data))
 					})									
 				})
-			},
-			post:function(req,res){
-				return g.list.get(req,res)
 			}
 		}
 	}	
@@ -161,7 +152,8 @@ var handle={
 	games:argsl('games'),
 	players:argsl('players'),
 	teams:argsl('teams'),
-	actions:argsl('actions')	
+	actions:argsl('actions'),	
+	actiontypes:argsl('actiontypes')
 }
 console.log(handle)	
 exports.handler=function(req,res){	

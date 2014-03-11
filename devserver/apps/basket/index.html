@@ -1,38 +1,50 @@
+<head>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
+</head>
 <script src='dom0.js'></script>
 <!---->
-<style>
-.sec,
-.form{
-	border:1px solid #aaa;
-	background-color: #eee;
-}
-.cols{
-	display:table;
-	table-layout:fixed;
-	width:100%;
-}
-.cols>*{
-	display:table-cell;
-}
-.bo{
-	border:1px solid #aaa;
-}
-.bt{
-	border-top:1px solid #aaa;
-}
-.bb{
-	border-bottom:1px solid #aaa;
-}
-.bl{
-	border-left:1px solid #aaa;
-}
-.br{
-	border-right:1px solid #aaa;
-}
-
-</style>
+<a href="/">home</a>
 <script>
 d.on('ready',function(e){
+	function setstyles(){
+		var sheet=d.dss.new('basesheet')
+		sheet.new('body,button,input,table',
+			'font-family:Open Sans Condensed, sans-serif',
+			'font-weight: bold',
+			'color:#666',
+			'text-transform: uppercase'
+		)
+		sheet.new('.sec,.form',
+			'border:1px solid #aaa',
+			'background-color: #eee'
+		)
+		sheet.new('.cols',
+			'display:table',
+			'table-layout:fixed',
+			'width:100%'
+		)
+		sheet.new('.cols>*',
+			'display:table-cell'
+		)
+		sheet.new('.bo',
+			'border:1px solid #aaa'
+		)
+		sheet.new('.bt',
+			'border-top:1px solid #aaa'
+		)
+		sheet.new('.bb',
+			'border-bottom:1px solid #aaa'
+		)
+		sheet.new('.bl',
+			'border-left:1px solid #aaa'
+		)
+		sheet.new('.br',
+			'border-right:1px solid #aaa'
+		)
+		sheet.show()
+		return sheet
+	}
+	setstyles()
 	console.log('ready')
 	var appname='basket'
 	var actions=['add','rem','get','set','list']
@@ -43,7 +55,8 @@ d.on('ready',function(e){
 			games:{},
 			teams:{},
 			players:{},
-			actions:{}
+			actions:{},
+			actiontypes:{}
 		}
 	}
 	d.body.on('keyup',function(e){
@@ -127,12 +140,20 @@ d.on('ready',function(e){
 						if(type.indexOf('int')!=-1){
 							field.set('type','number')
 						}
+						if(type=='date'){
+							if(v){
+								//format date
+								v=v.split('T')[0].split('-').join('.')
+							}
+						}
 						field.val=v
 						field.id=k
+						
 						if(k=='id'){
 							field.set('disabled','true')
 							field.set('data-ignore',true)
-						}						
+						}
+						/**/
 					})			
 					//set
 					row.r('button type=button html=set')
