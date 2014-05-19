@@ -62,7 +62,7 @@ d.on('ready',function(e){
 		selected:'',
 		tablename:'',
 		tables:[],
-		schemafields:['Field','Type','Null','Key','Default','Extra'],
+		schemafields:{'Field':'','Type':'','Null':'','Key':'','Default':'','Extra':''},
 		setstyles:function(){
 			var sheet=d.dss.new('basesheet')
 			sheet.new('body',
@@ -117,9 +117,16 @@ d.on('ready',function(e){
 				'padding:3px',
 				'margin:3px'
 			)
+			sheet.new('.primarykey',
+				'border:1px solid orange'
+			)
 			sheet.new('.selected',
 				'color:green',
 				'background:lightgreen'
+			)
+			sheet.new('.marked',
+				'color:brown',
+				'background:orange'
 			)
 			
 			
@@ -174,45 +181,20 @@ d.on('ready',function(e){
 			
 			var tables=base.html.r('div class=tables section')			
 				
-			tables.r('div class=controls iblocks')
-					.r('input').p
-					.r('button class=add html=add new table')
-						.on('click',function(e){
-							var inp=d.find('.tables .controls input'),
-								data={
-								table:inp.value,
-								columns:base.gettableschema()
-							}
-							inp.value=''
-							d.send('tables/add',data,function(res){
-								console.log('res:',res)
-							},'json')							
-						}).p
-					.r('button class=save html=save changes to table')
-						.on('click',function(e){
-							var data={
-								table:d.find('.existing .list .selected').h(),
-								columns:base.gettableschema()
-							}
-							d.send('tables/set',data,function(res){
-								console.log('res:',res)
-							},'json')							
-						}).p
-					.r('button class=droptable html=drop table')
-						.on('click',function(e){
-							var data={
-								table:d.find('.existing .list .selected').h()
-							}
-							if(data.table){
-								d.send('tables/rem',data,function(res){
-									console.log('res:',res)
-								},'json')	
-							}
-						}).p.p
-						
 			tables.r('div class=existing')
 				.r('div html=tables').p
-				.r('div class=list')
+				.r('div class=list').p
+				.r('button class=add html=add new table')
+					//.s('width:100%')
+					.on('click',function(e){
+						base.tablename=''
+						var sel=d.find('.group.selected')
+						if(sel){
+							sel.remclass('selected')
+						}
+						base.showschema()
+						base.addschemarow()
+					})						
 			tables.r('div class=conthead html=result').p
 			tables.r('div class=cont group').p
 						
@@ -273,63 +255,90 @@ d.on('ready',function(e){
 			list.h('')			
 			loop(base.tables,function(i,item){
 				loop(item,function(k,v){
-					list.r('div class=group')
-						.s('display:inline-block')
-						.r('div')
-							.h(v).p
-						.r('button')
-							.s('display:block width: 100%')
-							.h('show schema')
-							.on('click',function(e){
-								var tar=e.target,
-									act=tar.p.p.find('.selected')
-								if(act){
-									act.remclass('selected')
-								}
-								tar.p.addclass('selected')
-								base.tablename=v
-								
-								d.send('tables/get?table='+v,function(res){
-									if(res){
-										d.find('.conthead').h(v+' schema')
-										var data=JSON.parse(res)
-										base.showschema(data)
-									}
-								})
-							}).p
-						.r('button')
-							.s('display:block width: 100%')
-							.h('show items')
-							.on('click',function(e){
-								var tar=e.target,
-									act=tar.p.p.find('.selected')
-								if(act){
-									act.remclass('selected')
-								}
-								tar.p.addclass('selected')
-								base.tablename=v
-								
-								url='items/list?tablename='+v						
-								d.send(url,function(res){
-									d.find('.conthead').h(v+' items')									
-									base.showitems(res)
-								})								
-							})							
+					base.addtable(v)
 				})
-			})				
+			})			
+		},
+		addtable:function(name){
+			var list=base.html.find('.tables .existing .list')
+			
+			var table=d.r('div class=group')
+				.s('display:inline-block')
+				
+			table.r('div')
+					.r('span')
+						.h(name).p
+					.r('button')
+						.s('float:right')
+						.h('drop')
+						.on('click',function(e){
+							console.log('drop table:',name)
+							var table=this.findup('.group')
+							d.send('tables/rem?tablename='+name,function(res){
+								console.log('res:',res)
+								if(res.err){
+									
+								} else {
+									table.rem()
+								}
+							})
+						}).p.p
+				.r('button')
+					.s('display:block width: 100%')
+					.h('show schema')
+					.on('click',function(e){
+						var tar=e.target,
+							act=tar.p.p.find('.selected')
+						if(act){
+							act.remclass('selected')
+						}
+						tar.p.addclass('selected')
+						base.tablename=name
+						
+						d.send('tables/get?table='+name,function(res){
+							if(res){
+								d.find('.conthead').h(name+' schema')
+								var data=JSON.parse(res)
+								base.showschema(data)
+							}
+						})
+					}).p
+				.r('button')
+					.s('display:block width: 100%')
+					.h('show items')
+					.on('click',function(e){
+						var tar=e.target,
+							act=tar.p.p.find('.selected')
+						if(act){
+							act.remclass('selected')
+						}
+						tar.p.addclass('selected')
+						base.tablename=name
+						
+						url='items/list?tablename='+name						
+						d.send(url,function(res){
+							d.find('.conthead').h(name+' items')									
+							base.showitems(res)
+						})								
+					})							
+			
+			//console.log('table:',table)
+			table.to(list)
+			return table
 		},
 		showschema:function(data){
-			var table=d.r('table'),
+			var cont=d.find('.cont'),
+				table=d.r('table class=schema'),
 				thead=table.r('thead'),
 				tbody=table.r('tbody'),
 				tfoot=table.r('tfoot'),
 				tr=thead.r('tr'),
 				td
-				
+							
+			cont.h('')
+			table.to(cont)				
 			
-			//table.s('table-layout:fixed')
-			
-			loop(base.schemafields,function(i,name){				
+			loop(base.schemafields,function(name,val){				
 				td=tr.r('td class='+name)
 					.h(name)
 				if(name=='Key'){
@@ -338,68 +347,114 @@ d.on('ready',function(e){
 			})
 			tr.r('td')
 				.s('width:27px')
+				.r('button class=saveschema')
+					.h('save schema')
+					.s('width:100% white-space:nowrap')
+					.on('click',function(e){						
+						if(base.tablename){						
+							var row=this.findup('tr'),
+								data={
+									tablename:base.tablename,
+									schema:base.gettableschema()
+								}
+							console.log('data:',data)
+							d.send('tables/set',data,function(res){
+								console.log(res,typeof(res))
+							},'json')
+						}						
+					})
 				
-			function addrow(data){
-				var tr=tbody.r('tr')				
-				loop(base.schemafields,function(i,name){					
-					td=tr.r('td')
-					td.r('input')
-						.s('width:100%')
+			if(data){
+				var inp
+				loop(data,function(i,item){
+					base.addschemarow(item)					
 				})
-				tr.r('td')						
+			}
+			
+			
+			tfoot.r('tr')
+				.r('td colspan=7')
 					.s('background-color:#fff')
-					.r('button html=X')
+					.r('button html=add new field to schema')
+						.s('width:100%')
+						.on('click',function(e){
+							base.addschemarow()							
+						}).p
+					.r('div class=addnewtable')
+						.r('input class=tablename').p
+						.r('button html=add as new table')
+							.on('click',function(e){
+								var tablename=d.find('.addnewtable .tablename').val
+								if(tablename){
+									var data={
+										tablename:tablename,
+										schema:base.gettableschema()
+									}
+									console.log('data:',data)
+									d.send('tables/add',data,function(res){
+										res=JSON.parse(res)
+										if(res.err){
+											console.log(res.err)
+										} else {
+											base.addtable(res.tablename)
+										}
+										console.log('res:',res)
+									},'json')									
+								}														
+							}).p
+						
+		},
+		addschemarow:function(item){			
+			var item=item || base.schemafields,
+				tr=d.r('tr')
+			console.log('item:',item)
+			loop(item,function(k,v){
+				td=tr.r('td')
+				inp=td.r('input')
+					.s('width:100%')									
+				
+				if(k=='Key'){
+					inp.set('disabled',true)
+				} else if(k=='Null'){
+					v=(v=='NO'? 'NOT NULL' : '')
+				} else if(k=='Default'){
+					v=(v ? 'DEFAULT '+v : '')
+				}
+				
+				inp.val=v
+				inp.on('change',function(e){
+					/*
+					var but=this.findup('tr').find('button.set')
+					but.addclass('marked')
+					/**/
+				})
+			})
+			td=tr.r('td')						
+				.s('background-color:#fff width:1px white-space:nowrap')
+				/*
+				.r('button html=set class=set')
+					.on('click',function(e){
+						this.remclass('marked')
+						if(base.tablename){						
+							var row=this.findup('tr'),
+								data={
+								tablename:base.tablename,
+								schemafield:base.getschemafield(row)
+							}
+							d.send('tables/set',data,function(res){
+								console.log(res,typeof(res))
+							})
+						}
+					}).p
+				/**/
+				.r('button html=rem class=rem')
 					.on('click',function(e){
 						var tar=e.target,
 							tr=tar.findup('tr')
 						
-						tar.findup('tr').rem()	
-					})					
-				
-			}
-			if(data){
-				var inp
-				loop(data,function(i,item){
-					var tr=tbody.r('tr')
-					console.log('item:',item)
-					loop(item,function(k,v){
-						td=tr.r('td')
-						inp=td.r('input')
-							.s('width:100%')									
-						
-						if(k=='Key'){
-							inp.set('disabled',true)
-						} else if(k=='Null'){
-							v=(v=='NO'? 'NOT NULL' : '')
-						} else if(k=='Default'){
-							v=(v ? 'DEFAULT '+v : '')
-						}
-						
-						inp.val=v
+						tar.findup('tr').rem()							
 					})
-					td=tr.r('td')						
-						.s('background-color:#fff width:1px')
-						.r('button html=X')
-						.on('click',function(e){
-							var tar=e.target,
-								tr=tar.findup('tr')
-							
-							tar.findup('tr').rem()							
-						})
-				})
-			}
-			tfoot.r('tr')
-				.r('td colspan=7')
-					.s('background-color:#fff')
-					.r('button html=add new field')
-						.s('width:100%')
-						.on('click',function(e){
-							addrow()
-						})
-									
-			var cont=d.find('.cont')
-			cont.h('')
-			table.to(cont)			
+			tr.to(d.find('.schema tbody'))
 		},
 		showitems:function(data){
 			data=JSON.parse(data)
@@ -462,50 +517,62 @@ d.on('ready',function(e){
 						.p
 					.r('button class=rem html=rem')
 						.on('click',function(e){
-							/*
+							console.log('item:',this.findup('tr').item)
 							var data={
-								id:this.findup('tr').item.Id,
-								tablename:base.tablename
+								id:this.findup('tr').item.id,
+								tablename:base.tablename,
+								want:'list'
 							}
 							d.send('items/rem',data,function(res){
-								console.log('res:',res)
+								console.log('res:',res)								
+								base.showitems(res)								
 							},'json')
-							/**/
 						})						
 						.p					
 			})
 			//add new row
-			if(data.list.length){
-				row=tbody.r('tr')
-				loop(data.list[0],function(k,v){
-					inp=row.r('td')
-						.r('input')
-							.s('width:100%')
-					inp.id=k
-					inp.val=''
-				})	
-				//controls
-				row.r('td')
-					.s('width:1px white-space:nowrap')
-					.r('button class=add html=add')
+			//if(data.list.length){
+			console.log('data:',data.schema)
+			row=tbody.r('tr')
+			loop(data.schema,function(k,v){
+				console.log(k,v)
+				inp=row.r('td')
+					.r('input')
 						.s('width:100%')
-						.on('click',function(e){
-							var fdata=this.findup('tr').getform(),
-								id=fdata.id
-							delete fdata.id
-							
-							var data={
-								item:fdata,
-								id:id,
-								tablename:base.tablename,
-								want:'list'
-							}
-							d.send('items/add',data,function(res){
-								console.log('res:',res)
-								base.showitems(res)
-							},'json')							
-						})
-			}
+				inp.set('data-type',v.Type)
+				if(v.Key){
+					inp.addclass('primarykey')
+				}
+				inp.id=v.Field				
+				/*
+				loop(v,function(name,val){
+					inp.set('data-'+name,val)
+				})
+				/**/
+				inp.val=''
+			})	
+			//controls
+			row.r('td')
+				.s('width:1px white-space:nowrap')
+				.r('button class=add html=add')
+					.s('width:100%')
+					.on('click',function(e){
+						var fdata=this.findup('tr').getform(),
+							id=fdata.id
+						//delete fdata.id
+						
+						var data={
+							item:fdata,
+							id:id,
+							tablename:base.tablename,
+							want:'list'
+						}
+						d.send('items/add',data,function(res){
+							console.log('res:',res)
+							base.showitems(res)
+						},'json')							
+					})
+
 			table.to(cont)
 		},		
 		getbases:function(){
@@ -519,17 +586,26 @@ d.on('ready',function(e){
 				//base.showschema([])
 			})		
 		},
+		getschemafield:function(row){
+			var item={},
+				count=0
+			loop(base.schemafields,function(name,val){
+				val=row.children[count].find('input').value
+				item[name]=val
+				count+=1
+			})			
+			return item
+		},
 		gettableschema:function(){
 			var data=[],
-				rows=d.findall('.schema table tbody tr'),
-				item={}			
+				rows=d.findall('.schema tbody tr'),
+				item={},
+				count=0
 			loop(rows,function(i1,row){				
-				item={}
-				loop(base.schemafields,function(i2,name){
-					item[name]=row.children[i2].find('input').value
-				})
+				item=base.getschemafield(row)
 				data.push(item)
-			})			
+			})
+			console.log('data:',data)
 			return data
 		},
 	}

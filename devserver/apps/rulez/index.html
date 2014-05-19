@@ -1,0 +1,275 @@
+<html>
+<link href='http://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+<style>
+html,body {
+	width: 100%;
+	margin: 0;
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;	
+}
+#wrap {
+	width: 960px;
+	margin: auto;
+}
+table{
+	margin-bottom: 10px;
+}
+td{
+	padding: 0 10px;
+	text-align: center;
+	font-weight: bold;	
+	font-size: 16px;
+	background: #eee;
+	border: 1px solid #ddd;
+	border-radius: 16px;
+}
+#actions .first {
+	width: auto;
+}
+.hed1 ,#actions td.hed1,.hed1 td{
+	padding: 3px 0;
+	background: #ddd;
+	border: 1px solid #ccc;
+}
+.toggle {
+	background: #ccc;
+	border: 1px solid #aaa;
+	border-radius: 16px;
+	padding: 0 10px;
+}
+#diceavg {
+	//display: none;
+}
+</style>
+<body>
+	<a href='/'>Home</a>
+	<div class='calc'>
+		
+	</div>
+	<div id='wrap'>
+		<div id='actions'>
+			<span>Actions:</span><span class='toggle'id='toggle-diceavg'>+</span>
+			<table id='actions'>
+				<tr id='round'>
+					<td class='hed1'>Action type:</td>
+					<td colspan=4 class='hed1'>Time</td>
+					<td class='hed1'>Examples</td>
+				</tr>
+				<tr id='fastaction'>
+					<td class='first'>Fast action:</td>
+					<td>1s</td>
+					<td>1s</td>
+					<td>1s</td>
+					<td>1s</td>
+					<td>Fast attack, fast cast,draw a weapon, move 4m</td>
+				</tr>
+				<tr id='standardaction'>
+					<td class='first'>Standard action:</td>
+					<td colspan=2>2s</td>
+					<td colspan=2>2s</td>
+					<td>Attack, cast a spell, move 12m</td>
+				</tr>
+				<tr id='fullaction'>
+					<td class='first'>Full round action:</td>
+					<td colspan=4>4s</td>
+					<td colspan=4>Take something from backpack, move 28m</td>
+				</tr>
+			</table>
+			<span>Stats:</span><span class='toggle'id='toggle-diceavg'>+</span>
+			<table id='stats'>
+				<tr>
+					<td class='hed1'>Physical</td>
+					<td class='hed1'>Usful when:</td>
+				</tr>
+				<tr>
+					<td>Stength</td>
+					<td>Carrying luggage for others</td>
+				</tr>
+				<tr>
+					<td>Stamina</td>
+					<td>Resisting physical damage</td>
+				</tr>
+				<tr id='fullaction'>
+					<td>Agility</td>
+					<td>Balance, coordination fast reflexes</td>
+				</tr>
+				<tr>
+					<td class='hed1'>Mental</td>
+					<td class='hed1'>Usful when:</td>
+				</tr>				
+				<tr>
+					<td>Intelligence</td>
+					<td>Solving puzzles</td>					
+				</tr>
+				<tr>
+					<td>Wisdom</td>
+					<td>Resiting mental manipulation</td>					
+				</tr>
+				<tr id='fullaction'>					
+					<td>Wits</td>
+					<td>Quick thinking in critical siutations, initiative</td>
+				</tr>
+				
+			</table>
+			<span>Combat:</span><span class='toggle'id='toggle-diceavg'>+</span>
+			<table>
+				<tr>
+					<td>Roll INITIATIVE(agility+wits) and act in that order</td>
+				</tr>
+				<tr>
+					<td>As an fast action you can gain the dominant roll</td>					
+				</tr>
+				<tr>
+					<td>
+						Movement speed = 2*(2 + str + agi) m/s
+					</td>
+				</tr>
+				
+			</table>
+			<div class='dicerolls'>
+				<span>Dice rolls:</span><span class='toggle'id='toggle-diceavg'>+</span>
+				<table id='diceavg'>				
+					<tr class='hed1'>
+						<td>dices</td>
+						<td>average</td>
+					</tr>
+					<tr>
+						<td>1d20</td>
+						<td>10.5</td>
+					</tr>
+					<tr>
+						<td>2d20</td>
+						<td>13.8</td>
+					</tr>
+					<tr>
+						<td>3d20</td>
+						<td>15.5</td>
+					</tr>
+					<tr>
+						<td>4d20</td>
+						<td>16.5</td>
+					</tr>
+					<tr>
+						<td>5d20</td>
+						<td>17.15</td>
+					</tr>
+				</table>
+			</div>
+			<div class='difficulty'>
+				<span>Difficulty:</span><span class='toggle'id='toggle-diceavg'>+</span>
+				<table id='dif'>				
+					<tr class='hed1'>
+						<td>difficulty</td>
+						<td>nr</td>
+					</tr>
+					<tr>
+						<td>6+</td>
+						<td>easy</td>
+					</tr>
+					<tr>
+						<td>11+</td>
+						<td>average</td>
+					</tr>
+					<tr>
+						<td>15+</td>
+						<td>hard</td>
+					</tr>
+					<tr>
+						<td>18+</td>
+						<td>very hard</td>
+					</tr>
+					<tr>
+						<td>20+</td>
+						<td>godly</td>
+					</tr>
+				</table>			
+			</div>
+			<div>
+				Skills and Spells examples:
+			</div>
+			<table>
+				<tr>
+					<td class='hed1'>Name</td>
+					<td class='hed1'>1</td>
+					<td class='hed1'>2</td>
+					<td class='hed1'>3</td>
+					<td class='hed1'>4</td>
+					<td class='hed1'>5</td>
+				</tr>
+				<tr id='fastaction'>
+					<td>Swiftness (extra time, run speed)</td>
+					<td>+1s, 10m/s(36kmh)</td>
+					<td>+2s, 20m/s</td>
+					<td>+4s, 40m/s</td>
+					<td>+8s, 80m/s</td>
+					<td>+16s, 160m/s</td>
+				</tr>
+				<tr>
+					<td>Strong (lift above head)</td>
+					<td>100kg</td>
+					<td>200kg</td>
+					<td>400kg</td>
+					<td>800kg</td>
+					<td>1600kg</td>
+				</tr>
+				<tr>
+					<td>Telekinesis (weight to move at 1m/s)</td>
+					<td>1kg</td>
+					<td>10kg</td>
+					<td>100kg</td>
+					<td>1t</td>
+					<td>2t</td>
+				</tr>
+				<tr>
+					<td>Damage</td>
+					<td>2</td>
+					<td>4</td>
+					<td>6</td>
+					<td>8</td>
+					<td>10</td>
+				</tr>
+				<tr>
+					<td>Fast healing (health per round)</td>
+					<td>1</td>
+					<td>2</td>
+					<td>3</td>
+					<td>4</td>
+					<td>5</td>
+				</tr>
+				<tr>
+					<td>Control</td>
+					<td>affect</td>
+					<td>modify</td>
+					<td>resahpe</td>
+					<td>invoke</td>
+					<td>all</td>
+				</tr>
+			</table>
+			
+		</div>
+		
+	</div>
+</body>
+
+<script>
+/*
+function get(id) {return document.getElementById(id);};	
+function log(i) {console.log(i)};
+function round(num,dec) {
+	var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
+	return result;
+}
+var tar=diceavg.children[0].children,
+	sum,avg,rolls=[],step=0,want=[5,10,12,14,15,16,17,18,19,20],
+	dices=1,val;
+for (var dices=1;dices<11;dices++){			
+	for (var nr1=0;nr1<10;nr1++) {
+		val=round(100*(1-Math.pow(want[nr1]-1,dices)/Math.pow(20,dices)),0)+'%';
+		tar=diceavg.children[0].children[dices].children[2+nr1];
+		tar.innerHTML=val;
+		log(tar)		
+	}
+}
+/**/
+</script>
+</html>

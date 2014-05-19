@@ -9,7 +9,7 @@ var c0={
 		this.canvas.id='c0'
 		document.body.appendChild(this.canvas)
 		this.c=this.canvas.getContext('2d')
-		this.root=this.newnode('root')
+		this.root=this.node('root')
 		this.addevents()
 		
 	},
@@ -133,20 +133,6 @@ var c0={
 		}
 		return hits
 	},
-	polyarea:function(p,pts){
-		var a,b,c,p2,s,area=0
-		loop(pts,function(i,p1){
-			if(i<pts.length-1){
-				p2=pts[i+1]
-				a=Math.abs(p.sub(p1))
-				b=Math.abs(p.sub(p2))
-				c=Math.abs(p1.sub(p2))
-				s=(a+b+c)/2
-				area+=Math.sqrt(s(s-a)(s-b)(s-c))
-			}
-		})
-		return area
-	},
 	//util
 	dist:function(a,b){
 		var dx=a.x-b.x,
@@ -157,12 +143,12 @@ var c0={
 		if(a.getpos){
 			a=a.getpos(c0.root)
 		} else {
-			a=c0.newpos({x:a.x,y:a.y})			
+			a={x:a.x,y:a.y}
 		}
 		if(b.getpos){
 			b=b.getpos(c0.root)
 		} else {
-			b=c0.newpos({x:b.x,y:b.y})			
+			b={x:b.x,y:b.y}			
 		}
 		b=b.sub(a)
 		
@@ -185,14 +171,14 @@ var c0={
 	},
 	rot:function(p,an){
 		var rad=this.ator(an),
-			sin=Math.sin(rad).round(15),
-			cos=Math.cos(rad).round(15)
+			sin=Math.sin(rad),
+			cos=Math.cos(rad)
 			
-		return this.newpos({
+		return {
 			x:p.x*cos-p.y*sin,
 			y:p.x*sin+p.y*cos
-		})
-	},
+		}
+	},	
 	ator:function(an){
 		return (an*Math.PI/180)%(Math.PI*2)
 	},
@@ -200,16 +186,16 @@ var c0={
 		return (180*rad/Math.PI)%360
 	},
 	sub:function(a,b){
-		return this.newpos({
+		return {
 			x:a.x-b.x,
 			y:a.y-b.y
-		})
+		}
 	},
 	add:function(a,b){
-		return this.newpos({
+		return {
 			x:a.x+b.x,
 			y:a.y+b.y
-		})
+		}
 	},
 	norm:function(p){
 		var one=Math.max(Math.abs(p.x),Math.abs(p.y))
@@ -221,46 +207,41 @@ var c0={
 		}
 		return p
 	},
-	//new objs
-	newpos:function(a){
-		a=a || {x:0,y:0}
-		var pos={
-			init:function(){				
-				this.type='pos'
-				this.x=a.x
-				this.y=a.y
-			},
-			dist:function(p){
-				return c0.dist(this,p)
-			},
-			add:function(p){
-				return c0.add(this,p)
-			},
-			sub:function(p){
-				return c0.sub(this,p)
-			},
-			an:function(p){
-				return c0.an(this,p)
-			},
-			rot:function(an){
-				return c0.rot(this,an)
-			}
-		}
-		pos.init()
-		return pos
+	//rendering
+	clear:function(){
+		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
 	},
-	newnode:function(name){
-		var node=this.newpos(),		
+	render:function(node,mat){
+		var x,y			
+		node=node || c0.root
+		if(node.visible){
+			if(node.draw){
+				node.draw()
+			}
+			loop(node.children,function(i,e){
+				c0.render(e)
+			})
+		}		
+	},
+	redraw:function(node){
+		node=node || this.root
+		this.clear()
+		this.render(node)
+	},
+	//new objs
+	node:function(name){
+		var node={x:0,y:0},		
 			ext={
 				init:function(){
 					this.type='node'
+					this.name=name
 					this.parent=0	
 					this.children=[]
 					this.visible=true
 					this.an=0
 					this.sx=1
 					this.sy=1
-					this.tail=0
+					this.hit='rect'
 				},
 				//rendering
 				to:function(parent){
@@ -277,16 +258,6 @@ var c0={
 					this.parent=parent				
 					return this
 				},
-				render:function(){//a=pos,an,scale
-					if(this.visible){
-						if(this.draw){
-							this.draw()
-						}
-						loop(this.children,function(i,e){
-							e.render()
-						})
-					}
-				},
 				rem:function(){
 					var ind=this.parent.children.indexOf(this)
 					this.parent.children.splice(ind,1)
@@ -299,27 +270,24 @@ var c0={
 				//util
 				pos:function(p){
 					if(p){
-						this.x=px
+						this.x=p.x
 						this.y=p.y
 					} else {
-						return c0.newpos({
+						return {
 							x:this.x,
 							y:this.y
-						})
+						}
 					}
 				},
-				getpos:function(parent,pos){
-					if(pos){
-						pos=pos.rot(this.an)
-						pos=pos.add(this.getpos())
-					} else {
-						pos=c0.newpos({
-							x:this.x,
-							y:this.y
-						})					
-					}				
-					if(parent && parent!=this.parent){
-						pos=this.parent.getpos(parent,pos)
+				getpos:function(){
+					var pos={
+						x:this.x,
+						y:this.y
+					}
+					if(this.parent){
+						pos=c0.rot(pos,this.parent.getan())
+						var ppos=this.parent.getpos()
+						pos=c0.add(pos,ppos)
 					}
 					return pos
 				},			
@@ -331,15 +299,11 @@ var c0={
 						this.y=a.y
 					}
 				},
-				getan:function(parent,an){
-					if(an){
-						an+=this.an
-					} else {
-						an=this.an
-					}				
-					if(parent && parent!=this.parent){
-						an=this.parent.getan(parent,an)
-					}
+				getan:function(){
+					var an=this.an
+					if(this.parent){
+						an+=this.parent.getan()
+					}					
 					return an%360
 				},
 				setan:function(an,p){				
@@ -401,158 +365,35 @@ var c0={
 		this.nodes.push(node)
 		return node
 	},
-	//rendering
-	clear:function(){
-		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
-	},
-	render:function(node,mat){
-		var x,y			
-		node=node || c0.root
-		if(node.visible){
-			if(node.type=='rect'){
-				x=node.x-node.wid/2
-				y=node.y-node.hig/2
-			} else {
-				x=node.x
-				y=node.y
-			}			
-			if(node.draw){
-				node.draw()
-			}
-			loop(node.children,function(i,e){
-				c0.render(e)
-			})
-		}		
-	},
-	redraw:function(node){
-		node=node || this.root
-		this.clear()
-		node.render()		
-	},
-	//primitives
 	rect:function(a){
-		var wid=a.wid/2,
-			hig=a.hig/2
-		a.pts=[
-			{
-				x:-wid,
-				y:-hig
-			},
-			{
-				x:wid,
-				y:-hig
-			},
-			{
-				x:wid,
-				y:hig
-			},
-			{
-				x:-wid,
-				y:hig
-			}
-		]		
-		
-		var node=this.poly(a)
-		node.x=a.x
-		node.y=a.y
+		var node=this.node('circ')
 		node.type='rect'
-		return node
-	},
-	area:function(pts){
-		var p1,
-			p2=pts[pts.length-1],
-			ahig,
-			xdif,
-			area=0,
-			sum
-			
-		loop(pts,function(i,p){
-			p1=p
-			ahig=(Math.abs(p2.y)+Math.abs(p1.y))/2
-			xdif=p2.x-p1.x
-			sum=ahig*xdif			
-			if(xdif>0){
-				area+=sum
-			} else {
-				area-=sum
-			}
-			p2=p
-		})
-		return area
-		
-	},
-	poly:function(a){
-		var node=this.newnode('rect')
-		node.type='poly'
 		loop(a,function(k,v){
 			node[k]=v
-		})
-		var x=0,
-			y=0			
-			
-		loop(node.pts,function(i,p){
-			x+=p.x
-			y+=p.y			
-		})
-		node.x=x/node.pts.length
-		node.y=y/node.pts.length
-		
-		//make tail
-		loop(node.pts,function(i,p){
-			dist=c0.dist(node,p)
-			if(dist>node.tail){
-				node.tail=dist
-			}
 		})		
-		
-		node.draw=function(){								
-			var c=c0.c,
-				p=c0.newpos(this.pts[this.pts.length-1]),
-				pos=this.getpos(c0.root),
-				an=this.getan(c0.root),
-				pa=this.parent
-				//pos=pa.pos()				
+		node.draw=function(){
+			var an=this.getan(),
+				pos=this.parent.getpos()
+			pos=c0.add(pos,c0.rot(this.pos(),this.parent.an))
+						
+			var w2=node.wid/2,
+				h2=node.hig/2,
+				pts=[
+					c0.rot({x:-w2,y:-h2},an),
+					c0.rot({x: w2,y:-h2},an),
+					c0.rot({x: w2,y: h2},an),
+					c0.rot({x:-w2,y: h2},an)
+				]
 			
-			
+			var c=c0.c		
 			
 			c.beginPath()			
-			
-			p=p.rot(an)
-			p=p.add(pos)
-			c.moveTo(p.x,p.y)
-			loop(this.pts,function(i,pt){
-				p=c0.newpos(pt)
-				p=p.rot(an)			
-				p=p.add(pos)
-				c.lineTo(p.x,p.y)
-			})
-			c.closePath()
-			c.lineJoin = 'bevel'
-			
-			if(this.color){
-				c.fillStyle = this.color
-				c.fill()				
-			}
-			if(this.linewid){
-				c.lineWidth = this.linewid
-				c.strokeStyle = this.linecolor
-				c.stroke()
-			}
-		}
-		return node	
-	},
-	circ:function(a){
-		var node=this.newnode('circ')		
-		node.type='circ'
-		loop(a,function(k,v){
-			node[k]=v
-		})
-		node.tail=node.rad
-		
-		node.draw=function(){
-			var c=c0.c
-			c.beginPath()
-			c.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false)
+			c.moveTo(pos.x+pts[0].x,pos.y+pts[0].y)
+			c.lineTo(pos.x+pts[1].x,pos.y+pts[1].y)
+			c.lineTo(pos.x+pts[2].x,pos.y+pts[2].y)
+			c.lineTo(pos.x+pts[3].x,pos.y+pts[3].y)
+			c.lineTo(pos.x+pts[0].x,pos.y+pts[0].y)
+			c.closePath()					
 			if(this.color){
 				c.fillStyle = this.color
 				c.fill()
@@ -562,43 +403,59 @@ var c0={
 				c.strokeStyle = this.linecolor
 				c.stroke()
 			}
-			this.bounds={
-				x:this.x-this.rad,
-				y:this.y-this.rad,
-				wid:this.rad*2,
-				hig:this.rad*2
+		}
+		
+		return node
+	},
+	circ:function(a){
+		var node=this.node('circ')		
+		node.type='circ'
+		node.hit='circ'
+		loop(a,function(k,v){
+			node[k]=v
+		})
+		node.draw=function(){
+			var c=c0.c,
+				pos=c0.add(this.parent.getpos(),c0.rot(this.pos(),this.parent.getan()))
+			c.beginPath()			
+			c.arc(pos.x,pos.y, this.rad, 0, 2 * Math.PI, false)
+			if(this.color){
+				c.fillStyle = this.color
+				c.fill()
+			}
+			if(this.linewid){
+				c.lineWidth = this.linewid
+				c.strokeStyle = this.linecolor
+				c.stroke()
 			}
 		}
 		return node		
 	},
 	line:function(a){
-		var node=this.newnode('line')
+		var node=this.node('line')
 		node.type='line'
 		loop(a,function(k,v){
 			node[k]=v
-		})				
-		console.log(node.color)
+		})
 		node.draw=function(){		
-			var c=c0.c
+			var c=c0.c,
+				pos=this.parent.getpos(),
+				an=this.parent.getan(),
+				p1=c0.add(pos,c0.rot(this.p1,an)),
+				p2=c0.add(pos,c0.rot(this.p2,an))
 			c.beginPath()
-			c.moveTo(this.p1.x,this.p1.y)
-			c.lineTo(this.p2.x,this.p2.y)			
+			c.moveTo(p1.x,p1.y)
+			c.lineTo(p2.x,p2.y)			
 			c.strokeStyle = this.color || 'black'
 			if(this.linewid){
 				c.lineWidth = this.linewid				
 			}			
 			c.stroke()
-			this.bounds={
-				x:Math.min(this.p1.x,this.p2.x),
-				y:Math.min(this.p1.y-this.p2.y),
-				wid:Math.abs(this.p1.x-this.p2.x),
-				hig:Math.abs(this.p1.y-this.p2.y)
-			}
 		}
 		return node			
 	},
 	text:function(a){
-		var node=this.newnode('text')
+		var node=this.node('text')
 		
 		loop(a,function(k,v){
 			node[k]=v
@@ -606,7 +463,11 @@ var c0={
 		node.type='text'
 		
 		var c=c0.c
-		node.draw=function(){			
+		node.draw=function(){
+			var pos=this.parent.getpos(),
+				an=this.parent.getan()
+			//console.log(this.pos())
+			pos=c0.add(pos,c0.rot(this.pos(),an))
 			if(this.font){
 				c.font = this.font
 			}
@@ -614,67 +475,14 @@ var c0={
 			if(this.linewid){
 				c.lineWidth = this.linewid
 				c.strokeStyle = this.linecolor || 'black'				
-				c.strokeText(this.text,this.x,this.y)
+				c.strokeText(this.text,pos.x,pos.y)
 			}
-			c.fillText(this.text,this.x,this.y)
+			c.fillText(this.text,pos.x,pos.y)
 		}
 		return node			
 	},
 	img:function(a){},
 	//collision
-	pvl:function(p,l){
-		//console.log('lp1',l.p1.x,l.p1.y)
-		//point(axis aligned ray) vs line
-		var h=false,
-			o1={
-				a:0,
-				b:0,
-				c:0
-			}
-			
-		o1.a=l.p2.y-l.p1.y
-		o1.b=l.p1.x-l.p2.x
-		o1.c=o1.a*l.p1.x+o1.b*l.p1.y
-
-		px=(o1.b*p.y-o1.c)/-o1.a
-
-		yy=[l.p1.y,l.p2.y].sort()
-		l2.p1=m
-		l2.p2.x=m.x+100
-		l2.p2.y=m.y
-		
-		if(px>=p.x && p.y>yy[0] && p.y<yy[1]){
-			h=c0.newpos({
-				x:px,
-				y:p.y
-			})
-			console.log('p:',p.x,p.y)
-		}
-		
-		return h		
-	},
-	pvpoly:function(p,py){
-		var hits=[],
-			hits=0,
-			line={
-				p1:c0.newpos(py.pts[py.pts.length-1]),
-				p2:c0.newpos()
-			}
-			
-		//translate p
-		c1.setpos(p)		
-		p=p.sub(py.getpos(c0.root))
-		p=p.rot(-py.getan(c0.root))
-		loop(py.pts,function(i,pt){
-			line.p2=c0.newpos(pt)
-			hit=c0.pvl(p,line)
-			if(hit){
-				hits+=1
-			}			
-			line.p1=line.p2
-		})
-		return hits%2
-	},
 	//timing
 	timout:0,
 	time:{
@@ -703,10 +511,10 @@ var c0={
 //test
 c0.init()
 
-var m=c0.newpos({
+var m={
 	x:0,
 	y:0
-})
+}
 var t1=c0.text({
 	x:10,
 	y:10,
@@ -714,115 +522,67 @@ var t1=c0.text({
 })
 t1.to()
 
-
-
-/*
 var r1=c0.rect({
 	name:'r1',
 	x:200,
 	y:200,	
 	wid:50,
 	hig:100,
-	an:45,	
+	an:0,	
 	color:'green',
 	linecolor:'black',
 	linewid:3
 })
 r1.to()
-/**/
-p1=c0.poly({
-	pts:[
-		{x:0,y:0},
-		{x:100,y:0},
-		{x:50,y:20},
-		{x:100,y:40},
-		{x:0,y:60}
-	],
-	color:'green',
+
+var r2=c0.rect({
+	name:'r2',
+	x:100,
+	y:100,	
+	wid:50,
+	hig:100,
+	//an:45,	
+	color:'red',
 	linecolor:'black',
-	linewid:3	
+	linewid:3
 })
-p1.x=100
-p1.y=100
-p1.to()
+r2.to(r1)
+
 var c1=c0.circ({
-	x:0,
-	y:0,
-	rad:10,
-	color:'red'
+	name:'c1',
+	x:50,
+	y:50,
+	rad:30,
+	color:'yellow',
+	linecolor:'black',
+	linewid:'3'
 })
-c1.to()
-var c2=c0.circ({
-	x:0,
-	y:0,
-	rad:10,
-	color:'blue'
+c1.to(r2)
+
+var t2=c0.text({
+	x:50,
+	y:50,
+	text:'hello'
 })
-c2.to()
+t2.to(c1)
+
 var l1=c0.line({
-	p1:{x:100,y:100},
-	p2:{x:300,y:200},
-	linewid:10,
-	color:'red'
+	p1:{x:0,y:0},
+	p2:{x:50,y:50},
+	color:'black'
 })
-l1.to()
-var l2=c0.line({
-	p1:{x:100,y:200},
-	p2:{x:0,y:0},
-	linewid:3,
-	color:'green'
-})
-l2.to()
-l1.p1=c0.newpos(p1.pts[p1.pts.length-1]).add(p1.pos())
-l1.p2=c0.newpos(p1.pts[0]).add(p1.pos())
-
-function hitXX(p,l1){
-	var h=false,
-		o1={
-			a:0,
-			b:0,
-			c:0
-		},
-		o2={
-			a:0,
-			b:0,
-			c:0
-		},
-		d
-		
-	o1.a=l1.p2.y-l1.p1.y
-	o1.b=l1.p1.x-l1.p2.x
-	o1.c=o1.a*l1.p1.x+o1.b*l1.p1.y
-
-	px=(o1.b*p.y-o1.c)/-o1.a
-
-	yy=[l1.p1.y,l1.p2.y].sort()
-	
-	var p=m
-	if(px>=p.x && p.y>yy[0] && p.y<yy[1]){
-		h=c0.newpos({
-			x:px,
-			y:p.y
-		})
-	}
-	return h
-}
+l1.to(c1)
 
 c0.canvas.on('mousemove',function(e){
 	m.x=e.x
-	m.y=e.y	
-	t1.text='X:'+m.x+'Y;'+m.y
-	var h=c0.pvpoly(m,p1)
-	if(h){
-		c1.setpos(h)
-		p1.color='blue'
-	} else {
-		p1.color='green'
-	}
+	m.y=e.y		
+	r1.an=m.x/2
+	t1.text='X:'+m.x+'Y:'+m.y+'AN:'+r1.an
+	//console.log(r2.getpos())
 	c0.redraw()
 })
-
-
+/**/
+/*
 function animloop(){
   window.requestAnimationFrame(animloop)
   c0.run()
@@ -830,208 +590,10 @@ function animloop(){
 animloop()
 
 c0.runlist.push(function(){	
-	p1.an+=0.2
+	
 })
 /**/
 //c0.redraw()
-c0.root.render()
-
-/*
-//c0.run(10)
-
-c0.canvas.s('border:1px solid red')
-
-var map=c0.rect({
-	name:'map',
-	x:0,
-	y:0,
-	wid:50000,
-	hig:50000,
-	fill:'#94B856',
-	linecol:'black',
-	linewid:3
-})
-map.to(c0.root)
-
-map.on('mousedown',function(e){
-	spot.pos(e.pos)
-	map.mousedown=true
-})
-map.on('mouseup',function(e){
-	spot.pos(e.pos)
-	map.mousedown=false
-})
-map.on('mousemove',function(e){
-	if(map.mousedown){
-		spot.pos(e.pos)
-	}
-})
-
-var spot=c0.circ({
-	x:0,
-	y:0,
-	rad:10,	
-	fill:'#A2FF00'
-})
-spot.to(c0.root)
-
-var pls=[]
-function addpls(){
-	var nr=10,
-		pl
-	loop(nr,function(i){
-		var col='#B88A27',
-			hp=30
-		if(i==0){
-			col='#75A621'
-			hp=100000
-		}
-		pl=c0.circ({
-			x:Math.random()*500,
-			y:Math.random()*500,
-			rad:20,	
-			fill:col
-		})
-		pl.dam=10
-		pl.hp=hp
-		pl.regen=1
-		pl.globalcooldown=new Date().getTime()
-		
-		//spells
-		pl.spellindex=0
-		pl.spells=[
-			{
-				name:'dam',
-				val:10,
-				cool:0,
-				lastcast:0
-			},
-			{
-				name:'heal',
-				val:10,
-				cool:0,
-				lastcast:0
-			},
-			{
-				name:'dot',
-				val:30,
-				cool:5000,
-				lastcast:0
-			},			
-		]
-		
-		
-		pl.to(c0.root)
-		pls.push(pl)
-		console.log('pl:',pl)
-	})
-}
-addpls()
-var me=pls[0]
-function movepls(){
-	var dist,
-		aggro=200,
-		attack=200
-		
-	loop(pls,function(i,e){
-		if(e!=me){
-			dist=c0.dist(e.pos(),me.pos())
-			if(dist<aggro){
-				e.fol(me.pos(),0.1)
-				if(dist<attack){
-					doattack(e,me)
-				}
-			}
-		} else {
-			me.fol(spot.pos(),0.2)		
-		}
-	})
-}
-var bullets=[]
-function addbullet(owner,tar){
-	var bul=c0.circ({
-		x:0,
-		y:0,
-		rad:5,	
-		fill:owner.fill
-	})
-	bul.pos(owner.pos())
-	bul.owner=owner
-	bul.tar=tar
-	bul.birth=new Date().getTime()
-	bullets.push(bul)
-	bul.to(c0.root)
-}
-function movebullets(){
-	var remlist=[]
-	loop(bullets,function(i,bul){
-		bul.fol(bul.tar,0.8)
-		if(c0.time.ct-bul.birth>200){			
-			remlist.push(bul)
-		} else if (c0.dist(bul.pos(),bul.tar.pos())<10){
-			remlist.push(bul)
-		}
-	})
-	loop(remlist,function(i,bul){
-		var ind=bullets.indexOf(bul)
-		bullets.splice(ind,1)
-		bul.rem()
-	})
-}
-function getspell(pl){
-	var len=pl.spells.length,
-		ind=pl.spellindex,
-		spell=false,
-		last
-	
-	loop(function(i){
-		ind+=i
-		ind%=len
-		spell=pl.spells[ind]
-		//console.log('check if can cast:',spell.name,ind)
-		if(i>=len){
-			return false
-		}		
-		last=c0.time.ct-spell.lastcast		
-		if(last>=spell.cool){
-			spell.lastcast=new Date().getTime()
-			pl.spellindex=ind+1			
-			//console.log('can cast:',spell.name,ind)
-			return false
-		} else {
-			spell=0
-		}
-	})
-	return spell
-}
-function doattack(a,b){	
-	if(c0.time.ct-a.globalcooldown>globalcooldown){
-		a.globalcooldown=c0.time.ct
-		addbullet(a,b)
-		var spell=getspell(a)
-		//console.log(spell)
-		b.hp-=a.dam
-		if(b.hp<0){
-			d.dead=true
-			var ind=pls.indexOf(b)
-			pls.splice(ind,1)
-		}
-	}
-}
-
-c0.runlist.push(movepls)
-c0.runlist.push(movebullets)
-
-
-
-//skillchain
-var ele=d.body.r('div id=skillchain'),
-	sp
-ele.s('display:inline-block position:absolute bottom:0px left:50%')
-loop(me.spells,function(i,e){
-	sp=ele.r('div')
-	sp.s('display:inline-block width:64px height:64px border:1px solid #aaa background:#fff')
-	sp.h(e.name)
-})
-
-/**/
+c0.render(c0.root)
+console.log(r2.pos())
+console.log(r2.getpos())

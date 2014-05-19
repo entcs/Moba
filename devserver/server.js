@@ -34,7 +34,10 @@ var express = require('express'),
 			action=parts[2],
 			query=req.query,
 			hres='',
-			referer=req.headers.referer		
+			referer=req.headers.referer	
+
+		//console.log(parts)
+				
 		if(referer){
 			referer=referer.split('?')[0]
 			referer=referer.split('/').pop()
@@ -160,6 +163,7 @@ var s={
 s.addwatcherevents()	
 	
 app.use(express.bodyParser())	
+app.use(express.cookieParser())
 connection.connect()	
 
 app.get('*',function(req,res){

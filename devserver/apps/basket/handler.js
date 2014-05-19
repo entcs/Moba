@@ -35,18 +35,21 @@ var argsl=function(name){
 				})
 			},
 			post:function(req,res){
-				var q='insert into '+name+' set ?',
-					data=req.body,
+				var data=req.body,
+					q='insert into '+data.tablename+' set ?',
 					columns=[],
-					values=[]				
-				connection.query(q,data.req,function(err,qres){						
+					values=[]		
+
+				console.log('items add:',q,data)
+				connection.query(q,data.item,function(err,qres){						
 					if(err){
 						data.err=err
 					} else {
 						data.res=qres
 					}
-					if(data.want=='list'){
-						a.list.get(req,res)
+					if(data.want=='list' && !err){
+						handle[name].list.get({query:{tablename:data.tablename}},res)
+						//res.send(JSON.stringify(data))
 					} else {
 						res.send(JSON.stringify(data))
 					}
@@ -69,7 +72,7 @@ var argsl=function(name){
 			post:function(req,res){
 				//DELETE FROM somelog WHERE user = 'jcole'
 				var data=req.body,
-					q='DELETE from '+name+' where id='+connection.escape(data.req.id)
+					q='DELETE from '+name+' where id='+connection.escape(data.id)
 				
 				connection.query(q,data.req,function(err,qres){						
 					if(err){
@@ -78,7 +81,7 @@ var argsl=function(name){
 						data.res=qres
 					}
 					if(data.want=='list'){
-						a.list.get(req,res)
+						handle[name].list.get({query:{tablename:data.tablename}},res)
 					} else {
 						res.send(JSON.stringify(data))
 					}
@@ -107,21 +110,21 @@ var argsl=function(name){
 		set:{
 			post:function(req,res){
 				var data=req.body,
-					q='UPDATE '+name+' SET ? '+'where id='+connection.escape(data.req.id)
+					q='UPDATE '+name+' SET ? '+'where id='+connection.escape(data.id)
 				console.log('q:',data)
-				connection.query(q,data.req,function(err,qres){						
+				connection.query(q,data.item,function(err,qres){						
 					if(err){
 						data.err=err
 					} else {
 						data.res=qres
 					}					
 					if(data.want=='list'){
-						a.list.get(req,res)
+						handle[name].list.get({query:{tablename:data.tablename}},res)
 					} else {
 						res.send(JSON.stringify(data))
 					}
 				})
-			}
+			}								
 		},
 		list:{
 			get:function(req,res){
@@ -153,7 +156,8 @@ var handle={
 	players:argsl('players'),
 	teams:argsl('teams'),
 	actions:argsl('actions'),	
-	actiontypes:argsl('actiontypes')
+	actiontypes:argsl('actiontypes'),
+	tactics:argsl('tactics')
 }
 console.log(handle)	
 exports.handler=function(req,res){	

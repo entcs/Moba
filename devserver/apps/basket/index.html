@@ -2,302 +2,1507 @@
 	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
 </head>
 <script src='dom0.js'></script>
+<script src='c0.js'></script>
 <!---->
-<a href="/">home</a>
 <script>
+var basket={}
 d.on('ready',function(e){
-	function setstyles(){
-		var sheet=d.dss.new('basesheet')
-		sheet.new('body,button,input,table',
-			'font-family:Open Sans Condensed, sans-serif',
-			'font-weight: bold',
-			'color:#666',
-			'text-transform: uppercase'
-		)
-		sheet.new('.sec,.form',
-			'border:1px solid #aaa',
-			'background-color: #eee'
-		)
-		sheet.new('.cols',
-			'display:table',
-			'table-layout:fixed',
-			'width:100%'
-		)
-		sheet.new('.cols>*',
-			'display:table-cell'
-		)
-		sheet.new('.bo',
-			'border:1px solid #aaa'
-		)
-		sheet.new('.bt',
-			'border-top:1px solid #aaa'
-		)
-		sheet.new('.bb',
-			'border-bottom:1px solid #aaa'
-		)
-		sheet.new('.bl',
-			'border-left:1px solid #aaa'
-		)
-		sheet.new('.br',
-			'border-right:1px solid #aaa'
-		)
-		sheet.show()
-		return sheet
-	}
-	setstyles()
-	console.log('ready')
-	var appname='basket'
-	var actions=['add','rem','get','set','list']
-	var basket={
-		tables:{
-			seasons:{},
-			leagues:{},
-			games:{},
-			teams:{},
-			players:{},
-			actions:{},
-			actiontypes:{}
-		}
-	}
-	d.body.on('keyup',function(e){
-		var wrap=d.find('.args-wrap')
-		if(wrap && e.keyCode==27){
-			wrap.rem()
-		}		
-	})
 	
-	var args={
-		draw:function(name,action,data){
-			var cont=d.find('.args-wrap')
-			if(!cont){
-				cont=d.body.r('div class=args-wrap')
-					.s('position:absolute width:100% height:100% top:0px left:0px text-align:center background-color:rgba(0,0,0,0.5) padding:30px box-sizing:border-box')
-			}
-			cont.h('')			
-			var form=cont.r('form class=form')
-				.s('display:inline-block')
-			var header=form.r('div class=header')
-				.h(name+' '+action)
-			var content=form.r('div class=content')
-				.s('text-align:left')
-			var controls=form.r('div class=controls')
-				.s('text-align:right margin-top:20px')
-				
-			if(action=='add'){
-				var lab,
-					inp,
-					field
-										
-				loop(data,function(i,inf){
-					field=content.r('div class=field')
-					lab=field.r('label')
-						.h(inf.Field)
-					inp=field.r('input')
-						.set('id',inf.Field)
-						.set('data-type',inf.Type)
-					if(inf.Field=='id'){
-						field.s('display:none')
-						field.rem()
-					}				
-				})
-				controls.r('button class=add html=add type=button')
-					.on('click',function(e){						
-						validate=function(field){
-							console.log('validate:',field)
-						}
-						var tar=e.target,
-							form=tar.findup('.form'),
-							fdata=form.getform(validate)						
-						var url=['basket',name,'add'].join('/')
-						
-						d.send(url,fdata,function(res){
-							console.log('res:',res)
-						},'json')
-					})
-			} 
-			else if (action=='list'){
-				var row,field,types={},type
-				
-				//get types
-				loop(data.fields,function(i,e){					
-					types[e.Field]=e.Type
-				})
-				
-				loop(data.list,function(i,e){
-					if(!i){
-						var fields=content.r('div class=fields'),
-							field
-						loop(e,function(k,v){
-							field=fields.r('input class=cell disabled=true')								
-							field.val=k							
-						})						
-					}					
-					row=content.r('div class=row')
-					loop(e,function(k,v){
-						field=row.r('input class=cell')
-						type=types[k]
-						field.set('data-type',type)
-						if(type.indexOf('int')!=-1){
-							field.set('type','number')
-						}
-						if(type=='date'){
-							if(v){
-								//format date
-								v=v.split('T')[0].split('-').join('.')
-							}
-						}
-						field.val=v
-						field.id=k
-						
-						if(k=='id'){
-							field.set('disabled','true')
-							field.set('data-ignore',true)
-						}
-						/**/
-					})			
-					//set
-					row.r('button type=button html=set')
-						.set('data-action','set')
-						.set('data-url',[appname,name,'set'].join('/'))						
-						.set('data-name',name)
-						.set('data-want','list')						
-						.on('click',function(e){
-							this.p.find('#id').set('data-ignore','')
-							this.data=this.p.getform()							
-							args.send(e.target,'json')
-						})
-					//rem
-					row.r('button type=button html=rem')
-						.set('data-action','rem')
-						.set('data-url',[appname,name,'rem'].join('/'))						
-						.set('data-name',name)
-						.set('data-want','list')
-						.on('click',function(e){
-							this.p.find('#id').set('data-ignore','')
-							this.data=this.p.getform()
-							args.send(e.target,'json')
-						})					
-				})
-				//add row								
-				row1=content.r('div class=row bt')
-					.s('margin-top:10px')
-				row=content.r('div class=row')
-								
-				loop(data.fields,function(i,v){
-					field=row1.r('input class=cell disabled=true')								
-					field.val=v.Field												
-				
-					field=row.r('input class=cell')
-					field.id=v.Field
-					type=types[v.Field]
-					field.set('data-type',type)
-					if(type.indexOf('int')!=-1){
-						field.set('type','number')
-					}
-					
-					if(v.Extra=='auto_increment' || v.Field=='id'){
-						field.set('disabled',true)
-						field.set('data-ignore',true)
-						field.val=0
-					}
-					
-				})	
-				//add
-				row.r('button type=button html=add')
-					.set('data-action','add')
-					.set('data-url',[appname,name,'add'].join('/'))					
-					.set('data-name',name)
-					.set('data-want','list')
-					.on('click',function(e){
-						this.data=this.p.getform()
-						args.send(e.target,'json')
-					})				
-				
-				
-				
-			}
-			else if (action=='error'){
-				content.r('div')
-					.h(data)
-			}
-			else {
-				content.r('div')
-					.h(['no draw for:',name,action].join(' '))
-			}
+	//extend dom0
+	d.newfield=function(a){
+		var div=d.r('div class=field'),
+			lab=div.r('label'),
+			inp
+		if(a.type=='select'){
+			var sel=div.r('select')
+			loop(a.options,function(k,v){
+				sel.r('option')
+					.h(v)
+					.val(k)
+			})
+		} else if (a.type=='check'){
+			
+		} else if(a.type=='radio'){
+		
+		} else {
+			inp=div.r('input')
+			inp.id=a.id
+		}
+			
+		
+		lab.for=a.id
+		lab.h(a.id)
+		
+		return div
+	}
+	Element.prototype.app=function(c){
+		this.appendChild(c)
+		return this
+	}
+	Element.prototype.pos=function(){
+		var bounds=this.getBoundingClientRect(),
+			pos={
+				x:bounds.left,
+				y:bounds.top
+			}						
+		return pos
+	}
 
-			controls.r('button class=cancel html=cancel type=button')
-				.on('click',function(e){
-					var tar=e.target
-					tar.findup('.args-wrap').rem()
-					tar.findup('.form').rem()
-					
-				})
-			form.to(cont)					
+	basket={
+		setstyles:function(){
+			var sheet=d.dss.new('basesheet'),
+				col1='background-color:yellowgreen',
+				col2='background-color:#333',
+				col3='background-color:#eee',
+				tcol1='color:#eee',
+				tcol2='color:#eee',
+				tcol3='color:#333'				
+			
+			sheet.new('body',
+				'background-color:#eee',
+				'font-size:14px',
+				'margin:0px',
+				col3,
+				tcol3
+			)
+			sheet.new('table',
+				'border-collapse:collapse'
+			)
+			
+			sheet.new('table td',
+				'padding:0px',
+				'margin:0px',
+				'border:1px solid #aaa'
+			)
+			sheet.new('body,button,input,table,select',
+				'font-family:Open Sans Condensed, sans-serif',
+				'font-weight: bold',
+				'font-size:14px',
+				'color:#666',
+				'border:none',
+				'text-transform: uppercase'
+			)
+			sheet.new('*',
+				'box-sizing:border-box'
+				//'overflow:hidden'
+			)
+			sheet.new('.hand',
+				'cursor:pointer'
+			)
+			sheet.new('.sec,.form',
+				'border:1px solid #aaa',
+				'background-color: #eee'
+			)
+			sheet.new('.cols',
+				'display:table',
+				'table-layout:fixed',
+				'width:100%'				
+			)
+			sheet.new('.cols>*',
+				'display:table-cell',
+				'vertical-align:top'
+			)
+			sheet.new('.iblocks > *',
+				'display:inline-block',
+				'box-sizing:border-box'				
+			)			
+			sheet.new('.player',
+				col3
+			)			
+			
+			sheet.new('.selected',
+				col1
+			)			
+			sheet.new('.w1',
+				'width:960px'
+			)
+			sheet.new('.w2',
+				'width:172px'
+			)
+			sheet.new('.w3',
+				'width:576px'
+			)
+			sheet.new('.w4',
+				'width:788px'
+			)
+			sheet.new('.menu .item',
+				'margin:5px 0px 2px 2px',
+				'border-radius:25px 0px 0px 25px',
+				'text-align:right',
+				'padding:3px 5px',
+				'transition: all 0.5s',
+				'cursor:pointer',				
+				tcol3
+			)
+			sheet.new('.sha',
+				'box-shadow: 0px 1px 5px #000'
+			)
+			sheet.new('.menu .item:hover',
+				'border-radius:25px 0px 0px 25px',
+				'padding-right:20px',
+				//col3,
+				tcol1
+			)
+			sheet.new('.menu .item.selected',
+				'border-radius:25px 0px 0px 0px',
+				tcol2
+			)
+			sheet.new('.item2',
+				'margin:2px',
+				'font-size:14px',	
+				'border-radius:0px 0px 0px 0px',				
+				//'text-align:right',
+				'padding:3px 12px',
+				'transition: all 0.3s',
+				'cursor:pointer',				
+				col1,
+				tcol3
+			)
+			sheet.new('.item2:hover',
+				//'border-radius:0px 0px 25px 25px',				
+				col3
+				//tcol1
+			)			
+			
+			sheet.new('.gra1',
+				'background: linear-gradient(to bottom, #72aa00 0%,#bfd255 100%,#bfd255 100%)'
+			)
+			sheet.new('.big',
+				'font-size:18px'
+			)
+			sheet.new('.b32',
+				'width:32px',
+				'height:32px',
+				'font-size:24px',
+				'line-height:32px',
+				'border:1px solid #aaa',
+				'cursor:pointer'
+			)
+			sheet.new('.b48',
+				'width:48px',
+				'height:48px',
+				'line-height:48px',
+				'font-size:36px',
+				'border:1px solid #aaa',
+				'cursor:pointer'
+			)		
+			sheet.new('.h24',
+				'height:24px'
+			)
+			sheet.new('.h48',
+				'height:48px'
+			)		
+			sheet.new('.iblock',
+				'display:inline-block'
+			)			
+			sheet.new('.bo',
+				'border:1px solid #aaa'
+			)
+			sheet.new('.w100',
+				'width:100%'				
+			)
+			sheet.new('.w50',
+				'width:50%'				
+			)
+			sheet.new('.w33',
+				'width:33.33333%'				
+			)			
+			sheet.new('.w25',
+				'width:25%'				
+			)
+			sheet.new('.tleft',
+				'text-align:left'
+			)
+			sheet.new('.tright',
+				'text-align:right'
+			)
+			sheet.new('.tmid',
+				'text-align:center'
+			)
+			sheet.new('.bo',
+				'border:1px solid #aaa'
+			)
+			sheet.new('.bt',
+				'border-top:1px solid #aaa'
+			)
+			sheet.new('.bb',
+				'border-bottom:1px solid #aaa'
+			)
+			sheet.new('.bl',
+				'border-left:1px solid #aaa'
+			)
+			sheet.new('.br',
+				'border-right:1px solid #aaa'
+			)
+			sheet.new('.col1',
+				col1
+			)
+			sheet.new('.col2',
+				col2
+			)
+			sheet.new('.col3',
+				col3
+			)
+			sheet.new('.tcol1',
+				tcol1
+			)
+			sheet.new('.tcol2',
+				tcol2
+			)
+			sheet.new('.tcol3',
+				tcol3
+			)			
+			
+			
+			sheet.show()
+			return sheet
+		},
+		show:function(){
+			d.body.r('a href=/ class=big html=home')
+				.s('position:absolute')
+			var wrap=d.body.r('div class=wrap'),
+				headerwrap=wrap.r('div class=headerwrap col1'),
+				header=headerwrap.r('div class=header cols w1'),
+				left=header.r('div class=left w2'),
+				mid=header.r('div class=mid w3'),
+				right=header.r('div class=right w2')
+			
+			//headerwrap.s('border-bottom:5px solid #333')
+			wrap.s('margin:0 auto text-align:center')
+			header.s('margin:0 auto')			
+			
+			left.r('div class=logo w4 tleft html=basketball')
+				.s('font-size:48px')
+			left.r('div class=slogan w4 tleft html=leagues, tactics, combinations, statistics')				
+				.s('margin-top: -15px')
+			var promo=mid.r('div class=promo')
+				.s('padding:5px')
+				
+			right.s('padding:5px')
+			
+			//login
+			var login=right.r('div class=login')
+				.s('border-radius:10px padding:5px')
+				
+			login.r('div')
+				.r('input')
+					.s('width:100%').p
+				.r('input')
+					.s('width:100%').p
+				.r('button class=col2')
+					.h('login')
+					.s('width:100%')
+			
+			
+			
+			//infobar
+			var names=[				
+				{
+					id:'news',
+					name:'Uudised',
+					mark:'red'
+				},
+				{
+					id:'teams',
+					name:'Meeskonnad',
+					//act:'list',
+					mark:'red'
+				},
+				{
+					id:'players',
+					name:'Mängijad',
+					//act:'list',
+					mark:'red'
+				},
+				{
+					id:'calendar',
+					name:'Üldkalender',
+					mark:'red'
+				},
+				{
+					id:'timetable',
+					name:'Ajakava/Tulemused',
+					mark:'red'
+				},
+				{
+					id:'tournament',
+					name:'Turniiritabelid',
+					mark:'red'
+				},
+				{
+					id:'referees',
+					name:'Kohtunikud',
+					mark:'red'
+				},				
+				{
+					id:'guide',
+					name:'Juhend',
+					mark:'red'
+				},
+				{
+					id:'contact',
+					name:'Kontaktid',
+					mark:'red'
+				},
+				{
+					id:'registerteam',
+					name:'Registreerimine',
+					act:'newteam'
+				},
+				{
+					id:'newgame',
+					name:'Uus M2ng',
+					act:'newgame'
+				},
+				{
+					id:'tactics',
+					name:'taktika',
+					act:'tactics'
+				}
+			]		
+			var	barwrap=wrap.r('div class=barwrap col2'),
+				bar=barwrap.r('div class=bar cols w1 big')
+					//.h('infobar')
+			
+			barwrap.s('min-height:5px')
+			bar.s('margin:0px auto')
+			
+			//league
+			var league=bar.r('select class=league big')				
+			league
+				.r('option value=League1 html=League1').p
+				.r('option value=League2 html=League2').p
+				.r('option value=League3 html=League3').p
+				.r('option value=League4 html=League4').p
+				.r('option value=League5 html=League5').p
+				.r('option value=League6 html=League6')			
+			
+			//season
+			var season=bar.r('select class=season big')				
+			season
+				.r('option value=HOOAEG 2013/2014 html=HOOAEG 2013/2014').p
+				.r('option value=HOOAEG 2014/2015 html=HOOAEG 2014/2015').p
+				.r('option value=HOOAEG 2015/2016 html=HOOAEG 2015/2016').p
+				.r('option value=HOOAEG 2016/2017 html=HOOAEG 2016/2017').p
+				.r('option value=HOOAEG 2017/2018 html=HOOAEG 2017/2018').p
+				.r('option value=HOOAEG 2018/2019 html=HOOAEG 2018/2019')			
+			/*	
+			loop(names,function(i,name){
+				bar.r('div class=item2')
+					.s('display:inline-block')
+					.h(name)
+			})
+			/**/
+				
+			
+			
+			var	contwrap=wrap.r('div class=contwrap'),
+				cont=contwrap.r('div class=cont cols w1'),
+				left=cont.r('div class=left w2'),
+				mid=cont.r('div class=mid col1 ')
+				//right=cont.r('div class=right w2')
+			
+			cont.s(
+				'margin:0 auto'
+			)
+			
+			//menu
+			var menu=left.r('div class=menu'),
+				mb
+				
+			loop(names,function(name,item){
+				mb=menu.r('div class=item col1')
+					.h(item.name)
+					.set('act',item.act)
+					.on('click',function(e){
+						basket.handlemenu(item)
+					})
+				if(item.mark){
+					mb.s('background:red')
+				}
+			})
+			
+			//content
+			mid.s('padding:5px z-index:1 position:relative')
+			mid.r('div class=col3 cont')																
 			
 		},
-		send:function(tar,json){
-			
-			var action=tar.get('data-action'),
-				url=tar.get('data-url'),
-				want=tar.get('data-want'),
-				sdata={
-					req:tar.data,
-					want:want
-				},
-				name=tar.get('data-name')				
-													
-			function callback(res){
-				var data=''
-				try{
-					data=JSON.parse(res)							
-				} catch (err){
-					console.log('res not JSON')					
-					args.draw('ERROR','error',res)
+		lists:{},
+		handlemenu:function(item){
+			if(item.act=='list'){
+				console.log('menu click:',item)
+				var list=basket.lists[item.id]
+				if(!list){
+					console.log('here')
+					d.send(item.id+'/list',function(data){
+						data=JSON.parse(data)
+						basket.lists[item.id]=data.list
+						basket.showlist(basket.lists[item.id])
+					})
+				} else {
+					basket.showlist(basket.lists[item.id])
 				}
-				if(data){
-					if(data.err){
-						console.log('ERROR:',data.err)
-					} else {						
-						action=want || action						
-						args.draw(name,action,data)
+			} else if(item.act=='newteam'){
+				basket.newteam.show()
+			} else if(item.act=='newgame'){
+				basket.newgame.show()
+			} else if(item.act=='tactics'){
+				var court=basket.showcourt()
+				basket.tactics.show()		
+			}
+		},
+		showlist:function(list){//generic
+			var table=d.r('table class=list w100'),
+				thead=table.r('thead'),
+				tbody=table.r('tbody'),
+				tr,
+				td
+			
+			loop(list,function(i,item){
+				if(!i){
+					//headers
+				}
+				tr=tbody.r('tr class=item')
+				loop(item,function(k,v){
+					td=tr.r('td')
+					td.h(v)
+				})
+			})
+			var cont=d.find('.mid .cont')
+			cont.h('')
+			table.to(cont)
+		},
+		newteam:{
+			show:function(data){
+				var team=d.r('div class=newteam'),
+				field
+				
+				field=d.newfield({
+					id:'teamname'					
+				}).to(team)
+				field.s('display:inline-block')
+				
+				field=d.newfield({
+					id:'league',
+					type:'select',
+					options:{
+						1:'a',
+						2:'b',
+						3:'c'
 					}
+				}).to(team)
+				field.s('display:inline-block')
+
+				var fields=[
+					'name',
+					'age',
+					'nr',
+					'height',
+					'position',
+					'rem'
+				]				
+				
+				//players
+				var table=d.r('table')
+						.s('width:100%')
+					,
+					thead=table.r('thead'),
+					tbody=table.r('tbody'),
+					tfoot=table.r('tfoot'),
+					tr,
+					td
+				
+				//header				
+				tr=thead.r('tr')
+				loop(fields,function(i,name){
+					td=tr.r('td')
+					td.r('div')
+						.h(name)
+				})					
+				table.to(team)
+				
+				function addrow(){
+					tr=thead.r('tr')
+					loop(fields,function(i,name){
+						td=tr.r('td')
+						if(name=='rem'){
+							td.r('button')
+								.h(name)
+								.on('click',function(e){
+									e.target.findup('tr').rem()
+								})
+						} else {
+							td.r('input')
+								.addclass('w100')
+						}
+					})
+					return tr
+				}
+				loop(5,function(i){
+					addrow().to(tbody)
+				})
+				
+				//footer
+				tr=tfoot.r('tr')
+				td=tr.r('td')
+				td.set('colspan',fields.length)
+				td.r('button')
+					.addclass('w100')
+					.h('add new player')
+					.on('click',function(){
+						addrow().to(tbody)
+					})
+				
+				//send team
+				team.r('button')
+					.addclass('big w100')
+					.h('send team')
+				
+				var cont=d.find('.mid .cont')
+				cont.h('')
+				team.to(cont)
+				
+					
+				
+				return team
+			}
+		},
+		newgame:{
+			pl:'',
+			act:'',
+			show:function(){
+				var game=d.r('div')
+				game.addclass('newgame bo')
+				
+				//teams
+				var teams=game.r('div class=teams cols'),
+					team
+					
+				loop(2,function(i){
+					team=teams.r('div class=team bo')					
+					team.r('div class=name big bo html=team'+(i+1))
+					team.r('div class=score big html=score 00')
+					team.r('div class=fouls html=fouls 0')
+					
+					//players
+					var pls=team.r('div class=players'),
+						pl
+					loop(12,function(i2){
+						pl=pls.r('div class=player big b48')
+							.s('display:inline-block')
+							.h(i2+4)
+							.on('click',function(e){
+								var sel=game.find('.players .selected')
+								if(sel){
+									sel.remclass('selected')
+								}
+								if(i==1){
+									d.find('.newgame .actions').s(
+										'margin-left:auto margin-right:0px'
+									)									
+								} else {
+									d.find('.newgame .actions').s(
+										'margin-left:0px margin-right:auto'
+									)																		
+								}
+								e.target.addclass('selected')
+								basket.newgame.pl=e.target.h()
+								var pl=basket.newgame.pl,
+									act=basket.newgame.act
+								if(pl && act){
+									//addaction(pl,act)
+								}
+							})
+						
+					})
+				})
+				//actions
+				var acts=[						
+						'1+',
+						'1-',
+						'2+',
+						'2-',
+						'3+',
+						'3-',
+						'fo',
+						'tf',
+						'tt',												
+						'bl',
+						'st',
+						'as',
+						'rb',						
+						'to'
+					],
+					actions=game.r('div class=actions')						
+				
+				//shootinpos
+				var pos=actions.r('div class=spos')
+					.r('button class=toggle w100')
+						.h('mark shooting pos')
+						.on('click',function(e){
+							var court=game.find('.court')
+							if(court){
+								c0.rem(court)
+								//court.rem()
+							} else {
+								court=basket.showcourt(0.7)
+								court.to(game.find('.spos'))
+								//court.s('zoom:0.5')
+								var sspot=0,
+									cc=c0.get(court)
+								court.on('mousedown',function(e){									
+									var bounds=court.getClientRects()[0],
+										pos={
+											x:e.pageX-bounds.left,
+											y:e.pageY-bounds.top-d.body.scrollTop
+										}					
+									if(sspot){
+										sspot.rem()
+									}
+									sspot=cc.circ({
+										x:pos.x,
+										y:pos.y,
+										rad:15,
+										color:'yellowgreen'
+									})
+									sspot.to()									
+									cc.redraw()
+								})								
+							}
+						}).p	
+						
+				actlist=actions.r('div class=actionslist')
+				
+				loop(acts,function(i,name){
+					actlist.r('div class=action big b48')
+						.s('display:inline-block')
+						.h(name)
+						.on('click',function(e){
+							var sel=game.find('.actions .selected')
+							if(sel){
+								sel.remclass('selected')
+							}
+						
+							e.target.addclass('selected')
+							basket.newgame.act=name
+							var pl=basket.newgame.pl,
+								act=basket.newgame.act
+							if(pl && act){
+								addaction(pl,act)
+							}													
+						})
+				})
+				
+				//gamelines				
+				var gamelines=game.r('div class=gamelines')
+						.s('overflow:auto max-height:131px'),
+					table=gamelines.r('table')
+						.s('width:100% margin-bottom: 1px')
+					,
+					thead=table.r('thead'),
+					tbody=table.r('tbody'),
+					tfoot=table.r('tfoot'),
+					tr,
+					td,
+					fields=[
+						'nr',
+						'name',
+						'action',
+						'time',
+						'rem'
+					]
+												
+				function addaction(pl,act){
+					var sels=d.findall('.newgame .actions .selected')						
+					loop(sels,function(i,ele){
+						ele.remclass('selected')
+					})
+						
+					//basket.newgame.act=''
+					//basket.newgame.pl=''				
+					
+					
+					//tr=tbody.r('tr')
+					tr=d.r('tr').to(tbody,'first')
+					loop(fields,function(i,name){
+						if(name!='rem'){
+							td=tr.r('td')
+								.addclass(name)
+								.h(name)	
+							if(name=='nr'){
+								td.h(pl)
+							} else if(name=='action'){
+								td.h(act)
+							} else if(name=='time'){
+								td.h('game time')
+							}
+						} else {
+							td=tr.r('td')
+								.s('width:1px')
+								.addclass(name)
+								.r('button')
+									.h(name)
+									.on('click',function(e){
+										e.target.findup('tr').rem()
+									})
+
+						}
+					})
+					//gamelines.scrollTop=99999999
 				}
 				
-			}		
-			if(sdata.req){
-				if(json){
-					d.send(url,sdata,callback,json)
-				} else {
-					d.send(url,sdata,callback)
+				//time
+				var time=game.r('div class=time cols'),
+					gtime=time.r('div class=gametime big bo'),
+					otime=time.r('div class=offencetime big bo')
+				
+				gtime.h('gametime')
+				otime.h('offencetime')
+				
+				
+				var cont=d.find('.mid .cont')
+				cont.h('')
+				game.to(cont)				
+				
+				return game
+			}
+		},
+		showcourt:function(scale){		
+			scale=scale || 1
+			var canvas=d.r('canvas class=court')
+			canvas.set('width',(780*scale)+'px')
+			canvas.set('height',(550*scale)+'px')
+			
+			var c=c0.add(canvas)
+			var court=c.rect({
+				name:'court',
+				x:390*scale,
+				y:275*scale,	
+				wid:750*scale,
+				hig:550*scale,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			court.to()
+
+			var three=c.circ({
+				name:'three',
+				x:390*scale,
+				y:80*scale,	
+				rad:320*scale,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			three.to()
+			
+			var paint=c.rect({
+				name:'paint',
+				x:390*scale,
+				y:145*scale,	
+				wid:245*scale,
+				hig:290*scale,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			paint.to()
+			
+			var free=c.circ({
+				name:'free',
+				x:390*scale,
+				y:290*scale,	
+				rad:95*scale,
+				//color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			free.to()				
+			
+			var board=c.rect({
+				name:'board',
+				x:390*scale,
+				y:60*scale,	
+				wid:90*scale,
+				hig:2,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			board.to()				
+			
+			var rim=c.circ({
+				name:'rim',
+				x:390*scale,
+				y:80*scale,	
+				rad:15*scale,
+				//color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			rim.to()					
+			
+			//draw curve
+			/*
+			var curve=c.curve({
+				p1:{x:70,y:0},
+				p2:{x:710,y:0},
+				c1:{x:70,y:530},
+				c2:{x:710,y:530},
+				color:'blue',
+				linewid:2
+			})
+			curve.to()			
+			*/
+			c.redraw()		
+		
+			return canvas
+		},		
+		tactics:{
+			pl:'',
+			act:0,
+			lines:[],
+			show:function(){
+				var actpl='',
+					tac=d.r('div class=tactics')
+					court=basket.tactics.court=basket.showcourt()					
+				court.to(tac)
+				var cc=c0.get(court)
+				
+				var cont=d.find('.mid .cont')
+				cont.h('')
+				tac.to(cont)	
+								
+				var line
+				var trail=[],
+					lines=[]
+				function addspot(e,rad,col){
+					var bounds=court.getClientRects()[0],
+						pos={
+							x:e.pageX-bounds.left,
+							y:e.pageY-bounds.top-d.body.scrollTop
+						},
+						spot=cc.circ({
+							x:pos.x,
+							y:pos.y,
+							rad:rad || 2,
+							color:col || 'yellowgreen'
+						})
+					spot.to()
+					trail.push(spot)
+					cc.redraw()
+					return spot
 				}
-			} else {
-				if(json){
-					d.send(url,callback,json)
-				} else {
-					d.send(url,callback)
+				function remspots(){
+					loop(trail,function(i,spot){
+						if(spot.rem){
+							spot.rem()
+						}
+					})
+					trail=[]
+					if(line){
+						line.rem()
+						line=''
+					}
+					cc.redraw()
 				}
-			}		
+				court.on('mousedown',function(e){
+					//remspots()
+					if(actpl){
+						//plmove
+					} else {
+						//lines
+						addspot(e)
+						/*
+						line=cc.line({
+							p1:e.pos,
+							p2:e.pos,
+							linewid:8,
+							color:'orange'
+						})
+						line.to()
+						
+						basket.tactics.lines.push(line)
+						*/
+						//console.log('added line',basket.tactics.lines.length)						
+						cc.redraw()
+					}
+				})
+				court.on('mouseup',function(e){
+					var ind=tacs.ind
+					if(actpl){																
+						//mark spot						
+						var spots=tacs.frames.spots[ind],
+							pind=actpl.ind,
+							spot=spots[actpl.ind]
+							
+						spot.x=actpl.x
+						spot.y=actpl.y
+						
+						actpl=''						
+					} else {						
+						var //last=trail[trail.length-1],
+							first=trail[0],							
+							spot=addspot(e),
+							last=spot.pos(),
+							mid=trail[parseInt(trail.length/2)]
+						
+						function pointOnLine(line1, line2, pt) {
+							var isValid = false;
+
+							var r = {x:0,y:0}
+							if (line1.x == line2.x && line1.y == line2.y) line1.x -= 0.00001;
+
+							var U = ((pt.x - line1.x) * (line2.x - line1.x)) + ((pt.y - line1.y) * (line2.y - line1.y));
+
+							var Udenom = Math.pow(line2.x - line1.x, 2) + Math.pow(line2.y - line1.y, 2);
+
+							U /= Udenom;
+
+							r.x = line1.x + (U * (line2.x - line1.x));
+							r.y = line1.y + (U * (line2.y - line1.y));
+
+							var minx, maxx, miny, maxy;
+
+							minx = Math.min(line1.x, line2.x);
+							maxx = Math.max(line1.x, line2.x);
+
+							miny = Math.min(line1.y, line2.y);
+							maxy = Math.max(line1.y, line2.y);
+
+							isValid = (r.x >= minx && r.x <= maxx) && (r.y >= miny && r.y <= maxy);
+
+							return isValid ? r : null;
+						}
+							
+						var p=pointOnLine(first,last,mid)
+						if(p){
+							//console.log(mid,p)	
+							var dx=mid.x-p.x,
+								dy=mid.y-p.y
+								
+							mid={
+								x:mid.x+dx,
+								y:mid.y+dy
+							}
+						}
+						
+						var paths=tacs.frames.paths[ind]
+						if(!paths){
+							tacs.frames.paths[ind]=[]
+							paths=tacs.frames.paths[ind]
+						}
+						paths.push({
+							start:{
+								x:first.x,
+								y:first.y
+							},
+							end:{
+								x:last.x,
+								y:last.y
+							},
+							mid:{
+								x:mid.x,
+								y:mid.y
+							}
+						})
+						cc.qcurve({
+							p1:first.pos(),
+							p2:last,
+							c1:mid,
+							linewid:8,
+							color:'orange'
+						}).to()							
+						remspots()						
+						addspot(e,10,'orange')
+						trail=[]
+						line=''
+						
+						cc.redraw()
+					}
+										
+				})
+				court.on('mousemove',function(e){	
+					if(actpl){
+						actpl.pos(e.pos)
+						cc.redraw()
+					} else {
+						if(trail.length){
+							var last=trail[trail.length-1],
+								dist=cc.dist(last,e.pos)						
+							//line.p2.x=last.x
+							//line.p2.y=last.y
+							if(dist>16){
+								var last=trail[trail.length-1],
+									spot=addspot(e)
+								/*
+								cc.line({
+									p1:last.pos(),
+									p2:spot.pos(),
+									linewid:8,
+									color:'orange'
+								}).to()									
+								/*
+								//draw curve
+								var curve=cc.curve({
+									p1:last.pos(),
+									p2:spot.pos(),
+									c1:{x:0,y:0},
+									c2:{x:300,y:300},
+									color:'blue',
+									linewid:8
+								})
+								curve.to()
+								/**/
+
+															
+							}
+						}
+						if(line){	
+							//line.p2=e.pos						
+						}
+						cc.redraw()
+					}					
+				})
+				
+				//add pls
+				var pos1=[
+						[375,510],
+						[100,395],
+						[650,395],
+						[220,120],
+						[470,310]						
+					]				
+				var pls=[]
+				loop(pos1,function(i,pos){
+					var pl=cc.circ({
+						name:'pl',
+						x:pos[0],
+						y:pos[1],	
+						rad:20,
+						color:'#eee',
+						linecolor:'yellowgreen',
+						linewid:2,
+						ind:i
+					})
+					pl.to()
+					
+					pl.on('mousedown',function(e){
+						console.log('pl mdown')
+						act='move'
+						actpl=e.node
+						pl=e.node
+						loop(pls,function(i,p){
+							p.color='#eee'
+						})
+						pl.color='yellowgreen'
+						cc.redraw()
+						
+					})
+					pls.push(pl)
+				})
+				cc.redraw()		
+			
+				//timeline
+				var timeline=tac.r('div class=timeline'),
+					topcontrols=timeline.r('div class=iblocks'),
+					tacticslist=topcontrols.r('select class=tacticslist big w100'),					
+					frames=timeline.r('div class=cols frames'),
+					controls=timeline.r('div class=controls cols'),
+					saving=timeline.r('div class=saving'),
+					newname=saving.r('input class=newname big bo h24 w100'),
+					savechanges=saving.r('div class=savechanges b48 w100 bo html=save'),
+					asnew=saving.r('div class=saving w100'),					
+					addnew=asnew.r('div class=addnew big bo w50 h24 iblock html=add'),
+					remtac=asnew.r('div class=remtac big bo w50 h24 iblock html=rem')				
+				
+				//tacs
+				var opt,
+					tacs={
+						frames:{
+							spots:[],
+							paths:[]
+						},
+						load:function(){},
+						save:function(){}
+					}
+				
+				//set tac
+				function settac(tac){					
+					//console.log('tac:',tac.value)
+					tacs.frames=JSON.parse(tac.value)
+					frames.h('')
+					loop(tacs.frames.spots,function(i,e){
+						addframe('nospots')
+					})
+					d.find('.newname').val(tac.name)
+					
+				}
+				tacticslist.on('change',function(e){					
+					var ele=e.target,
+						tl=d.find('.timeline'),						
+						ind=ele.selectedIndex,
+						tac=basket.lists['tactics'][ind]											
+					basket.tactics.act=tac
+					settac(tac)
+					d.find('.frames .frame').trigger('click')
+					//set tac
+					
+				})
+				
+				function isnamevalid(name){
+					var tcs=d.find('.tacticslist'),
+						opts=tcs.findall('option'),
+						valid=true
+											
+					loop(opts,function(i,e){							
+						if(e.h()==name){								
+							valid=false
+							return false
+						}
+					})					
+					return valid
+				}
+				
+				//save
+				savechanges.on('click',function(e){
+					var name=newname.val(),
+						tl=d.find('.timeline')
+											
+					if(name){
+						var data={
+								item:{
+									//id:nr,
+									name:name,
+									value:JSON.stringify(tacs.frames)
+								},
+								id:basket.tactics.act.id,
+								tablename:'tactics',
+								want:'list'
+							}						
+						d.send('tactics/set',data,function(res){							
+							res=JSON.parse(res)
+							console.log('got data:',res)
+							basket.lists['tactics']=res.list							
+							basket.tactics.showlist()
+							
+							//select last added							
+							var tcs=d.find('.tacticslist'),
+								opts=tcs.findall('option'),
+								name=data.item.name							
+								
+							loop(opts,function(i,e){
+								if(e.h()==name){
+									tcs.val(e.val())
+									return false
+								}
+							})
+							d.find('.tacticslist').trigger('change')							
+							
+						},'json')
+					} else {
+						newname.val('tactics'+nr)
+						newname.focus()
+					}
+				})
+				
+				//addnew
+				addnew.on('click',function(e){
+					var name=newname.val(),
+						tl=d.find('.timeline'),
+						nr=tl.findall('option').length || 0
+					
+					if(name){
+						if(!isnamevalid(name)){
+							name=name+1
+						}						
+						var data={
+								item:{
+									//id:nr,
+									name:name,
+									owner:nr,
+									ownername:'owner'+nr,
+									value:JSON.stringify(tacs.frames)
+								},
+								//id:id,
+								tablename:'tactics',
+								want:'list'
+							}
+						newname.val('')
+						d.send('tactics/add',data,function(res){							
+							res=JSON.parse(res)
+							console.log('got data:',res)
+							basket.lists['tactics']=res.list							
+							basket.tactics.showlist()
+							
+							//select last added							
+							var tcs=d.find('.tacticslist'),
+								opts=tcs.findall('option'),
+								name=data.item.name
+							loop(opts,function(i,e){
+								if(e.h()==name){
+									tcs.val(e.val())
+									return false
+								}
+							})							
+							d.find('.tacticslist').trigger('change')
+							
+						},'json')
+					} else {
+						newname.val('tactics'+nr)
+						newname.focus()
+					}
+				})
+				
+				//rem
+				remtac.on('click',function(e){
+					var data={
+							id:basket.tactics.act.id,
+							tablename:'tactics',
+							want:'list'
+						}						
+					d.send('tactics/rem',data,function(res){							
+						res=JSON.parse(res)
+						console.log('got data:',res)
+						basket.lists['tactics']=res.list
+													
+						//select first
+						var tcs=d.find('.tacticslist'),
+							opts=tcs.findall('option')
+						
+						console.log('opts:',opts)
+						tac.val(opts[0].val())
+						
+						basket.tactics.showlist()
+						
+					},'json')
+				})				
+				//controls
+				var addbut=controls.r('div class=b32')
+					.h('+')
+					.on('click',function(e){
+						addframe()
+					})
+				var rembut=controls.r('div class=b32')
+					.h('-')
+					.on('click',function(e){
+						remframe()
+					})
+								
+				function addframe(nospots){
+					var frame=frames.r('div class=frame b48')
+					frame.h('frame')
+					//frame.to(addbut,'before')					
+					frame.on('click',function(e){
+						selectframe(e.target)						
+					})
+					//name frames
+					var frs=frames.findall('.frame')
+					loop(frs,function(i,f){
+						f.h(i+1)
+					})
+					if(frs.length>11){
+						addbut.hide()
+					} else {
+						addbut.show()
+					}					
+					if(!nospots){
+						//addspots
+						var spots=[]
+							
+						loop(pls,function(i,pl){
+							spots.push({x:pl.x,y:pl.y})
+						})
+						tacs.frames.spots.push(spots)
+					}
+					selectframe(frame)
+					console.log('tacs:',tacs.frames.spots)
+				}
+				function remframe(){
+					frs=frames.findall('.frame')
+					if(frs.length>1){
+						tacs.frames.spots.splice(tacs.ind,1)
+						var frame=frames.find('.selected').rem()							
+						frs=frames.findall('.frame')
+						console.log('ind:',tacs.ind)
+						if(tacs.ind==0){
+							tacs.ind=1
+						}
+						selectframe(frs[tacs.ind-1])
+						
+						//name frames
+						loop(frs,function(i,f){
+							f.h(i+1)
+						})												
+					}
+					
+				}
+				function selectframe(frame){
+					var frs=frames.findall('.frame')
+					loop(frs,function(i,f){
+						f.remclass('selected')
+					})
+					frame.addclass('selected')
+					
+					var ind=frs.indexOf(frame),
+						spots=tacs.frames.spots[ind],
+						pl
+					tacs.ind=ind
+					console.log('ind:',ind)
+					animate()
+				}
+				function animate(){
+					var spots=tacs.frames.spots[tacs.ind],
+						prev
+					
+					if(tacs.ind==-10){
+						loop(spots,function(i,spot){
+							pl=pls[i]
+							pl.x=spot.x
+							pl.y=spot.y
+						})
+						cc.redraw()						
+					} else {
+						var spot,
+							again=false,
+							dx,
+							dy,
+							ndx,
+							ndy,
+							dist,
+							norm
+							
+						loop(pls,function(i,pl){
+							spot=spots[i]
+							dx=pl.x-spot.x
+							dy=pl.y-spot.y
+							dist=Math.sqrt(dx*dx+dy*dy)
+							if(dist){
+								again=true
+								norm=10/dist
+								ndx=dx*norm
+								ndy=dy*norm
+								if(Math.abs(ndx)>Math.abs(dx)){
+									ndx=dx
+								}
+								if(Math.abs(ndy)>Math.abs(dy)){
+									ndy=dy
+								}
+								
+								pl.x=pl.x-ndx
+								pl.y=pl.y-ndy
+								cc.redraw()
+								//console.log('animate',ndx,ndy,norm)
+							}
+						})
+						if(again){
+							setTimeout(function(){								
+								animate()
+							},20)							
+						}						
+					}
+				}				
+				addframe()
+				
+				//getlist
+				d.send('tactics/list',function(data){
+					data=JSON.parse(data)
+					basket.lists['tactics']=data.list
+					basket.tactics.showlist()
+					console.log('got list',data)
+				})				
+				
+				
+			},
+			showlist:function(){
+				var list=basket.lists['tactics'],
+					tacticslist=d.find('.tacticslist')
+				tacticslist.h('')
+				loop(list,function(i,e){
+					opt=tacticslist.r('option')
+					opt.h(e.name)
+					opt.val(e.id)					
+				})
+				tacticslist.trigger('change')
+			},
+			showplayers:function(court){
+				//players				
+				var team1=court.r('div class=team1'),
+					team2=court.r('div class=team2'),
+					player,
+					layout1=[
+						[375,510],
+						[100,395],
+						[650,395],
+						[220,120],
+						[470,310]
+					],				
+					layout2=[
+						[375,375],
+						[375,375],
+						[375,375],
+						[375,375],
+						[375,375]
+					],
+					top=0,
+					left=0
+				
+				loop(5,function(i){
+					player=team1.r('div class=player big')
+						.h(i+1)
+						.s('width:44px height:44px border-radius:64px border:2px solid yellowgreen')
+						.s('position:absolute cursor:pointer transition:all 2s font-size:28px')
+					left=layout1[i][0]-20
+					top=layout1[i][1]-20
+					player.s('left:'+left+'px top:'+top+'px')
+						.on('click',function(e){
+							e.preventDefault()
+							e.stopPropagation()
+						
+							var sel=court.find('.selected')
+							if(sel){
+								sel.remclass('selected')
+							}
+							e.target.addclass('selected')
+							basket.tactics.pl=e.target
+						})
+
+					player=team2.r('div class=player big')
+						.h(i+1)
+						.s('width:44px height:44px border-radius:64px border:2px solid orange')
+						.s('position:absolute cursor:pointer transition:all 2s font-size:28px')
+					left=layout1[i][0]-20
+					top=layout1[i][1]-20-50
+					player.s('left:'+left+'px top:'+top+'px')
+						.on('click',function(e){
+							e.preventDefault()
+							e.stopPropagation()
+						
+							var sel=court.find('.selected')
+							if(sel){
+								sel.remclass('selected')
+							}
+							e.target.addclass('selected')
+							basket.tactics.pl=e.target
+						})					
+
+					
+				})
+					
+					
+					
+				return court
+			},
+			getlist:function(){
+				d.send('')
+			}
 		}
 	}
-	
-	var ele=d.body.r('div class=controls'),
-		wrap
-	loop(basket.tables,function(name,v){
-		wrap=ele.r('div')
-			.h(name)
-			.addclass(name)
-		loop(actions,function(i,action){
-			wrap.r('button')
-				.h(action)
-				.addclass(action)
-				.set('data-action',action)
-				.set('data-url',[appname,name,action].join('/'))
-				.set('data-data','')
-				.set('data-name',name)
-				.on('click',function(e){
-					args.send(e.target)
-				})
-		})
-	})
+	basket.setstyles()
+	basket.show()
+	basket.tactics.show()
+	console.log('ready')
 })
+
 </script>

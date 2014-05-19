@@ -1,0 +1,754 @@
+<html>
+<link href='http://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+<style>
+
+html {cursor:url("gfx/cur3d.cur"),default;}
+a:hover{cursor:url("gfx/hand3d.cur"),default;}
+button:hover{cursor:url("gfx/hand3d.cur"),default;}
+.m1:hover{cursor:url("gfx/m1.cur"),default;}
+.m2:hover{cursor:url("gfx/m2.cur"),default;}
+.mw:hover{cursor:url("gfx/mw.cur"),default;}
+.hand:hover{cursor:url("gfx/hand3d.cur"),default;}
+
+body {
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;
+}
+#wrap {
+	width: 572px;
+	
+	border: 1px solid grey;
+	border-radius: 70px;
+	padding: 10px;
+	margin: auto;
+}
+#c3d {
+	padding: 10px;
+	display: block;
+	border: 1px solid grey;
+	border-radius: 70px;
+	position: relative;
+}
+button {
+	display: inline-block;
+	padding:0;
+	margin: 0;
+	width: 80px;
+	height: 80px;
+	background: none;
+	border: none;//1px solid #eee;
+	border-radius: 60px;
+}
+#buttons {
+	left: 27px;
+	top: 14px;
+	position: absolute;
+}
+#hist {
+	//width:128px;
+	//height: 128px;
+	padding: 10px;
+	//overflow: auto;
+	//border: 1px solid grey;
+	border-radius: 10px;
+	margin-top: 10px;
+	text-align: center;
+	display: none;
+}
+
+table {
+	width: 550px;
+	font-size: 24px;
+	font-weight: bold;
+}
+table tbody{
+	vertical-align: top;
+}
+td {
+	width: 90px;
+	text-align: center;
+}
+tr {
+	border: 1px solid grey;
+}
+#clearhist,#clearhigh,#clearlow {
+	border: 1px solid grey;
+	height: auto;
+	width: 100%;
+	margin: auto;
+	background: #eee;
+	padding: 0px 20px;
+	border-radius: 40px;
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;	
+	font-size: 18px;	
+}
+.but {
+	border: 1px solid grey;
+	//width: 100%;
+	margin: auto;
+	background: #eee;
+	padding: 0px 20px;
+	border-radius: 40px;
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;	
+	font-size: 18px;	
+}
+.sep {
+	border: 1px solid grey;
+	//width: 100%;
+	margin: auto;
+	background: #eee;
+	padding: 0px 20px;
+	border-radius: 40px;
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;	
+	font-size: 18px;	
+}
+
+.inp {
+	border: 2px solid grey;
+	margin: auto;
+	background: #fff;
+	padding: 0px 20px;
+	border-radius: 40px;
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;	
+	font-size: 18px;	
+}
+#togglehist{
+	font-size:32px;
+	float: right;
+	width: 60px;
+	height: 60px;
+	margin: 10px;	
+}
+#dev {
+	display: none;
+}
+
+</style>	
+	<body>
+		<div id='wrap'>
+			<div id='dev'>
+				X<input id='x' value='0'/>
+				Y<input id='y'  value='0'/>
+				Z<input id='z'  value='0'/>
+				<input id='res'>
+			</div>
+			<div id='c3d'>
+				<div id='buttons'>
+					<button id='d4'></button>
+					<button id='d6'></button>
+					<button id='d8'></button>
+					<button id='d10'></button>
+					<button id='d12'></button>
+					<button id='d20'></button>
+				</div>			
+			</div>
+			<button class='but' id='togglehist'>+</button>
+			<div id='hist'>
+				<button id='clearhist'>Clear All</button>
+				<table>
+					<tr id='histrow'>
+						<td id='h4'></td>
+						<td id='h6'></td>
+						<td id='h8'></td>
+						<td id='h10'></td>
+						<td id='h12'></td>
+						<td id='h20'></td>
+					</tr>
+					<tr><td colspan=6><button id='clearhigh'>Clear Highest</button></td></tr>						
+					<tr id='high'>
+						<td id='s4'></td>
+						<td id='s6'></td>
+						<td id='s8'></td>
+						<td id='s10'></td>
+						<td id='s12'></td>
+						<td id='s20'></td>
+					</tr>
+					<tr><td colspan=6><button id='clearlow'>Clear Lowest</button></td></tr>						
+					<tr id='low'>
+						<td id='s4'></td>
+						<td id='s6'></td>
+						<td id='s8'></td>
+						<td id='s10'></td>
+						<td id='s12'></td>
+						<td id='s20'></td>
+					</tr>					
+					<tr><td colspan=6><div class='sep'>
+						Sum</div></td></tr>
+						
+					<tr id='sum'>
+						<td id='s4'></td>
+						<td id='s6'></td>
+						<td id='s8'></td>
+						<td id='s10'></td>
+						<td id='s12'></td>
+						<td id='s20'></td>
+					</tr>
+					
+
+					
+					<tr>
+						<td colspan=6>
+							+<input class='inp' id='addnr' value=0 onkeydown='dochange()'>
+						</td>
+					</tr>
+					<tr>
+						<td colspan=6>
+							-<input class='inp' id='subnr' value=0 onkeydown='dochange()'>
+						</td>
+					</tr>
+					<tr id='finsum'>
+						<td id='f4'></td>
+						<td id='f6'></td>
+						<td id='f8'></td>
+						<td id='f10'></td>
+						<td id='f12'></td>
+						<td id='f20'></td>
+					</tr>					
+				</table>				
+			</div>
+			
+		</div>
+	</body>
+</html>
+<script src="js/Three.js">
+</script>
+<script>
+//lazy
+function get(i){return document.getElementById(i)};
+function gets(obj,style) {return window.getComputedStyle(obj)[style];}
+var cube,d4,d6,d8,d10,d12,d20,
+	dx,dy,dz,smo=8,cur=d4,
+	ans={
+		d4:[
+		[0,0,0],
+		[0,0,2.1],
+		[0,0,-2.1],
+		[-1.8,-0.4,-1]
+		],
+		d6:[
+			[0,3.13,1.57],
+			[0,0,0],
+			[0,0,-1.57],
+			[0,3.13,3.13],
+			[-1.57,0,-1.57],
+			[1.57,0,0]
+		],
+		d8:[
+			[0.3,0,-0.7],
+			[0.3,3.13,2.3],
+			[0.3,0,2.3],
+			[0.3,3.13,-0.7],
+			[0.3,0,-2.3],
+			[0.3,3.13,0.7],
+			[0.3,0,0.9],
+			[0.3,3.13,-2.4]		
+		],
+		d10:[
+			[0.6,3.13,2.5],
+			[0.6,3.13,-2.5],			
+			[0.6,3.1,0],						
+			[0.6,0,-0.7],
+			[0.6,0,1.9],
+			[0.6,3.13,-1.3],		
+			[0.6,3.13,1.2],					
+			[0.6,0,0.6],
+			[0.6,0,-1.9],
+			[0.6,0,3.13]		
+		],
+		d12:[
+			[-0.8,0,0.3],
+			[-0.8,0,-1.1],
+			[-0.8,0,-2.3],
+			[-0.8,0,2.7],
+			[-0.8,0,1.5],
+			[-0.7,3.13,-0.1],
+			[-0.7,3.13,-1.5],
+			[-0.7,3.13,-2.7],
+			[-0.7,3.13,2.3],
+			[-0.7,3.13,1.1],			
+			[-1.9,0,-0.3],		
+			[1.3,0,-0.3]		
+		],
+		d20:[
+			[0.7,-0.6,-.6],//1
+			[0,0,0],
+			[-2.4,0.3,0.4],
+			[1.9,0.2,0.3],
+			[0,0,-2.5],//5
+			[-1.3,0,-0.7],
+			[2.5,0.5,0.1],
+			[-1.3,0,0.5],			
+			[1.1,-0.8,-1.1],
+			[-0.4,0,-1.8],//10
+			[-0.4,0,-0.6],
+			[-0.5,2.7,2],
+			[0,0,-1.1],
+			[0-1.2,0.2,-1.6],
+			[0.7,0,0],//15
+			[1.2,-2.8,-2.4],
+			[0,1.1,1.9],
+			[-1.2,-2.9,1.6],
+			[0,3.1,-2.6],
+			[-0.4,0,0.7]	//20	
+		]
+		},
+	ax=ay=az=0,
+	history=[[],[],[],[],[],[]],
+	sums=[[],[],[],[],[],[]];
+	
+
+document.body.onmousewheel=wheel;
+function wheel(e){
+	var val=0.1*e.wheelDelta/120,
+		obj;
+	switch (e.target.id) {
+		case 'x':
+			obj=get('x');
+			ax+=val;
+			obj.value=ax;
+			break;
+		case 'y':
+			obj=get('y');
+			ay+=val;
+			obj.value=ay;
+			break;
+		case 'z':
+			obj=get('z');
+			az+=val;
+			obj.value=az;
+			break;
+		case 'addnr':
+			
+	}
+	get('res').value=round(ax,1)+','+round(ay,1)+','+round(az,1);	
+}
+function round(num,dec) {
+	var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
+	return result;
+}
+document.onclick=click;
+function click(e){
+	var h,s;
+	if (e.target.nodeName=='BUTTON') {
+		switch (e.target.id) {
+			case 'clearhist':
+				clearhist();
+				break;
+			case 'togglehist':
+				togglehist();
+				break;
+			case 'clearhigh':
+				clearhigh();
+				break;
+			case 'clearlow':
+				clearlow();
+				break;
+			default:
+				roll(e.target.id);
+		}
+	}
+}
+function togglehist(){
+	st=gets(get('hist'),'display');
+	if (st=='block'){
+		get('hist').style.display='none';
+		get('togglehist').innerHTML='+';
+	} else {
+		get('hist').style.display='block';
+		get('togglehist').innerHTML='-';
+	};	
+}
+function clearhist(){
+	for (var nr in history){
+		get('sum').children[nr].innerHTML='';
+		get('histrow').children[nr].innerHTML='';
+		get('finsum').children[nr].innerHTML='';
+		get('high').children[nr].innerHTML='';
+		get('low').children[nr].innerHTML='';		
+		sums[nr]=0;
+		history[nr]=[];
+	};	
+}
+function clearhigh(){
+	var hig,cur;
+	for (var nr in history){
+		hig=[0,0];
+		for (var nr2 in history[nr]){			
+			cur=history[nr][nr2]
+			if (cur>hig[0]){
+				hig=[cur,nr2];
+			};
+		}
+		if (hig[0]!=0) {
+			history[nr].splice(hig[1],1);
+		};
+	};	
+	update();	
+}
+function clearlow(){
+	var low,cur;
+	for (var nr in history){
+		low=[21,0];
+		for (var nr2 in history[nr]){			
+			cur=history[nr][nr2]
+			if (cur<low[0]){
+				low=[cur,nr2];
+			};
+		}
+		if (low[0]!=21) {
+			history[nr].splice(low[1],1);
+		};
+	};		
+	update();
+};
+function roll(dice){
+	var nr=Math.random(),ind=0,doclear=0;
+	switch(dice){
+		case 'd4':
+			nr*=3.99999;
+			nr=parseInt(nr);
+			cur=d4;
+			h=get('h4');
+			s='s4';
+			ind=0;
+			break;
+		case 'd6':
+			nr*=5.99999;
+			nr=parseInt(nr);		
+			cur=d6;
+			h=get('h6');				
+			ind=1;
+			break;
+		case 'd8':
+			nr*=7.99999;
+			nr=parseInt(nr);		
+			cur=d8;
+			h=get('h8');
+			ind=2;
+			break;
+		case 'd10':
+			nr*=9.99999;
+			nr=parseInt(nr);		
+			cur=d10;
+			h=get('h10');
+			ind=3;
+			break;
+		case 'd12':
+			nr*=11.99999;
+			nr=parseInt(nr);		
+			cur=d12;
+			h=get('h12');
+			ind=4;
+			break;
+		case 'd20':
+			nr*=19.99999;
+			nr=parseInt(nr);		
+			cur=d20;
+			h=get('h20');
+			ind=5;
+			break;
+	}	
+	history[ind].push(nr+1);
+	h.innerHTML=(nr+1)+'<br>'+h.innerHTML
+	ax=ans[dice][nr][0];
+	ay=ans[dice][nr][1];
+	az=ans[dice][nr][2];
+	if (history[ind].length){
+		if (history[ind][history[ind].length-2] == nr+1){
+			ax=cur.rotation.x+3.14;
+			ay=cur.rotation.y+3.14;
+			az=cur.rotation.z+3.14;
+		}
+	}			
+	get('x').value=ax;
+	get('y').value=ay;
+	get('z').value=az;
+	var fsum=0,low=20,high=0;
+	sums[ind]=0;
+	for (var n in history[ind]){
+		sums[ind]+=history[ind][n];
+		if (history[ind][n]>high){high=history[ind][n]};
+		if (history[ind][n]<low){low=history[ind][n]};
+		
+	};
+	get('sum').children[ind].innerHTML=sums[ind];
+	get('high').children[ind].innerHTML=high;
+	get('low').children[ind].innerHTML=low;
+	get('res').value=ax+','+ay+','+az;
+	get('finsum').children[ind].innerHTML=sums[ind]+parseInt(get('addnr').value)-parseInt(get('subnr').value);
+				
+	
+}
+function update(){
+	var cur,sum,fsum,hig=0,low=21;
+	for (var nr in history){
+		get('histrow').children[nr].innerHTML='';
+		sums[nr]=0;	
+		sum=0;
+		fsum=0;
+		for (nr2 in history[nr]){
+			sum+=history[nr][nr2];			
+		};
+		get('sum').children[nr].innerHTML=sum;		
+		get('finsum').children[nr].innerHTML=sum+parseInt(get('addnr').value)-parseInt(get('subnr').value);
+		get('high').children[nr].innerHTML='';
+		get('low').children[nr].innerHTML='';	
+	};
+	for (var nr in history){
+		low=21;
+		hig=0;
+		for (var n in history[nr]){
+			get('histrow').children[nr].innerHTML=history[nr][n]+'<br>'+get('histrow').children[nr].innerHTML;
+			if (history[nr][n]>hig){hig=history[nr][n]};
+			if (history[nr][n]<low){low=history[nr][n]};
+			
+		};
+		if (low!=21 ) {
+			get('high').children[nr].innerHTML=hig;
+		};
+		if (hig!=0) {
+			get('low').children[nr].innerHTML=low;					
+		};
+	};
+	
+	
+	
+};
+
+window.requestAnimFrame = (function(callback){
+	return window.requestAnimationFrame ||
+	window.webkitRequestAnimationFrame ||
+	window.mozRequestAnimationFrame ||
+	window.oRequestAnimationFrame ||
+	window.msRequestAnimationFrame ||
+	function(callback){
+		window.setTimeout(callback, 1000 / 60);
+	};
+})();
+document.onkeyup=dochange;
+function dochange(e){
+	switch (e.keyCode){
+		case 49: roll('d4'); break;
+		case 50: roll('d6'); break;
+		case 51: roll('d8'); break;
+		case 52: roll('d10'); break;
+		case 53: roll('d12'); break;
+		case 54: roll('d20'); break;
+		case 46:
+			clearhist();
+			break;
+		case 107:
+			togglehist();
+			break;
+		case 187:	
+			togglehist();
+			break;
+		case 57:	
+			clearhigh();
+			break;
+		case 48:	
+			clearlow();
+			break;
+		
+		default:
+			for (var n in history){		
+				if (sums[n]) {
+					val=sums[n];
+					add=parseInt(get('addnr').value);
+					if (add){
+						val+=add;
+					};
+					sub=parseInt(get('subnr').value);
+					if (sub){
+						val-=sub;
+					};
+					get('finsum').children[n].innerHTML=val;
+				}
+			};
+			break;
+	};	
+};
+smo=8
+function animate(lastTime, angularSpeed, three){
+	// update
+	var date = new Date();
+	var time = date.getTime();
+	var timeDiff = time - lastTime;
+	var angleChange = angularSpeed * timeDiff * 2 * Math.PI / 1000;
+	var axe='z';
+	//d00.rotation[axe] = d10.rotation[axe] = d4.rotation[axe] = d6.rotation[axe] = d8.rotation[axe] = d12.rotation[axe] = d20.rotation[axe] += angleChange;
+	var axe='x';
+	if (cur){
+		dx=(cur.rotation.x-ax)/smo;
+		cur.rotation.x-=dx;
+		dy=(cur.rotation.y-ay)/smo;
+		cur.rotation.y-=dy;
+		dz=(cur.rotation.z-az)/smo;
+		cur.rotation.z-=dz;
+		//cur.rotation.x%=3.14
+	}
+	/*
+	d10.rotation[axe] = 
+	d4.rotation[axe] = 
+	d6.rotation[axe] = 
+	d8.rotation[axe] = 
+	d12.rotation[axe] = 
+	d20.rotation[axe] = dx;
+	var axe='y';
+	d10.rotation[axe] = 
+	d4.rotation[axe] = 
+	d6.rotation[axe] = 
+	d8.rotation[axe] = 
+	d12.rotation[axe] = 
+	d20.rotation[axe] = dy;
+	var axe='z';
+	d10.rotation[axe] = 
+	d4.rotation[axe] = 
+	d6.rotation[axe] = 
+	d8.rotation[axe] = 
+	d12.rotation[axe] = 
+	d20.rotation[axe] = dz;
+	// = three.cube.rotation.y
+	/**/
+	lastTime = time;
+	
+	// render
+	three.renderer.render(three.scene, three.camera);
+
+	// request new frame
+	requestAnimFrame(function(){
+		animate(lastTime, angularSpeed, three);
+	});
+}
+
+window.onload = function(){
+	var angularSpeed = 0.2; // revolutions per second
+	var lastTime = 0;
+
+	// renderer
+	var renderer = new THREE.WebGLRenderer();
+	var wid = 550;//window.innerWidth-100,
+		hig = 100;//window.innerHeight-100;
+	get('c3d').style.width=wid+'px';
+	get('c3d').style.height=hig+'px';
+	
+	renderer.setSize(wid, hig);
+	//document.body.appendChild(renderer.domElement);
+	get('c3d').appendChild(renderer.domElement);
+
+	// scene
+	var scene = new THREE.Scene();
+
+	 // camera
+	var camera = new THREE.PerspectiveCamera(5, wid/hig, 1, 1000);
+	camera.position.z = 8;
+	camera.position.y=-25;
+	camera.rotation.x=1.26;//1.2
+	
+	scene.add( camera );
+
+	// material
+	var material = new THREE.MeshLambertMaterial({
+		map: THREE.ImageUtils.loadTexture("../models/dice.png")
+	});
+	material.shading = THREE.FlatShading;
+	
+	/*
+	// cube		
+	var cube = new THREE.Mesh(new THREE.CubeGeometry(scale, scale, scale), material);
+	cube.overdraw = true;
+	cube.position.x=3;
+	scene.add(cube);
+	/**/
+
+	var scale = 1;
+	// d4
+	var loader = new THREE.JSONLoader();
+	loader.load( "models/d4.js", function ( geometry ) {			
+		d4= new THREE.Mesh( geometry, material );
+		d4.scale.set(scale,scale,scale);
+		d4.position.x=-5;
+		cur=d4;
+		scene.add( d4 );
+	} );
+	
+	// d6
+	var loader = new THREE.JSONLoader();
+	loader.load( "models/d6.js", function ( geometry ) {			
+		d6= new THREE.Mesh( geometry, material );
+		d6.scale.set(scale,scale,scale);
+		d6.position.x=-3;
+		scene.add( d6 );
+	} );
+	
+	//d8
+	var loader = new THREE.JSONLoader();
+	loader.load( "models/d8.js", function ( geometry ) {			
+		d8= new THREE.Mesh( geometry, material );
+		d8.scale.set(scale,scale,scale);
+		d8.position.x=-1;
+		scene.add( d8 );
+	} );
+	
+	//d10
+	var loader = new THREE.JSONLoader();
+	loader.load( "models/d10.js", function ( geometry ) {			
+		d10= new THREE.Mesh( geometry, material );
+		d10.scale.set(scale,scale,scale);
+		d10.position.x=1;		
+		scene.add( d10 );
+	} );
+	
+	//d12
+	var loader = new THREE.JSONLoader();
+	loader.load( "models/d12.js", function ( geometry ) {			
+		d12= new THREE.Mesh( geometry, material );
+		d12.scale.set(scale,scale,scale);
+		d12.position.x=3;
+		scene.add( d12 );
+	} );
+	
+	//d20
+	var loader = new THREE.JSONLoader();
+	loader.load( "models/d20.js", function ( geometry ) {			
+		d20= new THREE.Mesh( geometry, material );
+		d20.scale.set(scale,scale,scale);
+		d20.position.x=5;
+		scene.add( d20 );
+	} );
+	
+
+	// add subtle ambient lighting
+	var ambientLight = new THREE.AmbientLight(0x222222);
+	scene.add(ambientLight);
+
+	// add directional light source
+	var directionalLight = new THREE.DirectionalLight(0xffffff);
+	directionalLight.position.set(0, -1, 0).normalize();
+	scene.add(directionalLight);
+
+	// create wrapper object that contains three.js objects
+	var three = {
+		renderer: renderer,
+		camera: camera,
+		scene: scene,
+		cube: cube
+	};
+
+	/*
+	 * wait for texture image to load before
+	 * starting the animation
+	 */ 
+	
+	var textureImg = new Image();
+	textureImg.onload = function(){
+		animate(lastTime, angularSpeed, three, this);
+	};
+	textureImg.src = "models/dice.png";
+	/**/
+};
+</script>

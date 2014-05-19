@@ -143,30 +143,37 @@ handle.tables={
 	add:{
 		post:function(req,res){
 			var data=req.body,
-				query,
+				q,
 				line
 			line=[]	
-			query=['create table '+data.table],				
-			loop(data.columns,function(i,fi){					
+			q=['create table '+data.tablename],				
+			loop(data.schema,function(i,fi){					
 				line.push([fi.Field,fi.Type,fi.Extra].join(' '))
 			})				
-			query.push('('+line.join(',')+')')
-			query=query.join(' ')+';'
-			console.log('query:',query)
-			connection.query(query,function(err,qres){
+			q.push('('+line.join(',')+')')
+			q=q.join(' ')+';'
+			console.log('query:',q)
+			connection.query(q,function(err,qres){
 				if(err) console.log(err)
-			})
-			res.send('added new table')
+				res.send({
+					err:err,
+					tablename:data.tablename,
+					res:q
+				})
+			})			
 		}
 	},
 	rem:{
-		post:function(req,res){
-			var query='drop table '+req.body.table
-			console.log('query:',query)
-			connection.query(query,function(err,qres){
+		get:function(req,res){
+			var q='drop table '+req.query.tablename
+			console.log('q:',q)
+			connection.query(q,function(err,qres){
 				if(err) console.log(err)
-			})				
-			res.send('drop table')
+				res.send({
+					err:err,
+					res:q
+				})
+			})							
 		}
 	},
 	get:{
@@ -181,18 +188,24 @@ handle.tables={
 	set:{
 		post:function(req,res){
 			var data=req.body
+			console.log('data:',data)
+			
 			//get existing columns
-			var query="show columns from "+data.table				
-			connection.query(query,function(err,qres){						
+			var q="show columns from "+data.tablename	
+			console.log('q;',q)
+			connection.query(q,function(err,qres){						
+				console.log('got qres:',q,qres)
 				var todel=[],
 					toadd=[],
 					tomod=[],
 					ind
-				loop(data.columns,function(i1,field1){
+				console.log('here:',qres)
+				loop(data.schema,function(i1,field1){
 					if(!field1.action){
 						field1.action='add'
 						toadd.push(field1)
 					}
+					console.log('here1:',qres)
 					loop(qres,function(i2,field2){
 						if(!field2.action){
 							field2.action='drop'
@@ -214,17 +227,18 @@ handle.tables={
 						}
 					})
 				})
-				/*
-				console.log('todel:',todel.length)
-				console.log('tomod:',tomod.length)
-				console.log('toadd:',toadd.length)
-				/**/
+				
+				//console.log('todel:',todel.length)
+				//console.log('tomod:',tomod.length)
+				//console.log('toadd:',toadd.length)
+				
 				
 				var query,
 					line
 					
+				console.log('del:',tomod)	
 				if(todel.length){		
-					query=['alter table '+data.table],
+					query=['alter table '+data.tablename],
 					line=[]						
 					loop(todel,function(i,fi){
 						line.push('drop column '+fi.Field)
@@ -236,9 +250,9 @@ handle.tables={
 						if(err) console.log(err)
 					})
 				}
-				console.log(tomod)
+				console.log('mod:',tomod)
 				if(tomod.length){
-					query=['alter table '+data.table],
+					query=['alter table '+data.tablename],
 					line=[]
 					loop(tomod,function(i,fi){
 						line.push(['modify column',fi.Field,fi.Type,fi.Null,fi.Default,fi.Extra].join(' '))
@@ -250,9 +264,9 @@ handle.tables={
 						if(err) console.log(err)
 					})
 				}
-				
+				console.log('add:',toadd)
 				if(toadd.length){
-					query=['alter table '+data.table],
+					query=['alter table '+data.tablename],
 					line=[]
 					loop(toadd,function(i,fi){
 						line.push(['add column',fi.Field,fi.Type,fi.Null,fi.Default,fi.Extra].join(' '))
@@ -264,10 +278,11 @@ handle.tables={
 						if(err) console.log(err)
 					})
 				}
-				
-				res.send('alter table')
-			})					
-
+				res.send(data)
+						
+			})	
+			/**/
+			//res.send(data)
 		}
 	},
 	tabledata:{
@@ -295,14 +310,16 @@ handle.items={
 			var data=req.body,
 				q='insert into '+data.tablename+' set ?',
 				columns=[],
-				values=[]				
+				values=[]		
+
+			console.log('items add:',q,data)
 			connection.query(q,data.item,function(err,qres){						
 				if(err){
 					data.err=err
 				} else {
 					data.res=qres
 				}
-				if(data.want=='list'){
+				if(data.want=='list' && !err){
 					handle.items.list.get({query:{tablename:data.tablename}},res)
 				} else {
 					res.send(JSON.stringify(data))
@@ -322,8 +339,8 @@ handle.items={
 				} else {
 					data.res=qres
 				}
-				if(data.want=='list'){
-					a.list.get(req,res)
+				if(data.want=='list' && !err){
+					handle.items.list.get({query:{tablename:data.tablename}},res)
 				} else {
 					res.send(JSON.stringify(data))
 				}
