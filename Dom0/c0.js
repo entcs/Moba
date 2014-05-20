@@ -11,7 +11,22 @@ var c0={
 		this.c=this.canvas.getContext('2d')
 		this.root=this.node('root')
 		this.addevents()
-		
+		this.fps=this.text({
+			x:10,
+			y:10,
+			text:'info'
+		}).to()
+		this.m={x:0,y:0}
+		this.lft=0
+		this.cft=new Date().getTime()
+		this.runtasks={}
+		this.time={
+			lt:new Date().getTime(),
+			ct:new Date().getTime(),
+			td:0
+		}
+		this.tasks={}
+		this.deadtasks={}
 	},
 	//events
 	addevents:function(){	
@@ -45,95 +60,13 @@ var c0={
 		
 		//mouse clicks
 		var mc=['click','mousedown','mouseup']
-		//mc=['mousedown']
-		loop(mc,function(i,name){
-			c0.canvas['on'+name]=function(e){				
-				e.pos={
-					x:e.x,
-					y:e.y
-				}
-			
-				var hits=c0.gethits(e.pos,c0.root,[],name),
-					event=name,
-					fn
-				
-				hits.reverse()
-				loop(hits,function(i,n){
-					fn=n.events[event]
-					if(fn){
-						e.node=n
-						fn(e)
-					}
-				})			
-			}		
-		})
-		
-		this.canvas.onmousemovex=function(e){
-			e.pos={
-				x:e.x,
-				y:e.y
-			}		
-			var hits=c0.gethits(e.pos,c0.root,[],'mousemove'),
-				event='mousemove',
-				fn
-				
-			hits.reverse()			
-			loop(hits,function(i,n){
-				fn=n.events[event]
-				if(fn){
-					e.node=n
-					fn(e)
-				}
-			})
-			//mouseover
-			var first=hits[0]
-			if(first){
-				if(first!=this.over){
-					if(this.over){
-						fn=this.over.events['mouseout']
-						if(fn){
-							e.node=this.over
-							fn(e)
-						}
-					}			
-					this.over=first
-					fn=first.events['mouseover']
-					if(fn){						
-						e.node=first
-						fn(e)
-					}					
-				}
-			} else {
-				//mouseout
-				if(this.over){
-					fn=this.over.events['mouseout']
-					if(fn){			
-						e.node=this.over
-						fn(e)
-					}					
-				}
-				this.over=0
-			}
-			
-			
-		}
-		
-	},
-	over:0,
-	gethits:function(p,node,hits,event){		
-		node=node || this.root
-		hits=hits || []
-		if(node.visible){
-			if(node.events[event] && node.draw  && node.ishit(p)){
-				hits.push(node)
-			}		
-			loop(node.children,function(i,e){
-				c0.gethits(p,e,hits,event)
-			})
-		}
-		return hits
-	},
-	//util
+		this.canvas.on('mousemove',function(e){
+			c0.canvas.s('cursor:auto')
+			c0.m.x=e.x
+			c0.m.y=e.y
+		})		
+	},	
+	//util	
 	dist:function(a,b){
 		var dx=a.x-b.x,
 			dy=a.y-b.y
@@ -207,27 +140,6 @@ var c0={
 		}
 		return p
 	},
-	//rendering
-	clear:function(){
-		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
-	},
-	render:function(node,mat){
-		var x,y			
-		node=node || c0.root
-		if(node.visible){
-			if(node.draw){
-				node.draw()
-			}
-			loop(node.children,function(i,e){
-				c0.render(e)
-			})
-		}		
-	},
-	redraw:function(node){
-		node=node || this.root
-		this.clear()
-		this.render(node)
-	},
 	//new objs
 	node:function(name){
 		var node={x:0,y:0},		
@@ -239,6 +151,7 @@ var c0={
 					this.children=[]
 					this.visible=true
 					this.an=0
+					this.scale=1
 					this.sx=1
 					this.sy=1
 					this.hit='rect'
@@ -281,24 +194,20 @@ var c0={
 				},
 				getpos:function(){
 					var pos={
-						x:this.x,
-						y:this.y
-					}
+							x:this.x,
+							y:this.y
+						}
 					if(this.parent){
+						var scale=this.parent.getscale()
+						pos.x*=scale
+						pos.y*=scale
+					
 						pos=c0.rot(pos,this.parent.getan())
 						var ppos=this.parent.getpos()
 						pos=c0.add(pos,ppos)
 					}
 					return pos
 				},			
-				setpos:function(a,parent){
-					if(parent){
-						
-					} else {
-						this.x=a.x
-						this.y=a.y
-					}
-				},
 				getan:function(){
 					var an=this.an
 					if(this.parent){
@@ -306,11 +215,12 @@ var c0={
 					}					
 					return an%360
 				},
-				setan:function(an,p){				
-					if(p){
-						an-=this.parent.getan(p)
+				getscale:function(){
+					var s=this.scale
+					if(this.parent){
+						s*=this.parent.getscale()
 					}
-					this.an=an
+					return s
 				},
 				fol:function(p,speed){
 					var p1=this.pos(),
@@ -333,16 +243,32 @@ var c0={
 				},
 				//events
 				ishit:function(p){
+					if(this.hit=='circ'){
+						if(c0.dist(this.getpos(),p)<=this.rad*this.getscale()){
+							c0.canvas.s('cursor:pointer')
+							return true
+						}						
+					} else {
+						//rect
+					}
 					var b=this.bounds
 					if(this.type=='circ'){
 						if(c0.dist(this.pos(),p)<=this.rad){
+							c0.canvas.s('cursor:pointer')
 							return true
 						}
 					} else {
-						var a1=this.getarea(),
-							a2=this.dotarea(p).round(5)
-						console.log(a1,a2)
-						if(a1>=a2){
+						var pos=this.getpos(),
+							an=this.getan(),
+							scale=this.getscale(),
+							w2=this.wid/2,
+							h2=this.hig/2
+							
+						pos=c0.sub(p,pos)
+						pos=c0.rot(pos,-an)
+						pos.x/=scale
+						pos.y/=scale										
+						if(pos.x>-w2 && pos.x<w2 && pos.y>-h2 && pos.y<h2){							
 							return true
 						}
 			
@@ -373,8 +299,13 @@ var c0={
 		})		
 		node.draw=function(){
 			var an=this.getan(),
-				pos=this.parent.getpos()
-			pos=c0.add(pos,c0.rot(this.pos(),this.parent.an))
+				pos=this.parent.getpos(),
+				pscale=this.parent.getscale(),
+				scale=this.getscale(),
+				spos=c0.rot(this.pos(),this.parent.an)
+			spos.x*=pscale
+			spos.y*=pscale			
+			pos=c0.add(pos,spos)
 						
 			var w2=node.wid/2,
 				h2=node.hig/2,
@@ -388,18 +319,18 @@ var c0={
 			var c=c0.c		
 			
 			c.beginPath()			
-			c.moveTo(pos.x+pts[0].x,pos.y+pts[0].y)
-			c.lineTo(pos.x+pts[1].x,pos.y+pts[1].y)
-			c.lineTo(pos.x+pts[2].x,pos.y+pts[2].y)
-			c.lineTo(pos.x+pts[3].x,pos.y+pts[3].y)
-			c.lineTo(pos.x+pts[0].x,pos.y+pts[0].y)
+			c.moveTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
+			c.lineTo(pos.x+pts[1].x*scale,pos.y+pts[1].y*scale)
+			c.lineTo(pos.x+pts[2].x*scale,pos.y+pts[2].y*scale)
+			c.lineTo(pos.x+pts[3].x*scale,pos.y+pts[3].y*scale)
+			c.lineTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
 			c.closePath()					
 			if(this.color){
 				c.fillStyle = this.color
 				c.fill()
 			}
 			if(this.linewid){
-				c.lineWidth = this.linewid
+				c.lineWidth = this.linewid*scale
 				c.strokeStyle = this.linecolor
 				c.stroke()
 			}
@@ -416,15 +347,24 @@ var c0={
 		})
 		node.draw=function(){
 			var c=c0.c,
-				pos=c0.add(this.parent.getpos(),c0.rot(this.pos(),this.parent.getan()))
+				pos=this.parent.getpos(),
+				spos=c0.rot(this.pos(),this.parent.getan()),
+				pscale=this.parent.getscale()
+			
+			spos.x*=pscale
+			spos.y*=pscale
+			
+			pos=c0.add(pos,spos)
+				
+				
 			c.beginPath()			
-			c.arc(pos.x,pos.y, this.rad, 0, 2 * Math.PI, false)
+			c.arc(pos.x,pos.y, this.rad*this.getscale(), 0, 2 * Math.PI, false)
 			if(this.color){
 				c.fillStyle = this.color
 				c.fill()
 			}
 			if(this.linewid){
-				c.lineWidth = this.linewid
+				c.lineWidth = this.linewid*this.getscale()
 				c.strokeStyle = this.linecolor
 				c.stroke()
 			}
@@ -441,20 +381,29 @@ var c0={
 			var c=c0.c,
 				pos=this.parent.getpos(),
 				an=this.parent.getan(),
-				p1=c0.add(pos,c0.rot(this.p1,an)),
-				p2=c0.add(pos,c0.rot(this.p2,an))
+				p1=c0.add(pos,c0.rot(this.p1,an)),				
+				scale=this.getscale()
+				
+			var sp2=c0.rot(this.p2,an)
+			sp2.x*=scale
+			sp2.y*=scale
+			var p2=c0.add(pos,sp2)
+				
+				
 			c.beginPath()
 			c.moveTo(p1.x,p1.y)
 			c.lineTo(p2.x,p2.y)			
 			c.strokeStyle = this.color || 'black'
 			if(this.linewid){
-				c.lineWidth = this.linewid				
+				c.lineWidth = this.linewid*this.getscale()			
 			}			
 			c.stroke()
 		}
 		return node			
 	},
 	text:function(a){
+		//context.font = "normal normal 20px Verdana";
+		//[font style][font weight][font size][font face]
 		var node=this.node('text')
 		
 		loop(a,function(k,v){
@@ -462,12 +411,18 @@ var c0={
 		})		
 		node.type='text'
 		
-		var c=c0.c
+		
 		node.draw=function(){
-			var pos=this.parent.getpos(),
-				an=this.parent.getan()
+			var c=c0.c,
+				pos=this.parent.getpos(),
+				an=this.parent.getan(),				
+				scale=this.getscale(),
+				spos=c0.rot(this.pos(),an)
 			//console.log(this.pos())
-			pos=c0.add(pos,c0.rot(this.pos(),an))
+			spos.x*=scale
+			spos.y*=scale
+			pos=c0.add(pos,spos)
+			c.font='Xpx sans-serif'.replace('X',(10*scale).round())
 			if(this.font){
 				c.font = this.font
 			}
@@ -482,45 +437,126 @@ var c0={
 		return node			
 	},
 	img:function(a){},
-	//collision
-	//timing
-	timout:0,
-	time:{
-		lt:new Date().getTime(),
-		ct:new Date().getTime(),
-		td:0
+	//rendering
+	clear:function(){
+		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
 	},
-	run:function(interval){
+	render:function(node,mat){
+		var x,y			
+		node=node || c0.root
+		if(node.visible){
+			if(node.draw){
+				node.draw()
+			}
+			loop(node.children,function(i,e){
+				c0.render(e)
+			})
+		}		
+	},
+	redraw:function(node){
+		node=node || this.root
+		this.clear()
+		this.render(node)
+	},
+	draw:function(){
+		c0.cft=new Date().getTime()
+		c0.fps.text='X:'+c0.m.x+'Y:'+c0.m.y+'FPS:'+(1000/(c0.cft-c0.lft)).round()
+		c0.lft=c0.cft
+		c0.redraw()
+		window.requestAnimationFrame(c0.draw)
+	},	
+	//loops and tasks
+	mainloop:function(){
 		this.time.ct=new Date().getTime()
 		this.time.td=this.time.ct-this.time.lt
-		this.time.lt=this.time.ct
 		
-		loop(this.runlist,function(i,e){
-			e(c0.time)
-		})
-		this.redraw()
-		/*
-		this.timeout=setTimeout(function(){
-			c0.run(interval)
-		},interval)
-		/**/
+		this.dotasks(this.time)
+		
+		this.time.lt=this.time.ct
+		this.timeout=setTimeout(function(){			
+			c0.mainloop(10)
+		},10)
 	},
-	runlist:[]
+	dotasks:function(t){		
+		//rem dead tasks
+		loop(this.deadtasks,function(name,task){
+			if(task.ondeath){
+				task.ondeath(c0.time)
+			}
+			
+			delete c0.tasks[name]
+		})
+		this.deadtasks={}
+		//do tasks
+		loop(this.tasks,function(name,task){
+			//check life
+			if(task.life && t.ct>task.life){
+				//dead
+				task.rem('life')					
+			//check interval
+			} else if(task.interval){
+				if(t.ct>task.lt){
+					task.lt+=task.interval
+					//check count
+					if(task.count!=-1){
+						task.count-=1
+						if(task.count==0){
+							task.rem('interval count')
+						}							
+					}
+					task.fn(t)
+				}
+			//check count
+			} else {
+				task.fn(t)
+				if(task.count==0){
+					task.rem('count')
+				}				
+			}
+		})	
+	},
+	addtask:function(a){
+		var task={
+			run:function(){},			
+			rem:function(mes){
+				this.mes=mes
+				c0.deadtasks[this.name]=this
+			},
+			count:-1,
+			interval:-1,
+			life:0,
+			lt:new Date().getTime(),			
+			ondeath:false
+		}
+		loop(a,function(k,v){
+			task[k]=v
+		})
+		if(a.life){
+			task.life=c0.time.ct+task.life
+		}
+		var ot=this.tasks[a.name]
+		if(ot){
+			ot.rem()
+		}
+		this.tasks[a.name]=task
+		return task
+	},
+	run:function(){
+		this.init()
+		this.draw()
+		this.mainloop()
+	}
+	//collisions TODO
+	/*
+	line v line
+	line v circ	
+	line v rect
+	circ v circ
+	cirv v rect
+	rect v rect	
+	/**/
 }
-
-//test
-c0.init()
-
-var m={
-	x:0,
-	y:0
-}
-var t1=c0.text({
-	x:10,
-	y:10,
-	text:'X:0 Y:0'
-})
-t1.to()
+c0.run()
 
 var r1=c0.rect({
 	name:'r1',
@@ -528,7 +564,8 @@ var r1=c0.rect({
 	y:200,	
 	wid:50,
 	hig:100,
-	an:0,	
+	an:45,
+	scale:2,
 	color:'green',
 	linecolor:'black',
 	linewid:3
@@ -541,7 +578,7 @@ var r2=c0.rect({
 	y:100,	
 	wid:50,
 	hig:100,
-	//an:45,	
+	an:-45,	
 	color:'red',
 	linecolor:'black',
 	linewid:3
@@ -552,12 +589,12 @@ var c1=c0.circ({
 	name:'c1',
 	x:50,
 	y:50,
-	rad:30,
+	rad:10,
 	color:'yellow',
 	linecolor:'black',
-	linewid:'3'
+	linewid:'2'
 })
-c1.to(r2)
+c1.to()
 
 var t2=c0.text({
 	x:50,
@@ -573,27 +610,35 @@ var l1=c0.line({
 })
 l1.to(c1)
 
+c0.addtask({
+	name:'test',
+	life:1000,
+	//count:3,
+	interval:10,
+	fn:function(t){
+		console.log('tick')
+		c1.pos(c0.m)
+	},
+	ondeath:function(t){
+		console.log('task ended')
+	}
+	/**/
+})
+/*
 c0.canvas.on('mousemove',function(e){
+	c0.canvas.s('cursor:auto')
 	m.x=e.x
 	m.y=e.y		
-	r1.an=m.x/2
-	t1.text='X:'+m.x+'Y:'+m.y+'AN:'+r1.an
-	//console.log(r2.getpos())
-	c0.redraw()
-})
-/**/
-/*
-function animloop(){
-  window.requestAnimationFrame(animloop)
-  c0.run()
-}
-animloop()
-
-c0.runlist.push(function(){	
+	//r1.an=m.x/2
+	//r1.scale=m.x/400
 	
+	//r1.pos(m)
+	if(c1.ishit(m)){
+		c1.color='blue'
+	} else {
+		c1.color='green'
+	}
+	c0.draw()
 })
 /**/
-//c0.redraw()
-c0.render(c0.root)
-console.log(r2.pos())
-console.log(r2.getpos())
+
