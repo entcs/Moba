@@ -1,7 +1,4 @@
-d.body.s('margin:0px')
-//globals
-var globalcooldown=1000
-
+document.body.style['margin']='0px'
 var c0={
 	init:function(){
 		this.nodes=[]
@@ -11,15 +8,14 @@ var c0={
 		this.c=this.canvas.getContext('2d')
 		this.root=this.node('root')
 		this.addevents()
+		
 		this.fps=this.text({
 			x:10,
 			y:10,
 			text:'info'
 		}).to()
+		
 		this.m={x:0,y:0}
-		this.lft=0
-		this.cft=new Date().getTime()
-		this.runtasks={}
 		this.time={
 			lt:new Date().getTime(),
 			ct:new Date().getTime(),
@@ -27,13 +23,21 @@ var c0={
 		}
 		this.tasks={}
 		this.deadtasks={}
+		//events
+		this.down={}
+		this.up={}
+		this.click={}
+		this.move={}
+		//collisions
+		this.collidables={}
+		this.collisions={}
 	},
 	//events
-	addevents:function(){	
+	addevents:function(){
 		window.onresize=function(){
 			c0.canvas.width=window.innerWidth-2	
 			c0.canvas.height=window.innerHeight-2
-			c0.redraw()
+			c0.render()
 		}
 		d.trigger('resize')	
 	
@@ -66,7 +70,15 @@ var c0={
 			c0.m.y=e.y
 		})		
 	},	
-	//util	
+	//util
+	uid:function(){
+		//unigue id
+		var time=new Date().getTime()
+			uid=[time.toString(16),(time+this.uidcount).toString(16)].join('')
+		this.uidcount+=1		
+		return uid
+	},
+	uidcount:0,
 	dist:function(a,b){
 		var dx=a.x-b.x,
 			dy=a.y-b.y
@@ -145,6 +157,7 @@ var c0={
 		var node={x:0,y:0},		
 			ext={
 				init:function(){
+					this.uid=c0.uid()
 					this.type='node'
 					this.name=name
 					this.parent=0	
@@ -155,6 +168,8 @@ var c0={
 					this.sx=1
 					this.sy=1
 					this.hit='rect'
+					this.events={}
+					this.enabled=false
 				},
 				//rendering
 				to:function(parent){
@@ -240,8 +255,11 @@ var c0={
 					}		
 					move=c0.add(p1,move)	
 					this.pos(move)		
+				},				
+				loop:function(p){},//todo
+				dist:function(p){
+					return c0.dist(this.getpos(),p)
 				},
-				//events
 				ishit:function(p){
 					if(this.hit=='circ'){
 						if(c0.dist(this.getpos(),p)<=this.rad*this.getscale()){
@@ -275,13 +293,21 @@ var c0={
 					}
 					return false
 				},
+				//events
 				on:function(name,callback){
-					this.events[name]=callback
+					c0[name][this.uid]=callback
 				},
 				off:function(name){
-					delete this.events[name]
+					delete c0[name][this.uid]
 				},
-				events:{
+				//collisions
+				enable:function(){
+					this.enabled=true
+					c0.collidables[this.uid]=this
+				},
+				disable:function(){
+					this.enabled=false
+					delete c0.collidables[this.uid]
 				}
 			}
 		loop(ext,function(k,v){
@@ -441,8 +467,7 @@ var c0={
 	clear:function(){
 		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
 	},
-	render:function(node,mat){
-		var x,y			
+	render:function(node){
 		node=node || c0.root
 		if(node.visible){
 			if(node.draw){
@@ -453,16 +478,12 @@ var c0={
 			})
 		}		
 	},
-	redraw:function(node){
-		node=node || this.root
-		this.clear()
-		this.render(node)
-	},
 	draw:function(){
 		c0.cft=new Date().getTime()
 		c0.fps.text='X:'+c0.m.x+'Y:'+c0.m.y+'FPS:'+(1000/(c0.cft-c0.lft)).round()
 		c0.lft=c0.cft
-		c0.redraw()
+		c0.clear()
+		c0.render()
 		window.requestAnimationFrame(c0.draw)
 	},	
 	//loops and tasks
@@ -545,8 +566,106 @@ var c0={
 		this.init()
 		this.draw()
 		this.mainloop()
-	}
+	},
 	//collisions TODO
+	collide:function(callback){		
+		var cui1,
+			cui2,
+			col
+		loop(c0.collidables,function(u1,n1){
+			loop(c0.collidables,function(u2,n2){
+				cui1=u1+u2
+				cui2=u2+u1
+				if(u1!=u2 && !c0.collisions[cui1] && !c0.collisions[cui2]){					
+					col=c0.collidenow(n1,n2)					
+					if(col){
+						callback(col)
+					}
+					c0.collisions[cui1]=col
+				}
+			})
+		})		
+		this.collisions={}
+	},
+	collidenow:function(n1,n2){
+		var type=n1.type+n2.type,
+			col=0
+		function cc(n1,n2){
+			var dist=n1.dist(n2.getpos()),
+				rr=n1.rad+n2.rad,
+				dif=rr-dist
+				
+			if(dif>0){
+				return {
+					type:'cc',
+					n1:n1,
+					n2:n2,
+					dist:dist,
+					rr:rr,
+					dif:dif					
+				}
+			}			
+			return 0
+		}
+		function cl(n1,n2){
+			//line formula y=ax+c
+			//a1*a2=-1 perpendicular
+			
+			//rise of the line			
+			var a1=(n2.p2.y-n2.p1.y)/(n2.p2.x-n2.p1.x)
+			//shift of the line
+			var b1=n2.p1.y-a1*n2.p1.x
+			//rise of perpendicular projection line			
+			var a2=-1/a1
+			//shift of perpendicular projection line
+			var b2=n1.y-a2*n1.x
+			//col spot
+			var x=(b2-b1)/(a1-a2)
+			var y=a2*x+b2
+							
+			var rad=n1.rad/n1.getscale()
+			if(
+				(x>n2.p1.x && x>n2.p2.x) ||
+				(x<n2.p1.x && x<n2.p2.x) ||
+				(y>n2.p1.y && y>n2.p2.y) ||
+				(y<n2.p1.y && y<n2.p2.y)
+			) {
+				if(c0.dist(n2.p1,n1.getpos())<rad){
+					c2.pos(n2.p1)
+				} else if(c0.dist(n2.p2,n1.getpos())<rad){
+					c2.pos(n2.p2)
+				}
+			}else if(c0.dist({x:x,y:y},n1.getpos())<rad){
+				c2.pos({
+					x:x,
+					y:y
+				})					
+			}
+		
+			
+			//console.log(a,c1,c2,x,y)
+			
+			return false
+		}		
+		function cr(n1,n2){
+			return false
+		}
+		switch (type){
+			case 'circcirc':
+				col=cc(n1,n2)
+				break
+			case 'circline':
+				col=cl(n1,n2)
+				break
+			case 'circrect':
+				col=cr(n1,n2)
+				break
+			case 'rectcirc':
+				col=cc(n2,n1)
+				break
+		}
+		return col
+	}
 	/*
 	line v line
 	line v circ	
@@ -570,7 +689,22 @@ var r1=c0.rect({
 	linecolor:'black',
 	linewid:3
 })
-r1.to()
+//r1.to()
+
+var l1=c0.line({
+	name:'l1',
+	p1:{
+		x:100,
+		y:100
+	},
+	p2:{
+		x:400,
+		y:400
+	},
+	color:'green',
+	linewid:3
+})
+l1.to()
 
 var r2=c0.rect({
 	name:'r2',
@@ -583,19 +717,29 @@ var r2=c0.rect({
 	linecolor:'black',
 	linewid:3
 })
-r2.to(r1)
+//r2.to(r1)
 
 var c1=c0.circ({
 	name:'c1',
 	x:50,
 	y:50,
-	rad:10,
+	rad:50,
 	color:'yellow',
 	linecolor:'black',
 	linewid:'2'
 })
 c1.to()
 
+var c2=c0.circ({
+	name:'c2',
+	x:450,
+	y:450,
+	rad:10,
+	color:'red',
+	linecolor:'black',
+	linewid:'2'
+})
+c2.to()
 var t2=c0.text({
 	x:50,
 	y:50,
@@ -603,42 +747,39 @@ var t2=c0.text({
 })
 t2.to(c1)
 
-var l1=c0.line({
-	p1:{x:0,y:0},
-	p2:{x:50,y:50},
-	color:'black'
-})
-l1.to(c1)
-
 c0.addtask({
 	name:'test',
-	life:1000,
+	//life:1000,
 	//count:3,
 	interval:10,
 	fn:function(t){
-		console.log('tick')
+		l1.p1.y+=0.1
+		l1.p2.y-=0.1
+		//console.log('tick')
 		c1.pos(c0.m)
 	},
 	ondeath:function(t){
 		console.log('task ended')
 	}
-	/**/
-})
-/*
-c0.canvas.on('mousemove',function(e){
-	c0.canvas.s('cursor:auto')
-	m.x=e.x
-	m.y=e.y		
-	//r1.an=m.x/2
-	//r1.scale=m.x/400
-	
-	//r1.pos(m)
-	if(c1.ishit(m)){
-		c1.color='blue'
-	} else {
-		c1.color='green'
-	}
-	c0.draw()
-})
-/**/
 
+})
+c1.enable()
+//c2.enable()
+l1.enable()
+c0.addtask({
+	name:'collide',
+	interval:10,
+	fn:function(t){
+		c1.color='yellow'
+		c2.color='red'
+		c0.collide(function(col){
+			col.n1.color='blue'
+			col.n2.color='blue'
+			
+		})
+	},
+	ondeath:function(t){
+		console.log('task ended')
+	}
+
+})
