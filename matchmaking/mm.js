@@ -1,3 +1,60 @@
+//example pls
+var pls={},
+	name
+loop(48,function(i){
+	name='pl-'+(i+1)
+	pls[name]={
+		name:name,
+		rat:0,
+		games:[],
+		que:''
+	}
+})
+
+//matchmaking
+var mm={
+	pls:{},
+	add:function(pl){
+		this.pls.push(pl)
+	},
+	rem:function(pl){
+		var ind=this.pls.indexOf(pl)
+		this.pls.splice(ind,1)
+	},
+	match:function(nr){
+		
+	}
+}
+//draw
+var draw={
+	init:function(){
+		var pls=d.body.r('div class=pls'),
+			que=d.body.r('div class=que'),
+			match=d.body.r('div class=match')
+	},
+	pls:function(){
+		var pls=d.find('.pls')
+		pls.h('')
+		var table=pls.r('table'),
+			thead=table.r('thead'),
+			tbody=table.r('tbody'),
+			tr,td		
+		
+		loop(pls,function(i,pl){
+			tr=tbody.r('tr')
+			tr.addclass(pl.name)
+			loop(pl,function(k,v){
+				td=tr.r('td')
+				td.addclass='f_'+k
+				td.h(v)
+			})
+		})
+	}
+}
+d.on('ready',function(e){
+	draw.init()
+	draw.pls()
+})
 //utility
 //list
 var Util={
