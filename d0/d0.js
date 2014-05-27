@@ -682,4 +682,11 @@ d.uid=function(){
 	this.uidcount+=1		
 	return uid
 }
+d.rng=function(nr){
+	var rnr=Math.floor(Math.random()*nr)
+	if(rnr==nr){
+		rnr=d.rng(nr)
+	}
+	return rnr
+}
 console.log('loaded dom0')
