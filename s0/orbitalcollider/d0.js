@@ -675,22 +675,5 @@ d.send=function(){
 		}
 	}	
 }
-//unigue id
-d.uid=function(){	
-	var time=new Date().getTime()
-		uid=[time.toString(16),(time+this.uidcount).toString(16)].join('')
-	this.uidcount+=1		
-	return uid
-}
-d.rng=function(nr){
-	if(nr && nr!=1){
-		var rnr=Math.floor(Math.random()*nr)
-		if(rnr==nr){
-			rnr=d.rng(nr)
-		}
-	} else {
-		return false
-	}
-	return rnr
-}
+
 console.log('loaded dom0')

@@ -87,11 +87,36 @@ exports.handler=function(req,res){
 			}
 			if (fs.statSync(filename).isDirectory()) filename += '/index.html'
 			fs.readFile(filename, "binary", function(err, file) {
-				if(err) {     
+				if(err) {
 					res.send('{"err":'+err+'}',500)
 					return
+				} else {
+					var ex=ext.replace('.','')
+					switch(ex){
+						case 'wav':
+						case 'ogg':
+							var stat = fs.statSync(filename)    
+							res.writeHead(200, {
+								'Content-Type': 'audio/'+ex, 
+								'Content-Length': stat.size,
+								'Accept-Ranges': 'bytes',
+								'Content-Range': ['bytes 0-',stat.size-1,'/',stat.size-1].join('')
+							})					
+							var rs = fs.createReadStream(filename)
+							rs.pipe(res)					
+							break
+						case 'html':
+							res.writeHead(200, {
+								'Content-Type': 'text/html', 
+							})
+							res.write(file)//,'binary')
+							res.end()
+							break
+						default:
+							res.send(file,'200',ext)
+							break
+					}					
 				}				
-				res.send(file)
 			})			
 		})
 	}
