@@ -336,6 +336,9 @@ var c0={
 	rect:function(a){
 		var node=this.node('circ')
 		node.type='rect'
+		node.wid=100
+		node.hig=50
+		node.color='#aaa'
 		loop(a,function(k,v){
 			node[k]=v
 		})		
@@ -753,19 +756,19 @@ var c0={
 			col=0
 		switch (type){
 			case 'circcirc':
-				col=cc(n1,n2)
+				col=c0.cc(n1,n2)
 				break
 			case 'circline':
-				col=cl(n1,n2)
+				col=c0.cl(n1,n2)
 				break
 			case 'circrect':
-				col=cr(n1,n2)
+				col=c0.cr(n1,n2)
 				break
 			case 'noderect':
-				col=dr(n1,n2)
+				col=c0.dr(n1,n2)
 				break
 			case 'nodecirc':
-				col=dc(n1,n2)
+				col=c0.dc(n1,n2)
 				break
 		}
 		return col
