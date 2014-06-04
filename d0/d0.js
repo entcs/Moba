@@ -689,7 +689,7 @@ d.rng=function(nr){
 			rnr=d.rng(nr)
 		}
 	} else {
-		return false
+		return Math.random()
 	}
 	return rnr
 }
