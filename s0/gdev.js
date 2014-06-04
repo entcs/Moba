@@ -269,15 +269,17 @@ d.on('ready',function(e){
 						
 					loop(res.res,function(i,e){					
 						if(e.Field!='id'){
-							field=form.r('div class=field')
-							
-							lab=field.r('label')
-							lab.h(e.Field)
-							lab.set('for',e.Field)
-							
-							inp=field.r('input')
-							inp.set('name',e.Field)
-							inp.id=e.Field
+							if(!(name=='games' && e.Field=='owner')){
+								field=form.r('div class=field')
+								
+								lab=field.r('label')
+								lab.h(e.Field)
+								lab.set('for',e.Field)
+								
+								inp=field.r('input')
+								inp.set('name',e.Field)
+								inp.id=e.Field
+							}
 						}
 					})
 					//add button

@@ -29,7 +29,66 @@ var http=require('http'),
 		
 		//res.headers['Set-Cookie']=req.headers.cookie
 	}
+reqp.user=''
 resp.isauth=false
+resp.sendfile=function(req,res){
+	//file request
+	var filename = path.join(process.cwd(), req.pathname),			
+		ext=path.extname(req.pathname).replace('.',''),
+		dirname
+		
+	console.log('filename:',filename)
+	if(ext){
+		dirname=path.dirname(filename)
+	} else {
+		dirname=filename
+	}
+	if(filename.indexOf('handler.js')!=-1 || filename.indexOf('server.js')!=-1){
+		res.send("{'err':'You are not here'}",403)
+		return
+	}
+	fs.exists(filename, function(exists) {
+		if(!exists) {
+			res.send('"err":{"They are not here"}',404)
+			return
+		}
+		if (fs.statSync(filename).isDirectory()) {
+			filename += '/index.html'
+			ext='html'
+		}
+				
+		switch(ext){
+			case 'wav':
+			case 'ogg':
+				var stat = fs.statSync(filename)    
+				res.writeHead(200, {
+					'Content-Type': 'audio/'+ext, 
+					'Content-Length': stat.size,
+					'Accept-Ranges': 'bytes',
+					'Content-Range': ['bytes 0-',stat.size-1,'/',stat.size-1].join('')
+				})					
+				var rs = fs.createReadStream(filename)
+				rs.pipe(res)					
+				break
+			case 'html':
+				res.writeHead(200, {
+					'Content-Type': 'text/html', 
+				})
+				var rs = fs.createReadStream(filename)
+				rs.pipe(res)
+				break
+			default:
+				res.writeHead(200, {
+					'Content-Type': 'text/plain', 
+				})
+				var rs = fs.createReadStream(filename)
+				rs.pipe(res)
+				//res.send(file,'200',ext)
+				break
+		}					
+	})
+
+}
 resp.send=function(data,code){
 	code=code || 200
 	//type=type || 'text/plain'

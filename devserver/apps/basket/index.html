@@ -49,6 +49,7 @@ d.on('ready',function(e){
 	}
 
 	basket={
+		color1:'color:#333',
 		setstyles:function(){
 			var sheet=d.dss.new('basesheet'),
 				col1='background-color:yellowgreen',
@@ -56,7 +57,7 @@ d.on('ready',function(e){
 				col3='background-color:#eee',
 				tcol1='color:#eee',
 				tcol2='color:#eee',
-				tcol3='color:#333'				
+				tcol3=basket.color1//'color:#333'				
 			
 			sheet.new('body',
 				'background-color:#eee',
@@ -1499,7 +1500,7 @@ d.on('ready',function(e){
 			}
 		}
 	}
-	basket.setstyles()
+	basket.sheet=basket.setstyles()
 	basket.show()
 	basket.tactics.show()
 	console.log('ready')

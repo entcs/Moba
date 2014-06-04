@@ -40,10 +40,16 @@ var mysql=require('mysql'),
 		console.log('data123:',data)
 		req.write(data)
 		req.end()	
-	}	
-	
+	},
+	vq=function(q){		
+		if(!(q.match(/['";]/)===null)){
+			q=''
+		}
+		return q
+	}
 
-exports.handler=function(req,res){	
+exports.handler=function(req,res){
+	req.user=sessions.get(req.cookies.user)
 	res.isauth=filters.isauth(req,res)
 	var act=actions[req.route]
 	if(act){
@@ -61,64 +67,13 @@ exports.handler=function(req,res){
 			})
 		}
 		//handle action
-		if(auth){
+		if(auth){			
 			act.fn(req,res)
 		} else {			
 			res.send('{"err":"'+req.route+' forbidden'+'"}','text/html',403)
 		}				
 	} else {
-		//file request
-		var filename = path.join(process.cwd(), req.pathname),			
-			ext=path.extname(req.pathname),
-			dirname
-		if(ext){
-			dirname=path.dirname(filename)
-		} else {
-			dirname=filename
-		}
-		if(filename.indexOf('handler.js')!=-1 || filename.indexOf('server.js')!=-1){
-			res.send("{'err':'You are not here'}",403)
-			return
-		}
-		fs.exists(filename, function(exists) {
-			if(!exists) {
-				res.send('"err":{"They are not here"}',404)
-				return
-			}
-			if (fs.statSync(filename).isDirectory()) filename += '/index.html'
-			fs.readFile(filename, "binary", function(err, file) {
-				if(err) {
-					res.send('{"err":'+err+'}',500)
-					return
-				} else {
-					var ex=ext.replace('.','')
-					switch(ex){
-						case 'wav':
-						case 'ogg':
-							var stat = fs.statSync(filename)    
-							res.writeHead(200, {
-								'Content-Type': 'audio/'+ex, 
-								'Content-Length': stat.size,
-								'Accept-Ranges': 'bytes',
-								'Content-Range': ['bytes 0-',stat.size-1,'/',stat.size-1].join('')
-							})					
-							var rs = fs.createReadStream(filename)
-							rs.pipe(res)					
-							break
-						case 'html':
-							res.writeHead(200, {
-								'Content-Type': 'text/html', 
-							})
-							res.write(file)//,'binary')
-							res.end()
-							break
-						default:
-							res.send(file,'200',ext)
-							break
-					}					
-				}				
-			})			
-		})
+		res.sendfile(req,res)
 	}
 }
 
@@ -139,7 +94,7 @@ var sessions={
 		delete this.users[name]
 	},
 	get:function(name){
-		return this.users[name]
+		return this.users[name] || ''
 	},
 	run:function(){
 		setTimeout(function(){
@@ -238,8 +193,9 @@ var actions={
 			res.send('register not available')
 		}
 	},
+
 	'/games/add get':{
-		//filters:['isauth'],
+		filters:['isauth'],
 		fn:function(req,res){
 			connection.query('show columns from games',function(err,qres){						
 				var data={}
@@ -254,7 +210,7 @@ var actions={
 	},
 	'/games/add post':{
 		filters:['isauth'],
-		fn:function(req,res){
+		fn:function(req,res,user){
 			var user=sessions.get(req.cookies.user)
 			if(user){
 				var data=JSON.parse(req.data),
@@ -289,6 +245,48 @@ var actions={
 			}		
 		}
 	},
+	'/games/rem post':{
+		filters:['isauth'],
+		fn:function(req,res){
+			console.log('user:',req.user)
+			if(req.user){
+				var data=JSON.parse(req.data)					
+				
+				var id=vq(data.id)
+				console.log('rem game:',id)
+				connection.query('select * from games where id='+id,function(err,qres){
+					if(err){
+						data.err=err
+					} else {
+						data.res=qres
+						if(qres[0].owner==req.user.name){
+							console.log('qres:',qres[0].owner,req.user)
+							connection.query('delete from games where id='+id,function(err,qres){
+								if(err){
+									data.err=err
+									res.send(JSON.stringify(data))
+								} else {
+									if(data.want=='list' && !err){
+										actions['/games/list get'].fn(req,res)
+										//handle[name].list.get(req,res)
+										//res.send(JSON.stringify(data))
+									} else {
+										res.send(JSON.stringify(data))
+									}							
+									
+								}
+							})
+
+						} else {
+							res.send(JSON.stringify(data))
+						}											
+					}					
+				})				
+			} else {
+				res.send(req.data)
+			}
+		}
+	},
 	'/games/list get':{
 		filers:['isauth'],
 		fn:function(req,res){
@@ -307,6 +305,99 @@ var actions={
 			})			
 		}
 	},
+
+	'/developers/add get':{
+		filters:['isauth'],
+		fn:function(req,res){
+			connection.query('show columns from developers',function(err,qres){						
+				var data={}
+				if(err){
+					data.err=err
+				} else {
+					data.res=qres
+				}
+				res.send(JSON.stringify(data))
+			})			
+		}
+	},
+	'/developers/add post':{
+		filters:['isauth'],
+		fn:function(req,res,user){
+			var user=sessions.get(req.cookies.user)
+			if(user){
+				var data=JSON.parse(req.data),
+					item=data.item,
+					columns=[],
+					values=[]		
+				
+				item.owner=user.name
+				
+				connection.query('insert into developers set ?',item,function(err,qres){											
+					if(err){
+						data.err=err
+					} else {
+						data.res=qres
+					}
+					delete data.item
+					
+					//console.log('data:',err)
+					
+					if(data.want=='list' && !err){
+						actions['/developers/list get'].fn(req,res)
+						//handle[name].list.get(req,res)
+						//res.send(JSON.stringify(data))
+					} else {
+						res.send(JSON.stringify(data))
+					}
+				})
+			} else {
+				res.send(JSON.stringify({
+					err:'forbidden'
+				}))
+			}		
+		}
+	},
+	'/developers/rem post':{
+		filters:['isauth'],
+		fn:function(req,res){
+			console.log('user:',req.user)
+			if(req.user){
+				var data=JSON.parse(req.data)					
+				
+				var id=vq(data.id)				
+				connection.query('select * from developers where id='+id,function(err,qres){
+					if(err){
+						data.err=err
+					} else {
+						data.res=qres
+						if(qres[0].owner==req.user.name){
+							console.log('qres:',qres[0].owner,req.user)
+							connection.query('delete from developers where id='+id,function(err,qres){
+								if(err){
+									data.err=err
+									res.send(JSON.stringify(data))
+								} else {
+									if(data.want=='list' && !err){
+										actions['/developers/list get'].fn(req,res)
+										//handle[name].list.get(req,res)
+										//res.send(JSON.stringify(data))
+									} else {
+										res.send(JSON.stringify(data))
+									}							
+									
+								}
+							})
+
+						} else {
+							res.send(JSON.stringify(data))
+						}											
+					}					
+				})				
+			} else {
+				res.send(req.data)
+			}
+		}
+	},	
 	'/developers/list get':{
 		filers:['isauth'],
 		fn:function(req,res){
