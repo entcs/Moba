@@ -1,4 +1,3 @@
-document.body.style['margin']='0px'
 var c0={
 	init:function(){
 		this.nodes=[]
