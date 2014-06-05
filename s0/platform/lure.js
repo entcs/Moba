@@ -1,29 +1,75 @@
 var g,
-	me
+	me,
+	line,
+	rect,
+	dot
+	
 d.on('ready',function(e){
 	g={
 		run:function(tt){
-			//c0.redraw()
-			g.grav(tt)
-			g.move(tt)
+			g.grav(tt)			
+			me.color='yellowgreen'	
+			me.col=false
 			c0.collide(g.collide)
+			g.move(tt)
 		},
-		grav:function(dt){			
+		grav:function(tt){			
 			loop(g.map.pls,function(i,pl){
-				//console.log('pl:',pl)
-				pl.vec.y+=dt*0.008
+				pl.vec.y+=tt*0.012
 			})
 		},
-		move:function(){
+		move:function(tt){
+			var dec=0
 			loop(g.map.pls,function(i,pl){
-				pl.vis.x+=pl.vec.x
-				pl.vis.y+=pl.vec.y
-				//console.log('pl:',pl)
-				//pl.vec.y+=dt*0.001
+				if(pl.vec.x>0){
+					dec=-1
+				} else if(pl.vec.x<0){
+					dec=1
+				}				
+				if(me.left && me.col){
+					pl.vec.x-=tt*0.03
+				} else if(me.right && me.col){
+					pl.vec.x+=tt*0.03
+				}
+				if(pl.vec.x>0.35*tt){
+					pl.vec.x=0.35*tt
+				}
+				if(pl.vec.x<-0.35*tt){
+					pl.vec.x=-0.35*tt
+				}
+				if(me.jump && me.col){
+					me.vec.y=-0.5*tt
+					me.jump=false
+				}
+				if(me.col){
+					pl.vec.x+=dec*tt*0.01
+				} else {
+					pl.vec.x+=dec*tt*0.001
+				}
+				pl.x+=pl.vec.x
+				pl.y+=pl.vec.y
 			})			
 		},
 		collide:function(col){
-			console.log('col',col)
+			me.col=true
+			//col.n1.color='orange'
+			var pos=col.n1.getpos(),
+				vec=c0.norm(c0.sub(pos,col.hit)),
+				an=c0.an(pos,col.hit)
+			//dot.pos(col.hit)
+			//col.n1.vec=vec
+			//col.n1.vec.x+=vec.x
+			var dif=me.rad-c0.dist(pos,col.hit)
+			//console.log(me.x,col.hit.x)
+			if(pos.y<col.hit.y){
+				//console.log('me higher')
+				me.y-=dif-2
+			} else {
+				//console.log('me lower')
+				me.y+=dif-15
+			}
+			col.n1.vec.y=0
+			
 		},
 		map:{
 			blocks:[],
@@ -36,15 +82,15 @@ d.on('ready',function(e){
 				this.blocks.push(block)
 			},
 			pls:[],
-			addpl:function(a){
-				var pl={
-					vec:{x:0,y:0},
-					vis:c0.circ({
+			addpl:function(){
+				var pl=c0.circ({
 						rad:24,
 						color:'yellowgreen'
 					}).to(this.root)
-				}
-				pl.vis.enable()
+					
+					pl.vec={x:0,y:0}					
+				
+				pl.enable()
 				this.pls.push(pl)
 				return pl
 			},
@@ -77,17 +123,57 @@ d.on('ready',function(e){
 			}
 		}
 	}
-	c0.ondraw=g.run
-	c0.run()
+	c0.run('resize')
 	g.map.gen()
 	me=g.map.addpl()
+	me.x=443
+	me.y=410
+	dot=c0.circ({
+		rad:10,
+		color:'blue'
+	}).to(g.map.root)
+	c0.ondraw=g.run
 	
-	function resize(e){
-		console.log('here')
-		c0.canvas.width=window.innerWidth
-		c0.canvas.height=window.innerHeight		
-	}
-	window.onresize=resize
-	resize()
-	
+	d.body.on('keyup',function(e){	
+		switch(e.which){
+			case 65:
+			case 37:
+				me.left=false
+				break
+			case 68:
+			case 39:
+				me.right=false
+				break
+			case 87:
+			case 32:
+			case 38:
+				//jump				
+				e.preventDefault()
+				e.stopPropagation()
+				break
+		}
+	})
+	d.body.on('keydown',function(e){	
+		switch(e.which){
+			case 65:
+			case 37:
+				me.left=true
+				break
+			case 68:
+			case 39:
+				me.right=true
+				break
+			case 87:
+			case 32:
+			case 38:
+				//jump
+				if(me.col){
+					me.jump=true
+				}
+				e.preventDefault()
+				e.stopPropagation()
+				break
+		}
+	})	
+	//c0.collide(g.collide)
 })
