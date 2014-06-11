@@ -1,0 +1,526 @@
+<head>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
+</head>
+<script src='d0.js'></script>
+<script src='c0.js'></script>
+<!---->
+<script>
+var basket={}
+d.on('ready',function(e){	
+	var flip=false
+	basket={
+		acts:[],
+		pl:-1,
+		act:-1,
+		col:'',
+		setstyles:function(){
+			var sheet=d.dss.new('basesheet'),
+				col1='background-color:yellowgreen',
+				col2='background-color:#333',
+				col3='background-color:#eee',
+				tcol1='color:#eee',
+				tcol2='color:#eee',
+				tcol3='color:#333'				
+			
+			sheet.new('body',
+				'background-color:#111',
+				'font-size:14px',
+				'margin:0px'	
+			)
+			
+			sheet.new('.game',
+				'width:480px',
+				'height:800px',
+				'max-height:800px',
+				'background-color:#eee'
+			)			
+			sheet.new('.game.vert',
+				'width:800px',
+				'height:480px',
+				'max-height:480px',
+				'background-color:#eee'
+			)
+			
+			/*
+			sheet.new('.game, .game',
+				'width:100%',
+				'height:100%'				
+			)
+			/**/
+			
+			sheet.new('table',
+				'border-collapse:collapse'
+			)
+			
+			sheet.new('table td',
+				'padding:0px',
+				'margin:0px',
+				'border:1px solid #aaa'
+			)
+			sheet.new('body,button,input,table,select',
+				'font-family:Open Sans Condensed, sans-serif',
+				'font-weight: bold',
+				'font-size:14px',
+				'color:#666',
+				'border:none',
+				'text-transform: uppercase'
+			)
+			sheet.new('*',
+				'box-sizing:border-box'
+			)
+			sheet.new('.hand',
+				'cursor:pointer'
+			)
+			sheet.new('.sec,.form',
+				'border:1px solid #aaa',
+				'background-color: #eee'
+			)
+			sheet.new('.cols',
+				'display:table',
+				'table-layout:fixed',
+				'width:100%'				
+			)
+			sheet.new('.cols>*',
+				'display:table-cell',
+				'vertical-align:top'
+			)
+			sheet.new('.rows',
+				'display:table',
+				'table-layout:fixed',
+				'height:100%'				
+			)
+			sheet.new('.rows>*',
+				'display:table-row'				
+			)			
+			sheet.new('.iblocks > *',
+				'display:inline-block',
+				'box-sizing:border-box'				
+			)			
+			sheet.new('.b32',
+				'width:32px',
+				'height:32px',
+				'font-size:24px',
+				'line-height:32px',
+				'border:1px solid #aaa',
+				'cursor:pointer'
+			)		
+			sheet.new('.but',
+				'min-width:60px',
+				'height:64px',
+				'line-height:62px',
+				'font-size:42px',
+				'border:1px solid #aaa',
+				'cursor:pointer'				
+			)
+			sheet.new('.col1 .but',
+				'background-color:#CAE78F'
+			)
+			sheet.new('.col2 .but',
+				'background-color:#FFE4B3'
+			)
+			sheet.new('.col1 .selected',
+				'background-color:yellowgreen'
+			)			
+			sheet.new('.col2 .selected',
+				'background-color:orange'
+			)			
+			sheet.new('.b48',
+				'width:48px',
+				'height:48px',
+				'line-height:46px',
+				'font-size:36px',
+				'border:1px solid #aaa',
+				'cursor:pointer'
+			)		
+			sheet.new('.h32',
+				'height:32px',
+				'font-size:24px',
+				'line-height:30px'				
+			)
+			sheet.new('.h48',
+				'height:48px',
+				'line-height:46px',
+				'font-size:32px'				
+			)		
+			sheet.new('.ro',
+				'border-radius:10px'
+			)
+			sheet.new('.iblock',
+				'display:inline-block'
+			)			
+			sheet.new('.space',
+				'margin-top:4px'
+			)			
+			sheet.new('.bo',
+				'border:1px solid #aaa'
+			)
+			sheet.new('.w100',
+				'width:100%'				
+			)
+			sheet.new('.w50',
+				'width:50%'				
+			)
+			sheet.new('.w33',
+				'width:33.33333%'				
+			)			
+			sheet.new('.w25',
+				'width:25%'				
+			)
+			sheet.new('.tleft',
+				'text-align:left'
+			)
+			sheet.new('.tright',
+				'text-align:right'
+			)
+			sheet.new('.tmid',
+				'text-align:center'
+			)
+			sheet.new('.bo',
+				'border:1px solid #aaa'
+			)
+			sheet.new('.bt',
+				'border-top:1px solid #aaa'
+			)
+			sheet.new('.bb',
+				'border-bottom:1px solid #aaa'
+			)
+			sheet.new('.bl',
+				'border-left:1px solid #aaa'
+			)
+			sheet.new('.br',
+				'border-right:1px solid #aaa'
+			)
+			sheet.show()
+			return sheet
+		},
+		show:function(){
+			var game=d.body.r('div class=game tmid rows'),
+				top=game.r('div class=top'),
+				mid=game.r('div class=mid')
+					.s('height:100%'),
+				bot=game.r('div class=bot')				
+			
+			function confirmaction(){
+				console.log(basket.pl,basket.act)
+				if(basket.pl!=-1 && basket.act!=-1){
+					basket.acts.push({
+						pl:basket.pl,
+						act:basket.act,
+						col:basket.col
+					})							
+					updateacts()
+					/*
+					basket.pl=-1
+					basket.act=-1
+					game.find('.actions .selected').remclass('selected')
+					game.find('.players .selected').remclass('selected')
+					/**/
+				}
+			}
+			
+			function drawteams(){
+				//teams
+				var teams=d.r('div class=teams cols h48 space')
+				teams.r('div class=team1 bo ro hand')
+					.h('team:45(....)')
+					.s('background-color:yellowgreen')
+					.on('click',function(e){
+						game.remclass('col2')
+						game.addclass('col1')
+						basket.col='#CAE78F'
+						basket.pl=-1
+						basket.act=-1
+						var ele=game.find('.actions .selected')
+						if(ele){
+							ele.remclass('selected')
+						}						
+						ele=game.find('.players .selected')
+						if(ele){
+							ele.remclass('selected')						
+						}				
+					})
+				teams.r('div class=manageteams bo ro hand title=menu')
+					.h('...')
+					.s('width:48px')
+					.on('click',function(e){
+						if(game.hasclass('vert')){
+							game.remclass('vert')
+						} else {
+							game.addclass('vert')
+						}
+					})
+				teams.r('div class=team2 bo ro hand')
+					.h('team:37(....)')
+					.s('background-color:orange')
+					.on('click',function(e){
+						game.remclass('col1')
+						game.addclass('col2')
+						basket.col='#FFE4B3'
+						basket.pl=-1
+						basket.act=-1
+						var ele=game.find('.actions .selected')
+						if(ele){
+							ele.remclass('selected')
+						}						
+						ele=game.find('.players .selected')
+						if(ele){
+							ele.remclass('selected')						
+						}
+						
+					})
+					
+				return teams
+			}			
+			function drawplayers(){
+				var pls=d.r('div class=players iblocks space'),
+					pl
+				loop(12,function(i2){
+					pl=pls.r('div class=player but bo hand ro')
+						.h(i2+4)
+						.on('click',function(e){
+							var sel=game.find('.players .selected')
+							if(sel){
+								sel.remclass('selected')
+							}
+							e.target.addclass('selected')
+							basket.pl=e.target.h()
+							basket.act=-1
+							var ele=game.find('.actions .selected')
+							if(ele){
+								ele.remclass('selected')
+							}						
+							//confirmaction()
+						})
+					
+				})
+				return pls
+			}
+			function drawaction(){
+				var acts=[						
+						'1+',
+						'1-',
+						'2+',
+						'2-',
+						'3+',
+						'3-',
+						'fo',
+						'tf',
+						'tt',												
+						'bl',
+						'st',
+						'as',
+						'rb'
+					],
+					actions=d.r('div class=actions space')						
+										
+				actlist=actions.r('div class=actionslist iblocks')				
+				loop(acts,function(i,name){
+					actlist.r('div class=action but ro')						
+						.h(name)
+						.on('click',function(e){
+							var sel=game.find('.actions .selected')
+							if(sel){
+								sel.remclass('selected')
+							}							
+							e.target.addclass('selected')
+							basket.act=e.target.h()
+							confirmaction()
+						})
+				})
+			
+				return actions
+			}
+			function drawshooting(){
+				//shootinpos
+				var pos=d.r('div class=spos space')
+					.r('div class=toggle w100 h32 bo ro')
+						.h('mark shooting pos')
+						.on('click',function(e){
+							var court=bot.find('.court')
+							if(court){
+								c0.rem(court)
+								//court.rem()
+							} else {
+								court=basket.showcourt(0.6)
+								court.to(bot.find('.spos'))
+								//court.s('zoom:0.5')
+								var sspot=0,
+									cc=c0.get(court)
+								court.on('mousedown',function(e){									
+									var bounds=court.getClientRects()[0],
+										pos={
+											x:e.pageX-bounds.left,
+											y:e.pageY-bounds.top-d.body.scrollTop
+										}					
+									if(sspot){
+										sspot.rem()
+									}
+									sspot=cc.circ({
+										x:pos.x,
+										y:pos.y,
+										rad:15,
+										color:'yellowgreen'
+									})
+									sspot.to()									
+									cc.redraw()
+								})								
+							}
+						}).p	
+				return pos
+			}
+			//drawshooting().to(bot)
+			drawaction().to(bot)
+			drawplayers().to(bot)			
+			drawteams().to(bot)
+			
+			//gamelines				
+			var gamelines=mid.r('div class=gamelines space bo')
+					.s('overflow:auto max-height:242px')
+			var table=gamelines.r('table')
+					.s('width:100% margin-bottom: 1px')
+				,
+				thead=table.r('thead'),
+				tbody=table.r('tbody'),
+				tfoot=table.r('tfoot'),
+				tr,
+				td,
+				fields=[
+					'nr',
+					'name',
+					'action',
+					'time',
+					'rem'
+				]
+											
+			function updateacts(){
+				tbody.h('')
+				loop(basket.acts,function(i,act){
+					tr=tbody.r('tr class=h48')
+						.s('background-color:'+act.col)
+					tr.r('td')
+						.h(act.pl)
+					tr.r('td')
+						.h(act.act)
+					tr.r('td')
+						.h('time')
+					tr.r('td')
+						.h('X')
+				})
+				gamelines.scrollTop=99999999
+			}
+			
+			//time
+			var time=top.r('div class=time cols h48'),
+				gtime=time.r('div class=gametime big bo'),
+				otime=time.r('div class=offencetime big bo')
+			
+			gtime.h('gametime')
+			otime.h('offencetime')
+			d.find('.team1').trigger('click')
+		},
+		newgame:{
+			pl:'',
+			act:'',
+			show:function(){
+				
+				return game
+			}
+		},
+		showcourt:function(scale){		
+			scale=scale || 1
+			var canvas=d.r('canvas class=court')
+			canvas.set('width',(780*scale)+'px')
+			canvas.set('height',(550*scale)+'px')
+			
+			var c=c0.add(canvas)
+			var court=c.rect({
+				name:'court',
+				x:390*scale,
+				y:275*scale,	
+				wid:750*scale,
+				hig:550*scale,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			court.to()
+
+			var three=c.circ({
+				name:'three',
+				x:390*scale,
+				y:80*scale,	
+				rad:320*scale,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			three.to()
+			
+			var paint=c.rect({
+				name:'paint',
+				x:390*scale,
+				y:145*scale,	
+				wid:245*scale,
+				hig:290*scale,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			paint.to()
+			
+			var free=c.circ({
+				name:'free',
+				x:390*scale,
+				y:290*scale,	
+				rad:95*scale,
+				//color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			free.to()				
+			
+			var board=c.rect({
+				name:'board',
+				x:390*scale,
+				y:60*scale,	
+				wid:90*scale,
+				hig:2,
+				color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			board.to()				
+			
+			var rim=c.circ({
+				name:'rim',
+				x:390*scale,
+				y:80*scale,	
+				rad:15*scale,
+				//color:'#eee',
+				linecolor:'#aaa',
+				linewid:2
+			})
+			rim.to()					
+			
+			//draw curve
+			/*
+			var curve=c.curve({
+				p1:{x:70,y:0},
+				p2:{x:710,y:0},
+				c1:{x:70,y:530},
+				c2:{x:710,y:530},
+				color:'blue',
+				linewid:2
+			})
+			curve.to()			
+			*/
+			c.redraw()		
+		
+			return canvas
+		},		
+	}
+	basket.sheet=basket.setstyles()
+	basket.show()
+})
+
+</script>
