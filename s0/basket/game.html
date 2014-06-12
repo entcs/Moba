@@ -12,7 +12,19 @@ d.on('ready',function(e){
 		acts:[],
 		pl:-1,
 		act:-1,
-		col:'',
+		col:'',	
+		team:0,
+		gtime:0,
+		dgtime:1000*60*60*12,
+		quarter:1,
+		otime:0,
+		dotime:24*1000,
+		sotime:14*1000,
+		timeout:0,
+		dttime:60*1000,
+		ct:0,
+		lt:0,
+		dt:0,
 		setstyles:function(){
 			var sheet=d.dss.new('basesheet'),
 				col1='background-color:yellowgreen',
@@ -20,34 +32,30 @@ d.on('ready',function(e){
 				col3='background-color:#eee',
 				tcol1='color:#eee',
 				tcol2='color:#eee',
-				tcol3='color:#333'				
+				tcol3='color:#333'
+			var slong=800//480//960
+			var sshort=480//320//540
+			var size=Math.min(slong/8.1,sshort/8.1)
+			
 			
 			sheet.new('body',
 				'background-color:#111',
-				'font-size:14px',
+				'font-size:'+size*0.7+'px',
 				'margin:0px'	
 			)
 			
 			sheet.new('.game',
-				'width:480px',
-				'height:800px',
-				'max-height:800px',
-				'background-color:#eee'
+				'width:'+sshort+'px',
+				'height:'+slong+'px',
+				'max-height:'+slong+'px',
+				'background-color:#333'
 			)			
 			sheet.new('.game.vert',
-				'width:800px',
-				'height:480px',
-				'max-height:480px',
-				'background-color:#eee'
+				'width:'+slong+'px',
+				'height:'+sshort+'px',
+				'max-height:'+sshort+'px',
+				'background-color:#333'
 			)
-			
-			/*
-			sheet.new('.game, .game',
-				'width:100%',
-				'height:100%'				
-			)
-			/**/
-			
 			sheet.new('table',
 				'border-collapse:collapse'
 			)
@@ -60,10 +68,10 @@ d.on('ready',function(e){
 			sheet.new('body,button,input,table,select',
 				'font-family:Open Sans Condensed, sans-serif',
 				'font-weight: bold',
-				'font-size:14px',
-				'color:#666',
+				'color:#333',
 				'border:none',
-				'text-transform: uppercase'
+				'text-transform: uppercase',
+				'font-size:'+size*0.7+'px'
 			)
 			sheet.new('*',
 				'box-sizing:border-box'
@@ -96,22 +104,31 @@ d.on('ready',function(e){
 				'display:inline-block',
 				'box-sizing:border-box'				
 			)			
-			sheet.new('.b32',
-				'width:32px',
-				'height:32px',
-				'font-size:24px',
-				'line-height:32px',
-				'border:1px solid #aaa',
-				'cursor:pointer'
-			)		
-			sheet.new('.but',
-				'min-width:60px',
-				'height:64px',
-				'line-height:62px',
-				'font-size:42px',
+			sheet.new('.but',				
+				'width:'+size+'px',				
+				'height:'+size+'px',
+				'line-height:'+size+'px',
 				'border:1px solid #aaa',
 				'cursor:pointer'				
 			)
+			sheet.new('.hig',
+				'height:'+Math.floor(sshort/8)+'px',
+				'line-height:'+Math.floor(sshort/9)+'px',								
+				'background-color:#fff'
+			)		
+			sheet.new('.game.vert .hig4',
+				'height:'+Math.floor(sshort/2)+'px'
+			)			
+			sheet.new('.hig4',
+				'height:'+Math.floor(size*6)+'px'
+			)		
+			sheet.new('.wid',
+				'width:'+Math.floor(sshort/8)+'px'
+			)		
+			sheet.new('.wid2',
+				'width:'+Math.floor(sshort/4)+'px'
+			)		
+			
 			sheet.new('.col1 .but',
 				'background-color:#CAE78F'
 			)
@@ -124,47 +141,14 @@ d.on('ready',function(e){
 			sheet.new('.col2 .selected',
 				'background-color:orange'
 			)			
-			sheet.new('.b48',
-				'width:48px',
-				'height:48px',
-				'line-height:46px',
-				'font-size:36px',
-				'border:1px solid #aaa',
-				'cursor:pointer'
-			)		
-			sheet.new('.h32',
-				'height:32px',
-				'font-size:24px',
-				'line-height:30px'				
-			)
-			sheet.new('.h48',
-				'height:48px',
-				'line-height:46px',
-				'font-size:32px'				
-			)		
 			sheet.new('.ro',
 				'border-radius:10px'
 			)
 			sheet.new('.iblock',
 				'display:inline-block'
-			)			
-			sheet.new('.space',
-				'margin-top:4px'
-			)			
+			)					
 			sheet.new('.bo',
 				'border:1px solid #aaa'
-			)
-			sheet.new('.w100',
-				'width:100%'				
-			)
-			sheet.new('.w50',
-				'width:50%'				
-			)
-			sheet.new('.w33',
-				'width:33.33333%'				
-			)			
-			sheet.new('.w25',
-				'width:25%'				
 			)
 			sheet.new('.tleft',
 				'text-align:left'
@@ -190,6 +174,12 @@ d.on('ready',function(e){
 			sheet.new('.br',
 				'border-right:1px solid #aaa'
 			)
+			sheet.new('.gametime',
+				'background-color:yellowgreen'
+			)			
+			sheet.new('.gametime.pause',
+				'background-color:orange'
+			)
 			sheet.show()
 			return sheet
 		},
@@ -201,28 +191,23 @@ d.on('ready',function(e){
 				bot=game.r('div class=bot')				
 			
 			function confirmaction(){
-				console.log(basket.pl,basket.act)
 				if(basket.pl!=-1 && basket.act!=-1){
-					basket.acts.push({
+					var act={
 						pl:basket.pl,
 						act:basket.act,
-						col:basket.col
-					})							
-					updateacts()
-					/*
-					basket.pl=-1
-					basket.act=-1
-					game.find('.actions .selected').remclass('selected')
-					game.find('.players .selected').remclass('selected')
-					/**/
+						col:basket.col,
+						team:basket.team
+					}
+					basket.acts.push(act)
+					basket.updateacts()
 				}
 			}
 			
 			function drawteams(){
 				//teams
-				var teams=d.r('div class=teams cols h48 space')
-				teams.r('div class=team1 bo ro hand')
-					.h('team:45(....)')
+				var teams=d.r('div class=teams cols')
+				teams.r('div class=team1 bo ro hand hig')
+					.h('team:0')
 					.s('background-color:yellowgreen')
 					.on('click',function(e){
 						game.remclass('col2')
@@ -230,6 +215,7 @@ d.on('ready',function(e){
 						basket.col='#CAE78F'
 						basket.pl=-1
 						basket.act=-1
+						basket.team=1
 						var ele=game.find('.actions .selected')
 						if(ele){
 							ele.remclass('selected')
@@ -239,9 +225,8 @@ d.on('ready',function(e){
 							ele.remclass('selected')						
 						}				
 					})
-				teams.r('div class=manageteams bo ro hand title=menu')
-					.h('...')
-					.s('width:48px')
+				teams.r('div class=manageteams bo ro hand hig wid title=menu')
+					.h('...')					
 					.on('click',function(e){
 						if(game.hasclass('vert')){
 							game.remclass('vert')
@@ -249,8 +234,8 @@ d.on('ready',function(e){
 							game.addclass('vert')
 						}
 					})
-				teams.r('div class=team2 bo ro hand')
-					.h('team:37(....)')
+				teams.r('div class=team2 bo ro hand hig')
+					.h('team:0')
 					.s('background-color:orange')
 					.on('click',function(e){
 						game.remclass('col1')
@@ -258,6 +243,7 @@ d.on('ready',function(e){
 						basket.col='#FFE4B3'
 						basket.pl=-1
 						basket.act=-1
+						basket.team=2
 						var ele=game.find('.actions .selected')
 						if(ele){
 							ele.remclass('selected')
@@ -272,7 +258,7 @@ d.on('ready',function(e){
 				return teams
 			}			
 			function drawplayers(){
-				var pls=d.r('div class=players iblocks space'),
+				var pls=d.r('div class=players iblocks'),
 					pl
 				loop(12,function(i2){
 					pl=pls.r('div class=player but bo hand ro')
@@ -311,7 +297,7 @@ d.on('ready',function(e){
 						'as',
 						'rb'
 					],
-					actions=d.r('div class=actions space')						
+					actions=d.r('div class=actions')						
 										
 				actlist=actions.r('div class=actionslist iblocks')				
 				loop(acts,function(i,name){
@@ -332,8 +318,8 @@ d.on('ready',function(e){
 			}
 			function drawshooting(){
 				//shootinpos
-				var pos=d.r('div class=spos space')
-					.r('div class=toggle w100 h32 bo ro')
+				var pos=d.r('div class=spos')
+					.r('div class=toggle w100 bo ro')
 						.h('mark shooting pos')
 						.on('click',function(e){
 							var court=bot.find('.court')
@@ -374,8 +360,8 @@ d.on('ready',function(e){
 			drawteams().to(bot)
 			
 			//gamelines				
-			var gamelines=mid.r('div class=gamelines space bo')
-					.s('overflow:auto max-height:242px')
+			var gamelines=mid.r('div class=gamelines bo hig4')
+					.s('overflow:auto')
 			var table=gamelines.r('table')
 					.s('width:100% margin-bottom: 1px')
 				,
@@ -392,39 +378,79 @@ d.on('ready',function(e){
 					'rem'
 				]
 											
-			function updateacts(){
+			basket.updateacts=function(){
 				tbody.h('')
+				var score1=0,
+					score2=0,
+					val
 				loop(basket.acts,function(i,act){
-					tr=tbody.r('tr class=h48')
+					tr=tbody.r('tr class=hig tmid')
 						.s('background-color:'+act.col)
 					tr.r('td')
 						.h(act.pl)
 					tr.r('td')
 						.h(act.act)
 					tr.r('td')
-						.h('time')
+						.h(d.find('.gametime').h())
 					tr.r('td')
+						.h(d.find('.quarter').h())						
+					tr.r('td class=wid')
 						.h('X')
+					
+					if(act.act.indexOf('+')!=-1){						
+						val=parseInt(act.act.replace('+',''))
+						if(act.team==1){							
+							score1+=val
+						} else if(act.team==2){
+							score2+=val
+						}
+					}					
 				})
+				console.log('val:',score1)
+				d.find('.team1').h('team:'+score1)
+				d.find('.team2').h('team:'+score2)
 				gamelines.scrollTop=99999999
 			}
 			
-			//time
-			var time=top.r('div class=time cols h48'),
-				gtime=time.r('div class=gametime big bo'),
-				otime=time.r('div class=offencetime big bo')
-			
-			gtime.h('gametime')
-			otime.h('offencetime')
-			d.find('.team1').trigger('click')
-		},
-		newgame:{
-			pl:'',
-			act:'',
-			show:function(){
+			function drawtime(){
+				//time
+				var time=d.r('div class=time cols'),
+					quarter=time.r('div class=quarter big bo ro hand hig wid'),
+					gtime=time.r('div class=gametime big bo ro hand pause hig'),
+					otime=time.r('div class=offencetime big bo ro hand hig wid2'),
+					o14=time.r('div class=o14 big bo ro hand hig wid')
+					
+				quarter.h('Q1')
+					.on('click',function(e){
+						basket.gtime=basket.dgtime
+						basket.quarter=(basket.quarter%4)+1
+						basket.updtime()
+					})					
+				gtime.h('')					
+					.on('click',function(e){
+						if(basket.pause){
+							basket.start()
+						} else {
+							basket.stop()
+						}
+					})	
 				
-				return game
+				otime.h('')					
+					.on('click',function(e){
+						basket.otime=basket.dotime
+						basket.stop()
+						basket.updtime()
+					})						
+				o14.h('14')					
+					.on('click',function(e){
+						basket.otime=basket.sotime
+						basket.stop()
+						basket.updtime()						
+					})											
+				return time
 			}
+			drawtime().to(top)
+			d.find('.team1').trigger('click')
 		},
 		showcourt:function(scale){		
 			scale=scale || 1
@@ -517,10 +543,87 @@ d.on('ready',function(e){
 			c.redraw()		
 		
 			return canvas
-		},		
+		},
+		updtime:function(){
+			if(basket.gtime<=0){
+				basket.gtime=basket.dgtime
+			}
+			if(basket.otime<=0){
+				basket.otime=basket.dotime
+			}		
+			var gtime=d.find('.gametime'),
+				otime=d.find('.offencetime'),
+				quarter=d.find('.quarter')
+			
+			function fgtime(time){
+				var min=Math.floor((time/(1000*60*60))),
+					sec=Math.floor(((time/(1000))%60)),
+					msec=Math.floor(((time/(100))%10))
+				if(min<10){
+					min=['0',min].join('')
+				}
+				if(sec<10){
+					sec=['0',sec].join('')
+				}			
+				var ft=[min,sec,msec].join(':')
+				return ft
+			}
+			function fotime(time){
+				var sec=Math.floor(((time/(1000))%60)),
+					msec=Math.floor(((time/(100))%10))
+				if(sec<10){
+					sec=['0',sec].join('')
+				}			
+				var ft=[sec,msec].join(':')
+				return ft
+			}			
+			gtime.h(fgtime(basket.gtime))
+			otime.h(fotime(basket.otime))
+			quarter.h('Q'+basket.quarter)
+		},
+		start:function(){
+			if(basket.gtime<=0){
+				basket.gtime=basket.dgtime
+			}
+			if(basket.otime<=0){
+				basket.otime=basket.dotime
+			}
+			basket.lt=new Date().getTime()
+			basket.pause=false
+			d.find('.gametime').remclass('pause')
+		},
+		stop:function(){
+			basket.pause=true
+			d.find('.gametime').addclass('pause')
+		},
+		pause:true,
+		run:function(){
+			basket.ct=new Date().getTime()
+			basket.dt=basket.ct-basket.lt
+			basket.lt=basket.ct
+			if(!basket.pause){
+				basket.gtime-=basket.dt
+				basket.otime-=basket.dt
+				if(basket.otime<=0){
+					basket.stop()
+					basket.otime=basket.dotime
+				}
+				if(basket.gtime<=0){
+					basket.stop()
+					basket.gtime=basket.dgtime					
+					basket.quarter=(basket.quarter%4)+1
+				}
+				
+				basket.updtime()				
+			}
+			setTimeout(basket.run,10)
+		}
 	}
 	basket.sheet=basket.setstyles()
 	basket.show()
+	basket.run()
+	basket.updtime()
+	basket.updateacts()
 })
 
 </script>
