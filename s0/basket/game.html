@@ -1,43 +1,91 @@
 <head>
 	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
+	<meta name="viewport" content="width=device-width" />
 </head>
+<style>
+</style>
+
 <script src='d0.js'></script>
+<!--
 <script src='c0.js'></script>
 <!---->
 <script>
 var basket={}
 d.on('ready',function(e){	
-	var flip=false
+	var flip=false,
+		istouch = (('ontouchstart' in window) || (navigator.msMaxTouchPoints > 0)),
+		event='click',
+		down='mousedown',
+		up='mouseup',
+		move='mousemove',
+		size
+	if(istouch){
+		event='touchstart'
+		down='touchstart'
+		up='touchend'
+		move='touchmove'
+	}
 	basket={
-		acts:[],
-		pl:-1,
-		act:-1,
-		col:'',	
-		team:0,
-		gtime:0,
-		dgtime:1000*60*60*12,
-		quarter:1,
-		otime:0,
-		dotime:24*1000,
-		sotime:14*1000,
-		timeout:0,
-		dttime:60*1000,
-		ct:0,
-		lt:0,
-		dt:0,
+		butsize:8,
+		init:function(){
+			this.acts=[]
+			this.actnames={
+				'1+':true,
+				'1-':true,
+				'2+':true,
+				'2-':true,
+				'3+':true,
+				'3-':true,
+				'fo':true,
+				'tf':false,
+				'bl':true,
+				'st':true,
+				'as':true,
+				'rb':true,
+				'or':false,
+				'dr':false,
+				'to':false,
+			}
+			this.pl=-1
+			this.act=-1
+			this.col=''
+			this.team=0
+			this.gtime=0
+			this.qmins=12
+			this.dgtime=1000*60*this.qmins
+			this.quarter=1
+			this.otime=0
+			this.dotime=24*1000
+			this.sotime=14*1000
+			this.timeout=0
+			this.dttime=60*1000
+			this.ct=0
+			this.lt=0						
+			this.showofftime=true
+			this.dt=0
+			this.col1='yellowgreen'
+			this.col2='orange'
+			this.team1={
+				color:'yellowgreen',
+				number:'#333',
+				border:'#ccc'
+			}
+			this.team2={
+				color:'orange',
+				number:'#333',
+				border:'#ccc'		
+			}
+			this.neg='#FF5C00'
+			
+		},
 		setstyles:function(){
-			var sheet=d.dss.new('basesheet'),
-				col1='background-color:yellowgreen',
-				col2='background-color:#333',
-				col3='background-color:#eee',
-				tcol1='color:#eee',
-				tcol2='color:#eee',
-				tcol3='color:#333'
-			var slong=800//480//960
-			var sshort=480//320//540
-			var size=Math.min(slong/8.1,sshort/8.1)
-			
-			
+			var sheet=d.dss.new('basesheet')						
+			var wid=screen.width/window.devicePixelRatio//window.innerWidth
+			var hig=screen.height/window.devicePixelRatio//window.innerHeight			
+			size=Math.min(wid/basket.butsize,hig/basket.butsize)*window.devicePixelRatio
+			if(size>64){
+				size=64
+			}
 			sheet.new('body',
 				'background-color:#111',
 				'font-size:'+size*0.7+'px',
@@ -45,30 +93,34 @@ d.on('ready',function(e){
 			)
 			
 			sheet.new('.game',
-				'width:'+sshort+'px',
-				'height:'+slong+'px',
-				'max-height:'+slong+'px',
-				'background-color:#333'
-			)			
-			sheet.new('.game.vert',
-				'width:'+slong+'px',
-				'height:'+sshort+'px',
-				'max-height:'+sshort+'px',
-				'background-color:#333'
-			)
+				//'width:'+sshort+'px',
+				//'height:'+slong+'px',
+				//'max-height:'+slong+'px',
+				'background-color:#111'
+			)	
 			sheet.new('table',
-				'border-collapse:collapse'
+				//'border-collapse:collapse'
+				'border-spacing:0px'
 			)
 			
 			sheet.new('table td',
 				'padding:0px',
 				'margin:0px',
-				'border:1px solid #aaa'
+				'border:2px solid #aaa'
 			)
+			sheet.new('.gamelines td',
+				'color:#aaa'
+			)
+			/*
+			sheet.new('.gamelines td .but',
+				'color:#eee'
+			)
+			/**/
 			sheet.new('body,button,input,table,select',
 				'font-family:Open Sans Condensed, sans-serif',
 				'font-weight: bold',
 				'color:#333',
+				'color:#eee',
 				'border:none',
 				'text-transform: uppercase',
 				'font-size:'+size*0.7+'px'
@@ -79,9 +131,65 @@ d.on('ready',function(e){
 			sheet.new('.hand',
 				'cursor:pointer'
 			)
-			sheet.new('.sec,.form',
-				'border:1px solid #aaa',
-				'background-color: #eee'
+			sheet.new('.but',				
+				'height:'+size+'px',
+				'cursor:pointer',
+				'line-height:'+size*0.85+'px',
+				'border:2px solid #aaa',
+				'border:2px solid #111',
+				'border-radius:10px',
+				'display:inline-block',
+				'width:100%',
+				'cursor:pointer',
+				//'box-shadow:0px 0px 5px 0px #000 inset',
+				'background: #cccccc',				
+				/*
+				'background: -moz-linear-gradient(top, #cccccc 0%, #ffffff 10%, #cccccc 26%, #a3a3a3 50%, #999999 54%, #cccccc 93%, #ffffff 100%)',
+				'background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cccccc), color-stop(10%,#ffffff), color-stop(26%,#cccccc), color-stop(50%,#a3a3a3), color-stop(54%,#999999), color-stop(93%,#cccccc), color-stop(100%,#ffffff))',
+				'background: -webkit-linear-gradient(top, #cccccc 0%,#ffffff 10%,#cccccc 26%,#a3a3a3 50%,#999999 54%,#cccccc 93%,#ffffff 100%)',
+				'background: -o-linear-gradient(top, #cccccc 0%,#ffffff 10%,#cccccc 26%,#a3a3a3 50%,#999999 54%,#cccccc 93%,#ffffff 100%)',
+				'background: -ms-linear-gradient(top, #cccccc 0%,#ffffff 10%,#cccccc 26%,#a3a3a3 50%,#999999 54%,#cccccc 93%,#ffffff 100%)',
+				'background: linear-gradient(to bottom, #cccccc 0%,#ffffff 10%,#cccccc 26%,#a3a3a3 50%,#999999 54%,#cccccc 93%,#ffffff 100%)'				
+				/**/
+				
+				'background: -moz-linear-gradient(top, #cecece 0%, #898989 7%, #131313 89%, #898989 100%)',
+				'background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cecece), color-stop(7%,#898989), color-stop(89%,#131313), color-stop(100%,#898989))',
+				'background: -webkit-linear-gradient(top, #cecece 0%,#898989 7%,#131313 89%,#898989 100%)',
+				'background: -o-linear-gradient(top, #cecece 0%,#898989 7%,#131313 89%,#898989 100%)',
+				'background: -ms-linear-gradient(top, #cecece 0%,#898989 7%,#131313 89%,#898989 100%)',
+				'background: linear-gradient(to bottom, #cecece 0%,#898989 7%,#131313 89%,#898989 100%)'
+			)
+			sheet.new('.neg',
+				//'border-color:#FF5C00'
+				'background:#DB4823'
+			)
+			sheet.new('.pos,.selected',
+				'border-color:yellowgreen'
+			)
+			//dynamic col
+			sheet.new('.team1selected .team1',
+				'border-color:yellowgreen'				
+			)						
+			sheet.new('.team2selected .team2',
+				'border-color:#CF2BC2'
+			)						
+			sheet.new('.team1selected .selected',
+				'border-color:yellowgreen'
+			)
+			sheet.new('.team2selected .selected',
+				'border-color:#CF2BC2'
+			)
+			sheet.new('.team1row td',
+				'border-color:yellowgreen',
+				'border-color:rgba(154, 205, 50,0.3)'
+			)
+			sheet.new('.team2row td',
+				'border-color:#CF2BC2',
+				'border-color:rgba(207, 43, 194,0.3)'
+			)
+			//dynamic col
+			sheet.new('.sma',
+				'font-size:18px'
 			)
 			sheet.new('.cols',
 				'display:table',
@@ -104,52 +212,39 @@ d.on('ready',function(e){
 				'display:inline-block',
 				'box-sizing:border-box'				
 			)			
-			sheet.new('.but',				
-				'width:'+size+'px',				
-				'height:'+size+'px',
-				'line-height:'+size+'px',
-				'border:1px solid #aaa',
-				'cursor:pointer'				
-			)
 			sheet.new('.hig',
-				'height:'+Math.floor(sshort/8)+'px',
-				'line-height:'+Math.floor(sshort/9)+'px',								
+				'height:'+Math.floor(size)+'px',
+				'line-height:'+Math.floor(size*0.95)+'px',								
 				'background-color:#fff'
 			)		
-			sheet.new('.game.vert .hig4',
-				'height:'+Math.floor(sshort/2)+'px'
-			)			
-			sheet.new('.hig4',
-				'height:'+Math.floor(size*6)+'px'
-			)		
 			sheet.new('.wid',
-				'width:'+Math.floor(sshort/8)+'px'
+				'width:'+Math.floor(size)+'px'
 			)		
 			sheet.new('.wid2',
-				'width:'+Math.floor(sshort/4)+'px'
+				'width:'+Math.floor(size*2)+'px'
 			)		
-			
+			sheet.new('.space',
+				'margin-top:'+size/10+'px'
+			)
+			/*
 			sheet.new('.col1 .but',
-				'background-color:#CAE78F'
+				'border-color:'+basket.col1
 			)
 			sheet.new('.col2 .but',
-				'background-color:#FFE4B3'
+				'border-color:'+basket.col2
 			)
+			/**/
+			/*
 			sheet.new('.col1 .selected',
-				'background-color:yellowgreen'
+				'border-color:'+basket.col1
 			)			
 			sheet.new('.col2 .selected',
-				'background-color:orange'
-			)			
-			sheet.new('.ro',
-				'border-radius:10px'
+				'border-color:'+basket.col2
 			)
+			/**/
 			sheet.new('.iblock',
 				'display:inline-block'
 			)					
-			sheet.new('.bo',
-				'border:1px solid #aaa'
-			)
 			sheet.new('.tleft',
 				'text-align:left'
 			)
@@ -159,243 +254,267 @@ d.on('ready',function(e){
 			sheet.new('.tmid',
 				'text-align:center'
 			)
-			sheet.new('.bo',
-				'border:1px solid #aaa'
-			)
-			sheet.new('.bt',
-				'border-top:1px solid #aaa'
-			)
-			sheet.new('.bb',
-				'border-bottom:1px solid #aaa'
-			)
-			sheet.new('.bl',
-				'border-left:1px solid #aaa'
-			)
-			sheet.new('.br',
-				'border-right:1px solid #aaa'
-			)
-			sheet.new('.gametime',
-				'background-color:yellowgreen'
-			)			
-			sheet.new('.gametime.pause',
-				'background-color:orange'
+			sheet.new('.menu',
+				'width:100%',
+				'height:100%',
+				'position:absolute',
+				'top:0px',
+				'left:0px',
+				'background-color:#111'
 			)
 			sheet.show()
+			
+			var sh2=d.dss.new('teamcolors')
+			/*
+			sh2.new('.c1',
+				'background-color:'+basket.team1.color
+			)
+			sh2.new('.c2',
+				'color:'+basket.team1.number
+			)
+			sh2.new('.c3',
+				'border-color:'+basket.team1.border
+			)
+			/**/
+			sh2.show()
+			this.sh2=sh2
+			
+			
 			return sheet
 		},
-		show:function(){
-			var game=d.body.r('div class=game tmid rows'),
-				top=game.r('div class=top'),
-				mid=game.r('div class=mid')
-					.s('height:100%'),
-				bot=game.r('div class=bot')				
-			
-			function confirmaction(){
-				if(basket.pl!=-1 && basket.act!=-1){
-					var act={
-						pl:basket.pl,
-						act:basket.act,
-						col:basket.col,
-						team:basket.team
-					}
-					basket.acts.push(act)
-					basket.updateacts()
+		settings:{},
+		game:{
+			show:function(){
+				basket.pl=-1
+				basket.act=-1			
+				
+				var game=d.body.r('div class=game tmid rows'),
+					top=game.r('div class=top'),
+					mid=game.r('div class=mid')
+						.s('height:100%'),
+					bot=game.r('div class=bot')				
+				top.r('div class=buy')
+				top.r('div class=time cols')				
+				mid.r('div class=gamelines')
+					.s('overflow:auto height:100%')
+				
+				bot.r('div class=actions')
+					.s('background-color:#222')
+				bot.r('div class=players iblocks space')
+				bot.r('div class=teams cols space')
+				
+				basket.game.showbuy()
+				basket.game.showtime()
+				basket.game.updtime()
+				
+				basket.game.showlines()
+				basket.game.showactions()
+				basket.game.showplayers()
+				basket.game.showteams()
+				
+				basket.game.updlines()
+			},
+			hide:function(){
+				var game=d.find('.game')
+				if(game){
+					game.rem()
 				}
-			}
-			
-			function drawteams(){
-				//teams
-				var teams=d.r('div class=teams cols')
-				teams.r('div class=team1 bo ro hand hig')
-					.h('team:0')
-					.s('background-color:yellowgreen')
-					.on('click',function(e){
-						game.remclass('col2')
-						game.addclass('col1')
-						basket.col='#CAE78F'
-						basket.pl=-1
-						basket.act=-1
-						basket.team=1
-						var ele=game.find('.actions .selected')
-						if(ele){
-							ele.remclass('selected')
-						}						
-						ele=game.find('.players .selected')
-						if(ele){
-							ele.remclass('selected')						
-						}				
-					})
-				teams.r('div class=manageteams bo ro hand hig wid title=menu')
-					.h('...')					
-					.on('click',function(e){
-						if(game.hasclass('vert')){
-							game.remclass('vert')
-						} else {
-							game.addclass('vert')
+			},
+			showbuy:function(){
+				var promo=d.find('.buy')
+					.r('div class=but')
+						.h('buy app 4.99&euro;')
+			},			
+			showtime:function(){
+				var time=d.find('.time')
+				time.h('')
+								
+				var	quarter=time.r('div class=quarter but ro hand wid html=Q1')
+					.on(event,function(e){
+						basket.gtime=basket.dgtime
+						basket.quarter=(basket.quarter%4)+1
+						basket.updtime()
+						e.preventDefault()
+					})					
+				
+				var timeslidestep=20
+				var gtime=time.r('div class=gametime but ro hand neg')
+					.on(down,function(e){
+						timeslidestep=20
+						//basket.stop()
+						var but=e.target
+						but.isdown=true
+						var pos=[e.pageX,e.pageY]
+						if(event=='touchstart'){
+							pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
 						}
-					})
-				teams.r('div class=team2 bo ro hand hig')
-					.h('team:0')
-					.s('background-color:orange')
-					.on('click',function(e){
-						game.remclass('col1')
-						game.addclass('col2')
-						basket.col='#FFE4B3'
-						basket.pl=-1
-						basket.act=-1
-						basket.team=2
-						var ele=game.find('.actions .selected')
-						if(ele){
-							ele.remclass('selected')
-						}						
-						ele=game.find('.players .selected')
-						if(ele){
-							ele.remclass('selected')						
-						}
-						
-					})
-					
-				return teams
-			}			
-			function drawplayers(){
-				var pls=d.r('div class=players iblocks'),
-					pl
-				loop(12,function(i2){
-					pl=pls.r('div class=player but bo hand ro')
-						.h(i2+4)
-						.on('click',function(e){
-							var sel=game.find('.players .selected')
-							if(sel){
-								sel.remclass('selected')
-							}
-							e.target.addclass('selected')
-							basket.pl=e.target.h()
-							basket.act=-1
-							var ele=game.find('.actions .selected')
-							if(ele){
-								ele.remclass('selected')
+						var bounds=but.getBoundingClientRect(),
+							m={
+								x:pos[0]-bounds.left,
+								y:pos[1]-bounds.top
 							}						
-							//confirmaction()
-						})
-					
-				})
-				return pls
-			}
-			function drawaction(){
-				var acts=[						
-						'1+',
-						'1-',
-						'2+',
-						'2-',
-						'3+',
-						'3-',
-						'fo',
-						'tf',
-						'tt',												
-						'bl',
-						'st',
-						'as',
-						'rb'
-					],
-					actions=d.r('div class=actions')						
-										
-				actlist=actions.r('div class=actionslist iblocks')				
-				loop(acts,function(i,name){
-					actlist.r('div class=action but ro')						
-						.h(name)
-						.on('click',function(e){
-							var sel=game.find('.actions .selected')
-							if(sel){
-								sel.remclass('selected')
-							}							
-							e.target.addclass('selected')
-							basket.act=e.target.h()
-							confirmaction()
-						})
-				})
-			
-				return actions
-			}
-			function drawshooting(){
-				//shootinpos
-				var pos=d.r('div class=spos')
-					.r('div class=toggle w100 bo ro')
-						.h('mark shooting pos')
-						.on('click',function(e){
-							var court=bot.find('.court')
-							if(court){
-								c0.rem(court)
-								//court.rem()
+						but.sx=m.x
+						but.lx=m.x
+						e.preventDefault()
+					})
+					.on(up,function(e){
+						var but=e.target
+						but.isdown=false
+						if(but.sx==but.lx){
+							if(basket.pause){
+								basket.start()
 							} else {
-								court=basket.showcourt(0.6)
-								court.to(bot.find('.spos'))
-								//court.s('zoom:0.5')
-								var sspot=0,
-									cc=c0.get(court)
-								court.on('mousedown',function(e){									
-									var bounds=court.getClientRects()[0],
-										pos={
-											x:e.pageX-bounds.left,
-											y:e.pageY-bounds.top-d.body.scrollTop
-										}					
-									if(sspot){
-										sspot.rem()
-									}
-									sspot=cc.circ({
-										x:pos.x,
-										y:pos.y,
-										rad:15,
-										color:'yellowgreen'
-									})
-									sspot.to()									
-									cc.redraw()
-								})								
+								basket.stop()
 							}
-						}).p	
-				return pos
-			}
-			//drawshooting().to(bot)
-			drawaction().to(bot)
-			drawplayers().to(bot)			
-			drawteams().to(bot)
-			
-			//gamelines				
-			var gamelines=mid.r('div class=gamelines bo hig4')
-					.s('overflow:auto')
-			var table=gamelines.r('table')
-					.s('width:100% margin-bottom: 1px')
-				,
-				thead=table.r('thead'),
-				tbody=table.r('tbody'),
-				tfoot=table.r('tfoot'),
-				tr,
-				td,
-				fields=[
-					'nr',
-					'name',
-					'action',
-					'time',
-					'rem'
-				]
-											
-			basket.updateacts=function(){
+						}
+					})
+					.on(move,function(e){
+						var but=e.target
+						var pos=[e.pageX,e.pageY]
+						if(event=='touchstart'){
+							pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
+						}
+						var bounds=but.getBoundingClientRect(),
+							m={
+								x:pos[0]-bounds.left,
+								y:pos[1]-bounds.top
+							},
+							dif=m.x-but.lx
+												
+						if(but.isdown){
+							if(Math.abs(dif)>timeslidestep){
+								timeslidestep-=5
+								if(timeslidestep<1){
+									timeslidestep=1
+								}
+								var val=(dif/timeslidestep).round()
+								//console.log(dif,val)
+								basket.gtime+=val*1000
+								if(basket.gtime<0){
+									basket.gtime=0
+								} else if(basket.gtime>basket.dgtime){
+									basket.gtime=basket.dgtime
+								}
+								but.lx=m.x
+								basket.game.updtime('keep0')
+							}
+						}					
+					})
+				gtime.sx=0
+				gtime.lx=0
+					
+				if(basket.showofftime){
+					var otime=time.r('div class=offencetime but ro hand wid2')
+						.on(event,function(e){
+							basket.otime=basket.dotime
+							basket.updtime()
+							e.preventDefault()
+						})					
+					var o14=time.r('div class=o14 but ro hand wid')
+						.h(14)
+						.on(event,function(e){
+							basket.otime=basket.sotime
+							basket.stop()
+							basket.updtime()
+							e.preventDefault()							
+						})
+				}				
+			},
+			updtime:function(keep0){
+				if(!keep0){
+					if(basket.gtime<=0){
+						basket.gtime=basket.dgtime
+					}
+				}
+				if(basket.otime<=0){
+					basket.otime=basket.dotime
+				}		
+				var gtime=d.find('.gametime'),
+					otime=d.find('.offencetime'),
+					quarter=d.find('.quarter')
+				
+				function fgtime(time){
+					
+					var min=Math.floor((time/(1000*60))),
+						sec=Math.floor(((time/(1000))%60)),
+						msec=Math.floor(((time/(100))%10))
+					
+					//console.log(min,sec,msec)
+					
+					if(min<10){
+						min=['0',min].join('')
+					}
+					if(sec<10){
+						sec=['0',sec].join('')
+					}			
+					var ft=[min,sec,msec].join(':')
+					return ft
+				}
+				function fotime(time){
+					var sec=Math.floor(((time/(1000))%60)),
+						msec=Math.floor(((time/(100))%10))
+					if(sec<10){
+						sec=['0',sec].join('')
+					}			
+					var ft=[sec,msec].join(':')
+					return ft
+				}			
+				gtime.h(fgtime(basket.gtime))
+				if(basket.showofftime){
+					otime.h(fotime(basket.otime))
+				}
+				quarter.h('Q'+basket.quarter)				
+			},
+			showlines:function(){
+				//gamelines				
+				var gamelines=d.find('.gamelines')						
+				var table=gamelines.r('table')
+						.s('width:100% margin-bottom: 1px')
+					,
+					//thead=table.r('thead'),
+					tbody=table.r('tbody'),
+					//tfoot=table.r('tfoot'),
+					tr,
+					td,
+					fields=[
+						'nr',
+						'name',
+						'action',
+						'time',
+						'rem'
+					]					
+			},
+			updlines:function(){
+				var gamelines=d.find('.gamelines'),
+					tbody=gamelines.find('tbody')
+					
 				tbody.h('')
 				var score1=0,
 					score2=0,
 					val
 				loop(basket.acts,function(i,act){
-					tr=tbody.r('tr class=hig tmid')
-						.s('background-color:'+act.col)
+					tr=tbody.r('tr class=tmid team'+act.team+'row')
+						//.s('border-color:'+act.col)
+						//.s('background-color:'+act.col)
 					tr.r('td')
 						.h(act.pl)
 					tr.r('td')
 						.h(act.act)
 					tr.r('td')
-						.h(d.find('.gametime').h())
+						.h(act.time)
 					tr.r('td')
-						.h(d.find('.quarter').h())						
+						.h(act.qnr)						
 					tr.r('td class=wid')
-						.h('X')
+						.r('div class=wid but')
+							.h('X')
+							.on(event,function(e){
+								var tr=e.target.findup('tr'),
+									trs=d.findall('.gamelines tr'),
+									ind=trs.indexOf(tr)								
+								basket.acts.splice(ind,1)
+								basket.game.updlines()
+								e.preventDefault()
+							})
 					
 					if(act.act.indexOf('+')!=-1){						
 						val=parseInt(act.act.replace('+',''))
@@ -406,51 +525,417 @@ d.on('ready',function(e){
 						}
 					}					
 				})
-				console.log('val:',score1)
 				d.find('.team1').h('team:'+score1)
 				d.find('.team2').h('team:'+score2)
 				gamelines.scrollTop=99999999
-			}
-			
-			function drawtime(){
-				//time
-				var time=d.r('div class=time cols'),
-					quarter=time.r('div class=quarter big bo ro hand hig wid'),
-					gtime=time.r('div class=gametime big bo ro hand pause hig'),
-					otime=time.r('div class=offencetime big bo ro hand hig wid2'),
-					o14=time.r('div class=o14 big bo ro hand hig wid')
-					
-				quarter.h('Q1')
-					.on('click',function(e){
-						basket.gtime=basket.dgtime
-						basket.quarter=(basket.quarter%4)+1
-						basket.updtime()
-					})					
-				gtime.h('')					
-					.on('click',function(e){
-						if(basket.pause){
-							basket.start()
-						} else {
-							basket.stop()
-						}
-					})	
+			},
+			showactions:function(){
+				var actions=d.find('.actions')						
+				actions.h('')	
+				actlist=actions.r('div class=actionslist iblocks')				
+				loop(basket.actnames,function(name,show){
+					if(show){
+						actlist.r('div class=action but wid ro')						
+							.h(name)
+							.on(event,function(e){
+								var sel=d.find('.actions .selected')
+								if(sel){
+									sel.remc('selected')
+								}							
+								e.target.addc('selected')
+								basket.act=e.target.h()
+								basket.game.confirmaction()
+								e.preventDefault()
+							})
+					}
+				})			
+			},
+			confirmaction:function(){
+				if(basket.nopls) basket.pl=0
 				
-				otime.h('')					
-					.on('click',function(e){
-						basket.otime=basket.dotime
-						basket.stop()
-						basket.updtime()
-					})						
-				o14.h('14')					
-					.on('click',function(e){
-						basket.otime=basket.sotime
-						basket.stop()
-						basket.updtime()						
-					})											
-				return time
+				if(basket.pl!=-1 && basket.act!=-1){
+					var act={
+						pl:basket.pl,
+						act:basket.act,
+						col:basket.col,
+						time:d.find('.gametime').h(),
+						qnr:d.find('.quarter').h(),
+						team:basket.team
+					}
+					basket.acts.push(act)
+					basket.game.updlines()
+					basket.pl=-1
+					basket.act=-1
+					var ele=d.find('.actions .selected')
+					if(ele){
+						ele.remc('selected')
+					}						
+					ele=d.find('.players .selected')
+					if(ele){
+						ele.remc('selected')						
+					}					
+				}
+			},			
+			showplayers:function(){
+				var pls=d.find('.players'),
+					pl
+				pls.h('')
+				if(basket.nopls){
+					
+				} else {
+					loop(12,function(i2){
+						pl=pls.r('div class=player but wid hand ro')
+							.h(i2+4)
+							//.on('click',function(e){
+							.on(event,function(e){
+								var sel=d.find('.players .selected')
+								if(sel){
+									sel.remc('selected')
+								}
+								e.target.addc('selected')
+								basket.pl=e.target.h()
+								basket.game.confirmaction()
+								e.preventDefault()
+							})
+						
+					})			
+				}
+			},
+			showteams:function(){
+				var teams=d.find('.teams'),
+					game=d.find('.game')
+				teams.h('')
+				if(!basket.oneplayer){
+					teams.r('div class=team1 but ro hand')
+						.h('team:0')
+						//.s('background:yellowgreen border:2px solid yellowgreen')
+						//.on('click',function(e){
+						.on(event,function(e){
+							var but=e.target,
+								game=d.find('.game')
+							game.addc('team1selected')
+							game.remc('team2selected')							
+							basket.team=1
+							basket.col='yellowgreen'
+							e.preventDefault()
+						})
+				}
+				teams.r('div class=wid')
+					.r('div class=manageteams but ro hand wid title=menu')
+						.h('...')	
+						.on(event,function(e){
+							basket.stop()
+							basket.game.hide()
+							basket.menu.show()
+							e.preventDefault()
+						})
+				if(!basket.oneplayer){
+					teams.r('div class=team2 but ro hand')
+						.h('team:0')
+						//.s('background:orange border:2px solid orange')
+						.on(event,function(e){
+							var but=e.target,
+								game=d.find('.game')
+							game.addc('team2selected')
+							game.remc('team1selected')							
+							basket.team=2
+							basket.col='#CF2BC2'
+							e.preventDefault()
+						})
+					d.find('.team1').trigger(event)
+				}
 			}
-			drawtime().to(top)
-			d.find('.team1').trigger('click')
+		},		
+		menu:{			
+			show:function(){
+				basket.pl=-1
+				basket.act=-1			
+				
+				basket.menu.hide()				
+				var html=d.body.r('div class=menu tmid'),
+					rows=html.r('div class=rows'),						
+					top=rows.r('div'),
+					mid=rows.r('div'),
+					bot=rows.r('div')
+						.s('height:1px')
+						
+				top.r('div class=menusave')
+				top.r('div class=menutime')
+				
+				bot.r('div class=buttons')				
+				bot.r('div class=menuactions')
+				bot.r('div class=menuplayers')
+				bot.r('div class=menuteams')
+				
+				basket.menu.showsave()
+				basket.menu.showtime()
+				//basket.menu.showbuttons()
+				basket.menu.showactions()
+				basket.menu.showplayers()
+				basket.menu.showteams()
+				
+				//html.to(d.find('body'))
+			},
+			hide:function(){
+				var html=d.find('.menu')
+				if(html){
+					html.rem()
+				}			
+			},
+			showtime:function(){
+				var time=d.find('.menutime')
+				time.h('')
+				var cols=time.r('div class=cols')
+				var qbut=cols.r('div class=but sma')
+					.h('quarter length '+basket.qmins)
+					.on(down,function(e){
+						basket.stop()
+						
+						var but=e.target
+						but.isdown=true
+						var pos=[e.pageX,e.pageY]
+						if(event=='touchstart'){
+							pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
+						}
+						var bounds=but.getBoundingClientRect(),
+							m={
+								x:pos[0]-bounds.left,
+								y:pos[1]-bounds.top
+							}						
+						but.sx=m.x
+						but.lx=m.x
+						e.preventDefault()
+					})
+					.on(up,function(e){
+						var but=e.target
+						but.isdown=false
+					})
+					.on(move,function(e){
+						var but=e.target
+						var pos=[e.pageX,e.pageY]
+						if(event=='touchstart'){
+							pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
+						}
+						var bounds=but.getBoundingClientRect(),
+							m={
+								x:pos[0]-bounds.left,
+								y:pos[1]-bounds.top
+							},
+							dif=m.x-but.lx,
+							step=20
+						if(but.isdown){
+							if(Math.abs(dif)>step){
+								var val=(dif/step).round()
+								//console.log(dif,val)
+								basket.qmins+=val
+								if(basket.qmins<1){
+									basket.qmins=1
+								}
+								but.lx=m.x
+								but.h('quarter length '+basket.qmins)
+								basket.dgtime=1000*60*basket.qmins
+								basket.gtime=basket.dgtime
+							}
+						}
+						
+					})				
+				qbut.sx=0
+				qbut.lx=0
+				var offtime=cols.r('div class=but sma')
+					.h('show offence time')
+					.on(event,function(e){
+						basket.showofftime=!basket.showofftime
+						if(basket.showofftime){
+							offtime.remc('neg')
+						} else {
+							offtime.addc('neg')
+						}
+					})
+				if(basket.showofftime){
+					offtime.remc('neg')
+				} else {
+					offtime.addc('neg')
+				}			
+			},
+			showsave:function(){
+				var save=d.find('.menusave')				
+				save.r('div class=but')
+					.h('buy app 4.99&euro;')
+				var cols=save.r('div class=cols')
+				cols.r('div class=but neg sma')
+					.h('save game')
+				cols.r('div class=but neg sma')
+					.h('load game')
+			},
+			showlines:function(){},
+			showbuttons:function(){
+				var buttons=d.find('.buttons')
+				var butsize=buttons.r('div class=but sma buttonsize')
+					.h('button size '+basket.butsize)
+					.on(down,function(e){
+						var but=e.target
+						but.isdown=true
+						var pos=[e.pageX,e.pageY]
+						if(event=='touchstart'){
+							pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
+						}
+						var bounds=but.getBoundingClientRect(),
+							m={
+								x:pos[0]-bounds.left,
+								y:pos[1]-bounds.top
+							}						
+						but.sx=m.x
+						but.lx=m.x
+						e.preventDefault()
+					})
+					.on(up,function(e){
+						var but=e.target
+						but.isdown=false
+					})
+					.on(move,function(e){
+						var but=e.target
+						var pos=[e.pageX,e.pageY]
+						if(event=='touchstart'){
+							pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
+						}
+						var bounds=but.getBoundingClientRect(),
+							m={
+								x:pos[0]-bounds.left,
+								y:pos[1]-bounds.top
+							},
+							dif=m.x-but.lx,
+							step=20
+						if(but.isdown){
+							if(Math.abs(dif)>step){
+								var val=(dif/step).round()								
+								basket.butsize+=val
+								if(basket.butsize<3){
+									basket.butsize=3
+								} else if (basket.butsize>15){
+									basket.butsize=15
+								}
+								basket.setstyles()
+								but.lx=m.x
+								but.h('button size '+basket.butsize)
+							}
+						}
+						
+					})				
+				butsize.sx=0
+				butsize.lx=0
+					
+					
+			},
+			showactions:function(){
+				var acts=d.find('.menuactions'),
+					act
+				acts.h('')
+				loop(basket.actnames,function(name,show){
+					act=acts.r('div class=but wid')
+						.h(name)
+						.on(event,function(e){
+							var name=e.target.h()
+							basket.actnames[name]=!basket.actnames[name]
+							basket.menu.showactions()
+						})
+					if(!show){
+						act.addc('neg')
+					}
+				})					
+			},
+			showplayers:function(){
+				var pls=d.find('.menuplayers')
+				pls.h('')
+				var cols=pls.r('div class=cols')
+				var sepbuts=cols.r('div class=but sma')
+					.h('separate buttons')
+					.on(event,function(e){
+						var but=e.target
+						basket.sepbuts=!basket.sepbuts
+						if(basket.sepbuts){
+							but.remc('neg')
+						} else {
+							but.addc('neg')
+						}
+
+						e.preventDefault()
+					})
+				if(basket.sepbuts){
+					sepbuts.remc('neg')
+				} else {
+					sepbuts.addc('neg')
+				}
+				var nopls=cols.r('div class=but sma')
+					.h('show players')
+					.on(event,function(e){
+						var but=e.target
+						basket.nopls=!basket.nopls
+						if(basket.nopls){
+							but.addc('neg')
+						} else {
+							but.remc('neg')
+						}
+
+						e.preventDefault()
+					})
+				if(basket.nopls){
+					nopls.addc('neg')
+				} else {
+					nopls.remc('neg')
+				}
+			},
+			showteams:function(){
+				var teams=d.find('.menuteams')
+				teams.h('')
+				teams.r('div class=cols')
+					.r('div class=t1')
+						.r('div class=c1 but wid')
+							.on(event,function(e){
+								colorpicker.show(e.target)
+								e.preventDefault()
+							}).p
+						.r('div class=c2 but wid')
+							.on(event,function(e){
+								colorpicker.show(e.target)
+								e.preventDefault()
+							}).p						
+						.r('div class=c3 but wid')
+							.on(event,function(e){
+								colorpicker.show(e.target)
+								e.preventDefault()
+							}).p.p						
+					.r('div class=t2')
+						.r('div class=c1 but wid')
+							.on(event,function(e){
+								colorpicker.show(e.target)
+								e.preventDefault()
+							}).p						
+						.r('div class=c2 but wid')
+							.on(event,function(e){
+								colorpicker.show(e.target)
+								e.preventDefault()
+							}).p						
+						.r('div class=c3 but wid')
+							.on(event,function(e){
+								colorpicker.show(e.target)
+								e.preventDefault()
+							}).p						
+						
+				teams.r('div class=cols')
+					.r('div class=but team1load sma')
+						.h('team1').p					
+					.r('div class=but wid tmid html=...')
+						.on(event,function(e){
+							basket.menu.hide()
+							colorpicker.hide()
+							basket.game.show()//showactions()
+							e.preventDefault()
+						}).p
+					.r('div class=but team2load sma')
+						.h('team2')							
+					
+			
+			},
 		},
 		showcourt:function(scale){		
 			scale=scale || 1
@@ -556,7 +1041,7 @@ d.on('ready',function(e){
 				quarter=d.find('.quarter')
 			
 			function fgtime(time){
-				var min=Math.floor((time/(1000*60*60))),
+				var min=Math.floor((time/(1000*60))),
 					sec=Math.floor(((time/(1000))%60)),
 					msec=Math.floor(((time/(100))%10))
 				if(min<10){
@@ -576,10 +1061,16 @@ d.on('ready',function(e){
 				}			
 				var ft=[sec,msec].join(':')
 				return ft
-			}			
-			gtime.h(fgtime(basket.gtime))
-			otime.h(fotime(basket.otime))
-			quarter.h('Q'+basket.quarter)
+			}
+			if(gtime){
+				gtime.h(fgtime(basket.gtime))
+			}
+			if(otime){
+				otime.h(fotime(basket.otime))
+			}
+			if(quarter){
+				quarter.h('Q'+basket.quarter)
+			}
 		},
 		start:function(){
 			if(basket.gtime<=0){
@@ -590,11 +1081,14 @@ d.on('ready',function(e){
 			}
 			basket.lt=new Date().getTime()
 			basket.pause=false
-			d.find('.gametime').remclass('pause')
+			d.find('.gametime').remc('neg')
 		},
 		stop:function(){
 			basket.pause=true
-			d.find('.gametime').addclass('pause')
+			var gametime=d.find('.gametime')
+			if(gametime){
+				gametime.addc('neg')
+			}
 		},
 		pause:true,
 		run:function(){
@@ -604,7 +1098,7 @@ d.on('ready',function(e){
 			if(!basket.pause){
 				basket.gtime-=basket.dt
 				basket.otime-=basket.dt
-				if(basket.otime<=0){
+				if(basket.showofftime && basket.otime<=0){
 					basket.stop()
 					basket.otime=basket.dotime
 				}
@@ -619,11 +1113,207 @@ d.on('ready',function(e){
 			setTimeout(basket.run,10)
 		}
 	}
+	basket.init()
 	basket.sheet=basket.setstyles()
-	basket.show()
+	basket.game.show()
+	//basket.show()
 	basket.run()
-	basket.updtime()
-	basket.updateacts()
+	//basket.updtime()
+	//basket.updateacts()
+	var colorpicker={
+		init:function(){
+			var sh=d.dss.new('colorpicker-styles')
+			sh.new('.canvas',
+				'position:absolute',
+				'bottom:'+2*size+'px',
+				'left:0px'				
+			)
+			sh.show()
+		},
+		dist:function(pp1,pp2){
+			return Math.sqrt((pp1[0]-pp2[0])*(pp1[0]-pp2[0])+(pp1[1]-pp2[1])*(pp1[1]-pp2[1]))
+		},
+		an:function(a,b){		
+			b={
+				x:b[0]-a[0],
+				y:b[1]-a[1]
+			}
+			
+			var an=Math.atan(b.x/b.y)
+			if(b.x>0){
+				if(b.y<0){
+					an=-an
+				} else {
+					an=Math.PI-an
+				}
+			} else {
+				if(b.y>=0){
+					an=Math.PI-an
+				} else {
+					an=2*Math.PI-an
+				}						
+			}
+			//console.log('an:',an)
+			an%=Math.PI*2
+			return an
+		},		
+		show:function(tar){
+			this.tar=tar
+			this.hide()
+			var csize=Math.floor(8*size),
+				half=csize/2,
+				step=Math.PI/3,//Math.floor(size/6),
+				rat=255/(Math.PI/3),
+				ld=1,
+				cc=[half,half],
+				p1=[half,0],
+				p2=[half+Math.floor(half*Math.cos(Math.PI/6)),half+Math.floor(half*Math.sin(Math.PI/6))],
+				p3=[half-Math.floor(half*Math.cos(Math.PI/6)),half+Math.floor(half*Math.sin(Math.PI/6))],
+				aff	,dist,an,
+				cstart=half,
+				cend=half/3
+			var c=d.r('canvas class=canvas colorpicker')
+				.on(event,function(e){
+					var pos=[e.pageX,e.pageY]
+					if(event=='touchstart'){
+						//console.log(e)
+						pos=[e.changedTouches[0].clientX,e.changedTouches[0].clientY]
+					}
+					var bounds=c.getBoundingClientRect(),
+						m={
+							x:pos[0]-bounds.left,
+							y:pos[1]-bounds.top
+						},
+						arr=ctx.getImageData(m.x,m.y, 1, 1).data
+						col='rgba(v0,v1,v2,v3)'		
+					//console.log(bounds,m)
+					loop(arr,function(i,v){
+						col=col.replace('v'+i,v)
+					})
+					colorpicker.col=col
+					colorpicker.tar.s('background:'+col)
+					c.trigger('colorpick')
+					//colorpicker.tar.trigger('colorpick')
+					colorpicker.hide()
+				})
+				.on(move,function(e){
+					var pos=[e.pageX,e.pageY]
+					if(event=='touchstart'){
+						pos=[e.touches[0].clientX,e.touches[0].clientY]
+					}				
+					var bounds=c.getBoundingClientRect(),
+						m={
+							x:pos[0]-bounds.left,
+							y:pos[1]-bounds.top
+						},
+						arr=ctx.getImageData(m.x,m.y, 1, 1).data
+						col='rgba(v0,v1,v2,v3)'
+					loop(arr,function(i,v){
+						col=col.replace('v'+i,v)
+					})
+					colorpicker.tar.s('background:'+col)
+						
+					//console.log(col)
+				})
+			c.width=csize
+			c.height=csize
+			var ctx=c.getContext("2d");
+			var imgData=ctx.createImageData(csize,csize),
+				nr,x,y,r,g,b,a
+			loop(imgData.data.length/4,function(i){				
+				r=0
+				g=0
+				b=0
+				a=255
+				x=i%csize
+				y=Math.floor(i/csize)
+				dist=colorpicker.dist([x,y],cc)
+				an=colorpicker.an(cc,[x,y])
+				if(an<step){
+					r=255					
+					g=an*rat//g+					
+				} else if(an<step*2){
+					g=255
+					r=256-(an-step)*rat//r-
+				} else if(an<step*3){
+					g=255
+					b=(an-step*2)*rat//b+		
+				} else if(an<step*4){
+					b=255
+					g=256-(an-(step*3))*rat//g-
+				} else if(an<step*5){
+					b=255
+					r=(an-step*4)*rat//r+
+				} else {
+					r=255
+					b=256-(an-(step*5))*rat//b-
+				}				
+				
+				if (dist<cend){
+					val=dist*255/cend
+					ld=0
+					r=g=b=val
+				} else if (dist<cstart){
+					aff=(cstart-dist)*255/(cstart-cend)
+					ld=Math.abs((half/3)-(dist-half/3))/(half/3)
+				} else {
+					r=g=b=0
+					ld=0
+				}
+				r=aff*ld+(1-ld)*r
+				g=aff*ld+(1-ld)*g
+				b=aff*ld+(1-ld)*b					
+				
+				nr=i*4
+				imgData.data[nr+0]=r//255;
+				imgData.data[nr+1]=g//(x+85)%256
+				imgData.data[nr+2]=b//(x+170)%256
+				imgData.data[nr+3]=a			
+			})
+			/*
+			for (var i=0;i<imgData.data.length;i+=4)
+			  {
+			  imgData.data[i+0]=255;
+			  imgData.data[i+1]=0;
+			  imgData.data[i+2]=0;
+			  imgData.data[i+3]=255;
+			  }
+			/**/
+			ctx.putImageData(imgData,0,0)
+			c.to(d.body)
+		},
+		hide:function(){
+			var cp=d.find('.colorpicker')
+			if(cp){
+				cp.rem()
+			}
+		}
+	}
+	colorpicker.init()
+	d.on('colorpick',function(e){
+		var tar=colorpicker.tar,
+			team=basket.team2,
+			name,
+			teambut=d.find('.team2load')
+		if(tar.p.hasclass('t1')){
+			team=basket.team1
+			teambut=d.find('.team1load')
+		}
+		
+		if(tar.hasclass('c1')){
+			team.color=colorpicker.col
+			teambut.s('background:'+team.color)
+		} else if(tar.hasclass('c2')){
+			team.number=colorpicker.col
+			teambut.s('color:'+team.number)
+		} else if(tar.hasclass('c3')){
+			team.border=colorpicker.col
+			teambut.s('border-color:'+team.border)			
+		}
+		console.log(team)
+		//console.log('colorpick',tar)
+	})
+	//colorpicker.show()
 })
 
 </script>

@@ -1,7 +1,8 @@
 var d=document,
-	ep=Element.prototype,
-	sp=String.prototype,	
-	np=Node.prototype
+	p='prototype',
+	ep=Element[p],
+	sp=String[p],	
+	np=Node[p]
 
 //node
 np.find=function(sel){
@@ -42,12 +43,22 @@ np.on=function(name,fn,haveselector){
 		this.addEventListener(name,fn,false);
 		if (!this.eventfunctions) this.eventfunctions={};
 		this.eventfunctions['efn-'+name]=fn;		
+		/*
+		if(name=='touchstart'){
+			this.on('mousedown',fn)
+		}
+		/**/
 	}
 	return this;
 }
 np.off=function(n,fn,f){
 	var fn=this.eventfunctions['efn-'+n];
 	this.removeEventListener(n,fn, f || false);
+	/*
+	if(n=='touchstart'){
+		this.off('mousedown',fn)
+	}
+	/**/
 	return this;
 }
 //element
@@ -206,7 +217,7 @@ ep.isvis=function(toggle){
 	}
 	return this.style.display == 'none'?false:true
 }
-ep.addclass=function(n){
+ep.addclass=ep.addc=function(n){
 	var cl=this.className.split(' '),
 		nl=n.split(' ');
 	if (cl[0]=='') cl.shift()
@@ -218,7 +229,7 @@ ep.addclass=function(n){
 	this.className=cl.join(' ')
 	return this
 }
-ep.remclass=function(n){
+ep.remclass=ep.remc=function(n){
 	if (n){
 		var nl=this.className.split(' ');
 		if (n.indexOf(' ')!=-1){
@@ -238,7 +249,7 @@ ep.remclass=function(n){
 	}
 	return this;	
 }
-ep.hasclass=function(n){
+ep.hasclass=ep.hasc=function(n){
 	var nl=this.className.split(' '),
 		ns=n.split(' '),
 		res=1;
@@ -249,6 +260,15 @@ ep.hasclass=function(n){
 		}
 	}
 	return res
+}
+ep.togc=function(a,b){
+	if(this.hasc(a)){
+		this.remc(a)
+		if(b)this.addc(b)
+	} else {
+		if(b)this.remc(b)
+		this.addc(a)
+	}
 }
 ep.r=function(str){
 	var ele=document.r(str)
@@ -671,4 +691,4 @@ d.send=function(){
 	}	
 }
 
-console.log('loaded dom0')
+//console.log('loaded dom0')
