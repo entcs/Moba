@@ -26,7 +26,7 @@ d.on('ready',function(e){
 		move='touchmove'
 	}
 	basket={
-		butsize:8,
+		butsize:7,
 		init:function(){
 			this.acts=[]
 			this.actnames={
@@ -42,9 +42,11 @@ d.on('ready',function(e){
 				'st':true,
 				'as':true,
 				'rb':true,
+				/*
 				'or':false,
 				'dr':false,
-				'to':false,
+				/**/
+				'to':true,
 			}
 			this.pl=-1
 			this.act=-1
@@ -91,12 +93,12 @@ d.on('ready',function(e){
 				'font-size:'+size*0.7+'px',
 				'margin:0px'	
 			)
-			
 			sheet.new('.game',
 				//'width:'+sshort+'px',
 				//'height:'+slong+'px',
 				//'max-height:'+slong+'px',
 				'background-color:#111'
+				
 			)	
 			sheet.new('table',
 				//'border-collapse:collapse'
@@ -226,22 +228,9 @@ d.on('ready',function(e){
 			sheet.new('.space',
 				'margin-top:'+size/10+'px'
 			)
-			/*
-			sheet.new('.col1 .but',
-				'border-color:'+basket.col1
+			sheet.new('.buy',
+				'display:none'
 			)
-			sheet.new('.col2 .but',
-				'border-color:'+basket.col2
-			)
-			/**/
-			/*
-			sheet.new('.col1 .selected',
-				'border-color:'+basket.col1
-			)			
-			sheet.new('.col2 .selected',
-				'border-color:'+basket.col2
-			)
-			/**/
 			sheet.new('.iblock',
 				'display:inline-block'
 			)					
@@ -293,15 +282,14 @@ d.on('ready',function(e){
 					mid=game.r('div class=mid')
 						.s('height:100%'),
 					bot=game.r('div class=bot')				
-				top.r('div class=buy')
+				top.r('div class=buyapp')
 				top.r('div class=time cols')				
 				mid.r('div class=gamelines')
 					.s('overflow:auto height:100%')
 				
 				bot.r('div class=actions')
-					.s('background-color:#222')
-				bot.r('div class=players iblocks space')
-				bot.r('div class=teams cols space')
+				bot.r('div class=players iblocks')
+				bot.r('div class=teams cols')
 				
 				basket.game.showbuy()
 				basket.game.showtime()
@@ -321,8 +309,8 @@ d.on('ready',function(e){
 				}
 			},
 			showbuy:function(){
-				var promo=d.find('.buy')
-					.r('div class=but')
+				var promo=d.find('.buyapp')
+					.r('div class=but buy')
 						.h('buy app 4.99&euro;')
 			},			
 			showtime:function(){
@@ -502,8 +490,6 @@ d.on('ready',function(e){
 						.h(act.act)
 					tr.r('td')
 						.h(act.time)
-					tr.r('td')
-						.h(act.qnr)						
 					tr.r('td class=wid')
 						.r('div class=wid but')
 							.h('X')
@@ -515,6 +501,8 @@ d.on('ready',function(e){
 								basket.game.updlines()
 								e.preventDefault()
 							})
+					tr.r('td')
+						.h(act.qnr)						
 					
 					if(act.act.indexOf('+')!=-1){						
 						val=parseInt(act.act.replace('+',''))
@@ -662,6 +650,13 @@ d.on('ready',function(e){
 				top.r('div class=menusave')
 				top.r('div class=menutime')
 				
+				var sw=screen.width,
+					sh=screen.height,
+					pr=window.devicePixelRatio.round(1)
+					specs=sw+'*'+sh+' pixr:'+pr+' '+(sw*pr).round()+'*'+(sh*pr).round()
+				top.r('div class=specs sma')
+					.h(specs)
+				
 				bot.r('div class=buttons')				
 				bot.r('div class=menuactions')
 				bot.r('div class=menuplayers')
@@ -759,7 +754,7 @@ d.on('ready',function(e){
 			},
 			showsave:function(){
 				var save=d.find('.menusave')				
-				save.r('div class=but')
+				save.r('div class=but buy')
 					.h('buy app 4.99&euro;')
 				var cols=save.r('div class=cols')
 				cols.r('div class=but neg sma')
@@ -886,44 +881,15 @@ d.on('ready',function(e){
 			},
 			showteams:function(){
 				var teams=d.find('.menuteams')
-				teams.h('')
-				teams.r('div class=cols')
-					.r('div class=t1')
-						.r('div class=c1 but wid')
-							.on(event,function(e){
-								colorpicker.show(e.target)
-								e.preventDefault()
-							}).p
-						.r('div class=c2 but wid')
-							.on(event,function(e){
-								colorpicker.show(e.target)
-								e.preventDefault()
-							}).p						
-						.r('div class=c3 but wid')
-							.on(event,function(e){
-								colorpicker.show(e.target)
-								e.preventDefault()
-							}).p.p						
-					.r('div class=t2')
-						.r('div class=c1 but wid')
-							.on(event,function(e){
-								colorpicker.show(e.target)
-								e.preventDefault()
-							}).p						
-						.r('div class=c2 but wid')
-							.on(event,function(e){
-								colorpicker.show(e.target)
-								e.preventDefault()
-							}).p						
-						.r('div class=c3 but wid')
-							.on(event,function(e){
-								colorpicker.show(e.target)
-								e.preventDefault()
-							}).p						
-						
+				teams.h('')						
 				teams.r('div class=cols')
 					.r('div class=but team1load sma')
-						.h('team1').p					
+						.h('load team').p					
+					.r('div class=team1col but wid')
+						.on(event,function(e){
+							colorpicker.show(e.target)
+							e.preventDefault()
+						}).p						
 					.r('div class=but wid tmid html=...')
 						.on(event,function(e){
 							basket.menu.hide()
@@ -931,8 +897,13 @@ d.on('ready',function(e){
 							basket.game.show()//showactions()
 							e.preventDefault()
 						}).p
+					.r('div class=team2col but wid')
+						.on(event,function(e){
+							colorpicker.show(e.target)
+							e.preventDefault()
+						}).p						
 					.r('div class=but team2load sma')
-						.h('team2')							
+						.h('load team')							
 					
 			
 			},
@@ -1125,7 +1096,7 @@ d.on('ready',function(e){
 			var sh=d.dss.new('colorpicker-styles')
 			sh.new('.canvas',
 				'position:absolute',
-				'bottom:'+2*size+'px',
+				'bottom:0px',
 				'left:0px'				
 			)
 			sh.show()
@@ -1160,7 +1131,7 @@ d.on('ready',function(e){
 		show:function(tar){
 			this.tar=tar
 			this.hide()
-			var csize=Math.floor(8*size),
+			var csize=Math.floor(basket.butsize*size),
 				half=csize/2,
 				step=Math.PI/3,//Math.floor(size/6),
 				rat=255/(Math.PI/3),
