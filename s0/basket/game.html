@@ -1,6 +1,6 @@
 <head>
 	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
-	<meta name="viewport" content="width=device-width" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <style>
 </style>
@@ -85,9 +85,11 @@ d.on('ready',function(e){
 			var wid=screen.width/window.devicePixelRatio//window.innerWidth
 			var hig=screen.height/window.devicePixelRatio//window.innerHeight			
 			size=Math.min(wid/basket.butsize,hig/basket.butsize)*window.devicePixelRatio
-			if(size>64){
-				size=64
+			var max=64
+			if(size>max){
+				size=max
 			}
+			/**/
 			sheet.new('body',
 				'background-color:#111',
 				'font-size:'+size*0.7+'px',
@@ -191,7 +193,7 @@ d.on('ready',function(e){
 			)
 			//dynamic col
 			sheet.new('.sma',
-				'font-size:18px'
+				'font-size:'+size/2.5+'px'
 			)
 			sheet.new('.cols',
 				'display:table',

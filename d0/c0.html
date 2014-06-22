@@ -1,10 +1,308 @@
 <style>
 	body {
-		background-color:#000;
-		text-align:center;
+		margin:0px;
 	}
 	
 </style>
 <body></body>
 <script src='d0.js'></script>
 <script src='c0.js'></script>
+<script>
+c0.run('resize')
+var gfx={	
+	init:function(){
+		this.c=d.body.r('canvas id=gfxcanvas')
+		this.c2=gfx.c.getContext('2d')
+		console.log('c2:',this.c2.drawImage)
+		var names=['tactics.png'],
+			img
+		this.raws={}
+		this.imgs={}
+		loop(names,function(i,n){
+			img={
+				ready:false,
+				imgo:new Image()
+			}
+			img.imgo.src=n
+			img.imgo.onload=function(){				
+				img.ready=true
+				console.log(this,'img ready')
+			}
+			gfx.raws[n]=img
+		})
+		
+	},	
+	clear:function(){
+		
+	},
+	setsize:function(wid,hig){
+		this.c.width=wid
+		this.c.height=hig
+	},
+	draw:function(a){		
+		if(a.img.ready){
+			if(a.opa==undefined){
+				a.opa=1
+			}
+			scale=a.scale || 1
+			this.c2.globalAlpha = a.opa		
+			x=a.x-(a.wid/2)
+			y=a.y-(a.hig/2)
+			offx=a.offx||0
+			offy=a.offy||0
+			this.c2.drawImage(a.img.imgo,offx,offy, a.wid,a.hig,x,y, a.wid*scale, a.hig*scale)
+			this.c2.globalAlpha = 1
+		} else {
+			
+			setTimeout(function(){
+				gfx.draw(a)
+			},100)
+		}
+	}
+}
+/*
+gfx.init()
+gfx.setsize(64,64)
+gfx.draw({
+	x:32,
+	y:32,
+	wid:64,
+	hig:64,
+	offx:320,
+	offy:64,
+	img:gfx.raws['tactics.png']
+})
+gfx.draw({
+	x:32,
+	y:32,
+	wid:64,
+	hig:64,
+	offx:0,
+	offy:64,
+	img:gfx.raws['tactics.png']
+})
+gfx.draw({
+	x:32,
+	y:32,
+	wid:64,
+	hig:64,
+	offx:196,
+	offy:64,
+	img:gfx.raws['tactics.png']
+})
+gfx.draw({
+	x:32,
+	y:32,
+	wid:64,
+	hig:64,
+	offx:256,
+	offy:64,
+	img:gfx.raws['tactics.png']
+})
+var imgd=gfx.c2.getImageData(0,0,64,64)
+console.log(imgd)
+*/
+//i2.draw(gfx.c2)
+var tac={
+	initmap:function(){
+		var map=c0.rect({
+			//src:'tactics.png',
+			x:window.innerWidth/2,
+			y:window.innerHeight/2,
+			wid:8000,
+			hig:8000,
+			color:'yellowgreen',
+			start:{},
+			goscale:1,
+			vec:{x:0,y:0},
+			focus:{x:0,y:0},
+			mouse:{x:0,y:0}
+		}).to()
+		map.on('mousedown',function(e){
+			map.down=true
+			map.start.x=c0.m.x-map.x
+			map.start.y=c0.m.y-map.y			
+			map.vec.x=0
+			map.vec.y=0
+		})
+		map.on('mouseup',function(e){
+			map.down=false
+			var pos=map.mpos()	
+			i1.pos(pos)			
+			map.vec.x=c0.mvec.x
+			map.vec.y=c0.mvec.y
+		})		
+		
+		//bushes
+		var bushes=[],
+			bush,
+			x,y
+		loop(240,function(i){
+			x=Math.random()*map.wid-map.wid/2
+			y=Math.random()*map.hig-map.hig/2
+			bush=c0.img({
+				x:x,
+				y:y,
+				src:'tactics.png',
+				wid:64,
+				hig:64,
+				offx:196,
+				offy:128,
+				opa:0.5
+			}).to(map)
+		})		
+		map.on('mousemove',function(e){
+			if(map.down){
+				var dif=c0.sub(c0.m,map.start)				
+				map.x=dif.x
+				map.y=dif.y
+				tac.handlemap()
+			}	
+		})
+		c0.canvas.on('mousewheel',function(e){
+			var dif=e.wheelDelta,
+				scale=map.getscale(),
+				wid=map.wid*scale,
+				hig=map.wid*scale
+			if(dif>0){
+				map.goscale+=0.2
+			} else if(dif<0){
+				map.goscale-=0.2
+			}
+			
+			var pos=map.getpos(),
+				mpos=map.mpos(),
+				scale=map.getscale()
+			
+			i1.pos(mpos)
+			map.focus=map.mpos()
+			map.mouse.x=c0.m.x
+			map.mouse.y=c0.m.y
+			
+			tac.handlemap()
+		})		
+		tac.map=map
+	},
+	handlemap:function (){
+		var map=tac.map,
+			scale=map.getscale()
+			mix=scale*map.wid/2,
+			max=window.innerWidth-scale*map.wid/2,
+			miy=scale*map.hig/2,
+			may=window.innerHeight-scale*map.hig/2,
+			wid=map.wid*scale,
+			hig=map.hig*scale,
+			sx=window.innerWidth/wid,
+			sy=window.innerHeight/hig
+		
+		if(map.vec.x){
+			map.x+=map.vec.x
+			map.vec.x*=0.9
+			if(Math.abs(map.vec.x)<0.01){
+				map.vec.x=0
+			}
+		}
+		if(map.vec.y){
+			map.y+=map.vec.y
+			map.vec.y*=0.9
+			if(Math.abs(map.vec.y)<0.01){
+				map.vec.y=0
+			}
+			
+		}
+		
+		if(wid<window.innerWidth && sx>sy){
+			scale=window.innerWidth/map.wid
+			if(map.goscale<scale){
+				map.goscale=scale
+				map.scale=scale
+			}
+			map.x=window.innerWidth/2
+			mix=scale*map.wid/2,
+			max=window.innerWidth-scale*map.wid/2		
+			miy=scale*map.hig/2,
+			may=window.innerHeight-scale*map.hig/2				
+		} else if(hig<window.innerHeight && sy>sx){
+			scale=window.innerHeight/map.hig
+			if(map.goscale<scale){
+				map.goscale=scale
+				map.scale=scale
+			}
+			map.y=window.innerHeight/2
+			mix=scale*map.wid/2,
+			max=window.innerWidth-scale*map.wid/2				
+			miy=scale*map.hig/2,
+			may=window.innerHeight-scale*map.hig/2		
+		}
+		
+		
+		if(map.x>mix){
+			map.x=mix
+		} else if(map.x<max){
+			map.x=max
+		}
+		if(map.y>miy){
+			map.y=miy
+		} else if(map.y<may){
+			map.y=may
+		}
+		if(map.goscale>1){
+			map.goscale=1
+		}	
+		if(Math.abs(map.scale-map.goscale)<0.0001){
+			map.scale=map.goscale
+		}
+		
+	},
+	units:[],
+	pls:[]	
+}
+tac.initmap()
+
+
+
+var c1=c0.circ({
+	x:50,
+	y:50,
+	color:'red',
+	rad:10
+}).to(tac.map)
+var c2=c0.circ({
+	x:0,
+	y:0,
+	color:'orange',
+	rad:10
+}).to()
+var i1=c0.img({
+	src:'tactics.png',
+	x:100,
+	y:100,
+	wid:64,
+	hig:64,
+	offx:0,
+	offy:64
+}).to(tac.map)
+c0.ondraw=function(){
+	//c1.pos(c0.m)
+	var dif=(tac.map.goscale-tac.map.scale)/4
+	tac.map.scale+=dif
+	if(tac.map.scale!=tac.map.goscale){		
+		var scale=tac.map.getscale(),
+			pos=tac.map.getpos(),
+			dif={
+				x:(tac.map.focus.x*scale+pos.x)-tac.map.mouse.x,
+				y:(tac.map.focus.y*scale+pos.y)-tac.map.mouse.y
+			}
+		if(dif.x!=0 || dif.y!=0){			
+			tac.map.x-=dif.x
+			tac.map.y-=dif.y
+			c1.pos(tac.map.focus)
+			c2.pos(tac.map.mouse)
+		}
+	}
+	tac.handlemap()
+}
+d.body.on('keypress',function(e){
+	console.log('click1')
+})
+</script>
