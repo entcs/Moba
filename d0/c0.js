@@ -25,6 +25,8 @@ Node.prototype.on=function(name,fn){
 	this.eventfunctions['efn-'+name]=fn
 	return this;
 }
+MouseEvent.prototype.stop=false
+MouseEvent.prototype.node=false
 var c0={
 	init:function(resize){
 		this.resize=resize || false
@@ -78,7 +80,7 @@ var c0={
 				mousedown:0,
 				mouseup:0,
 				dblclick:0,
-				//mousewheel:0,
+				mousewheel:0,
 				mousemove:function(e){
 					bounds=c0.canvas.getBoundingClientRect()
 					x=e.x-bounds.left
@@ -101,7 +103,12 @@ var c0={
 				if(fn) fn(e)
 				var hits=c0.doevents(n,c0.root)
 				loop(hits,function(i,node){
-					node.events[n](e)
+					if(!e.stop){
+						e.node=node
+						node.events[n](e)
+					} else {
+						return false
+					}
 				})				
 			})			
 		})
@@ -120,7 +127,7 @@ var c0={
 					hits.splice(0,0,node)
 				}
 			}
-		}		
+		}
 		loop(node.children,function(i,chi){
 			c0.doevents(event,chi,hits)
 		})
@@ -151,9 +158,14 @@ var c0={
 		return res
 	},
 	dist:function(a,b){
-		var dx=a.x-b.x,
-			dy=a.y-b.y
-		return Math.sqrt(dx*dx+dy*dy)			
+		if(b){
+			var dx=a.x-b.x,
+				dy=a.y-b.y,
+				dist=Math.sqrt(dx*dx+dy*dy)
+			return dist
+		} else {
+			return Math.sqrt(a.x*a.x+a.y*a.y)
+		}
 	},
 	an:function(a,b){		
 		b=c0.sub(b,a)
@@ -613,6 +625,35 @@ var c0={
 		}
 		return node
 	},
+	imgd:function(a){
+		var node=this.node('imgd'),
+			imgo
+		node.type='imgd'
+		node.hit='rect'
+		loop(a,function(k,v){
+			node[k]=v
+		})
+		node.imgready=true
+		node.wid=node.wid || node.imgo.width
+		node.hig=node.hig || node.imgo.height
+		data=a.data
+		node.draw=function(c2){
+			c2=c2 || c0.c
+			if(node.imgready){
+				if(node.opa){
+					//c0.c.globalAlpha = node.opa
+				}
+				scale=node.getscale()
+				pos=node.getpos()
+				x=pos.x-(node.wid/2)*scale
+				y=pos.y-(node.hig/2)*scale
+				c2.drawImage(a.data,0,0, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
+				//c2.putImageData(data,x,y)
+				//c2.globalAlpha = 1
+			}						
+		}
+		return node
+	},	
 	pat:function(a){
 		var node=this.node('pat')
 		node.type='pat'

@@ -1,6 +1,7 @@
 <style>
 	body {
 		margin:0px;
+		background-color:#000;
 	}
 	
 </style>
@@ -12,8 +13,8 @@ c0.run('resize')
 var gfx={	
 	init:function(){
 		this.c=d.body.r('canvas id=gfxcanvas')
+			.s('display:none')
 		this.c2=gfx.c.getContext('2d')
-		console.log('c2:',this.c2.drawImage)
 		var names=['tactics.png'],
 			img
 		this.raws={}
@@ -26,118 +27,168 @@ var gfx={
 			img.imgo.src=n
 			img.imgo.onload=function(){				
 				img.ready=true
-				console.log(this,'img ready')
+				d.trigger('imageloaded',[n,img])
 			}
 			gfx.raws[n]=img
 		})
-		
+		d.on('imageloaded',function(e){
+			console.log('args:',e.args)
+			gfx.gen()
+			d.trigger('gfxready')
+		})
 	},	
 	clear:function(){
-		
+		console.log('clear')
+		gfx.c2.clearRect(0, 0, gfx.c.width, gfx.c.height)
 	},
+	imgs:{},
 	setsize:function(wid,hig){
 		this.c.width=wid
 		this.c.height=hig
 	},
 	draw:function(a){		
 		if(a.img.ready){
+			/*
 			if(a.opa==undefined){
 				a.opa=1
 			}
+			*/
 			scale=a.scale || 1
-			this.c2.globalAlpha = a.opa		
+			//this.c2.globalAlpha = a.opa		
 			x=a.x-(a.wid/2)
 			y=a.y-(a.hig/2)
 			offx=a.offx||0
 			offy=a.offy||0
 			this.c2.drawImage(a.img.imgo,offx,offy, a.wid,a.hig,x,y, a.wid*scale, a.hig*scale)
-			this.c2.globalAlpha = 1
+			//this.c2.globalAlpha = 1
 		} else {
 			
 			setTimeout(function(){
 				gfx.draw(a)
 			},100)
 		}
+	},
+	gen:function(){
+		var img,
+			wid=64,
+			hig=64
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:320,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})		
+		img=new Image()
+		img.src=gfx.c.toDataURL("image/png")			
+		gfx.imgs['bcirc']=img
+				
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:0,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})
+		img=new Image()
+		img.src=gfx.c.toDataURL("image/png")			
+		gfx.imgs['bsword']=img
+		
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:196,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})
+		img=new Image()
+		img.src=gfx.c.toDataURL("image/png")			
+		gfx.imgs['bhsword']=img
+		
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:256,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})
+		img=new Image()
+		img.src=gfx.c.toDataURL("image/png")			
+		gfx.imgs['bhmsword']=img		
+		/*
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:0,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:196,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})
+		gfx.draw({
+			x:32,
+			y:32,
+			wid:wid,
+			hig:hig,
+			offx:256,
+			offy:64,
+			img:gfx.raws['tactics.png']
+		})
+		var imgd=gfx.c2.getImageData(0,0,wid,hig)
+		gfx.imgs['heavycavalry']=imgd
+		console.log(imgd)
+		/**/
 	}
 }
-/*
 gfx.init()
 gfx.setsize(64,64)
-gfx.draw({
-	x:32,
-	y:32,
-	wid:64,
-	hig:64,
-	offx:320,
-	offy:64,
-	img:gfx.raws['tactics.png']
-})
-gfx.draw({
-	x:32,
-	y:32,
-	wid:64,
-	hig:64,
-	offx:0,
-	offy:64,
-	img:gfx.raws['tactics.png']
-})
-gfx.draw({
-	x:32,
-	y:32,
-	wid:64,
-	hig:64,
-	offx:196,
-	offy:64,
-	img:gfx.raws['tactics.png']
-})
-gfx.draw({
-	x:32,
-	y:32,
-	wid:64,
-	hig:64,
-	offx:256,
-	offy:64,
-	img:gfx.raws['tactics.png']
-})
-var imgd=gfx.c2.getImageData(0,0,64,64)
-console.log(imgd)
-*/
 //i2.draw(gfx.c2)
-var tac={
+var tac={	
 	initmap:function(){
 		var map=c0.rect({
 			//src:'tactics.png',
 			x:window.innerWidth/2,
 			y:window.innerHeight/2,
-			wid:8000,
-			hig:8000,
+			wid:4000,
+			hig:4000,
 			color:'yellowgreen',
 			start:{},
 			goscale:1,
+			fol:0,
 			vec:{x:0,y:0},
 			focus:{x:0,y:0},
-			mouse:{x:0,y:0}
+			mouse:{x:0,y:0},
+			moved:false,
 		}).to()
-		map.on('mousedown',function(e){
-			map.down=true
-			map.start.x=c0.m.x-map.x
-			map.start.y=c0.m.y-map.y			
-			map.vec.x=0
-			map.vec.y=0
-		})
-		map.on('mouseup',function(e){
-			map.down=false
-			var pos=map.mpos()	
-			i1.pos(pos)			
-			map.vec.x=c0.mvec.x
-			map.vec.y=c0.mvec.y
-		})		
+		
+		//node layers
+		map.paths=c0.node({}).to(map)
+		map.terra=c0.node({}).to(map)
+		map.units=c0.node({}).to(map)		
+		map.gfx=c0.node({}).to(map)
 		
 		//bushes
 		var bushes=[],
 			bush,
 			x,y
-		loop(240,function(i){
+		loop(256,function(i){
 			x=Math.random()*map.wid-map.wid/2
 			y=Math.random()*map.hig-map.hig/2
 			bush=c0.img({
@@ -149,113 +200,304 @@ var tac={
 				offx:196,
 				offy:128,
 				opa:0.5
-			}).to(map)
+			}).to(map.terra)
 		})		
-		map.on('mousemove',function(e){
-			if(map.down){
-				var dif=c0.sub(c0.m,map.start)				
-				map.x=dif.x
-				map.y=dif.y
-				tac.handlemap()
-			}	
+		map.on('mousedown',function(e){
+			console.log('map mousedown')
+			map.down=true
+			map.start.x=c0.m.x-map.x
+			map.start.y=c0.m.y-map.y			
+			map.vec.x=0
+			map.vec.y=0
 		})
-		c0.canvas.on('mousewheel',function(e){
-			var dif=e.wheelDelta,
-				scale=map.getscale(),
-				wid=map.wid*scale,
-				hig=map.wid*scale
-			if(dif>0){
-				map.goscale+=0.2
-			} else if(dif<0){
-				map.goscale-=0.2
+		map.on('mouseup',function(e){
+			if(map.down){
+				var pos=map.mpos()	
+				//i1.pos(pos)			
+				map.fol=0
+				map.vec.x=c0.mvec.x
+				map.vec.y=c0.mvec.y				
+				map.down=false
 			}
-			
-			var pos=map.getpos(),
-				mpos=map.mpos(),
-				scale=map.getscale()
-			
-			i1.pos(mpos)
-			map.focus=map.mpos()
-			map.mouse.x=c0.m.x
-			map.mouse.y=c0.m.y
-			
-			tac.handlemap()
+			tac.actunit=0
+			/*
+			//onclick zoom
+			if(map.goscale==1 && !map.moved){
+				tac.setscale()
+			} else if(map.goscale!=1){
+				tac.setscale(1)
+			}
+			/**/
+			map.moved=false
+		})			
+		map.on('mousemove',function(e){
+			if(tac.actunit){
+				var unit=tac.actunit,
+					mpos=map.mpos(),
+					pos=tac.actunit.pos()
+				if(unit.path.length){
+					pos=unit.path[unit.path.length-1]
+				}
+				var dist=c0.dist(mpos,pos)
+				if(dist>64){
+					var dot=c0.circ({
+						x:mpos.x,
+						y:mpos.y,
+						rad:16,
+						color:'rgba(255,255,255,0.3)'
+					}).to(map.terra)
+					unit.path.push(dot)
+					unit.fol=0
+				}
+				//console.log('dist:',dist,map.mpos(),tac.actunit.pos())
+			} else {			
+				if(map.down && map.goscale==1){
+					var dif=c0.sub(c0.m,map.start)				
+					map.fol=dif
+					if(dif.x!=0 || dif.y!=0){
+						map.moved=true
+					}
+				}	
+			}
+		})
+		map.on('mousewheel',function(e){
+			var dif=e.wheelDelta
+			if(dif>0){
+				tac.setscale(1)
+			} else if(dif<0){
+				tac.setscale()
+			}			
 		})		
 		tac.map=map
 	},
+	setscale:function(set){
+		var map=tac.map
+		if(set==1){
+			map.goscale=1
+			var mpos=map.mpos(),
+				pos=map.getpos(),
+				scale=map.getscale(),
+				spos={
+					x:mpos.x*scale,
+					y:mpos.y*scale
+				},
+				dif=c0.sub(spos,mpos)
+			c2.pos(spos)
+			map.fol={
+				x:pos.x+dif.x,
+				y:pos.y+dif.y
+			}
+			var mix=map.wid/2,
+				miy=map.hig/2,
+				max=window.innerWidth-map.wid/2,
+				may=window.innerHeight-map.hig/2		
+			if(map.fol.x>mix){
+				map.fol.x=mix
+			} else if(map.fol.x<max){
+				map.fol.x=max
+			}
+			if(map.fol.y>miy){
+				map.fol.y=miy
+			} else if(map.fol.y<may){
+				map.fol.y=may
+			}
+			/*
+			min max
+			var pos=map.getpos(),
+				wid=map.wid,
+				mix=wid/2-pos.x,
+				miy=hig/2-pos.y,
+				max=window.innerWidth-wid/2-pos.x,
+				may=window.innerHeight-hig/2-pos.y
+			
+			if(mix<0){								
+				map.x=map.wid/2
+				map.fol.x=map.x
+			} else if(max>0){
+				map.x=window.innerWidth-wid/2
+				map.fol.x=map.x				
+			}			
+			if(miy<0){
+				map.y=map.hig/2
+				map.fol.y=map.y
+			} else if(may>0){
+				map.y=window.innerHeight-hig/2
+				map.fol.y=map.y
+			}			
+			*/
+			
+		} else {
+			var sx=window.innerWidth/map.wid,
+				sy=window.innerHeight/map.hig,
+				sc=Math.min(sx,sy)
+			map.goscale=sc
+			map.fol={
+				x:window.innerWidth/2,					
+				y:window.innerHeight/2				
+			}
+		}								
+	},
+	handle:function(dt){
+		this.handlemap(dt)
+		this.handleunits(dt)	
+	},
 	handlemap:function (){
-		var map=tac.map,
+		var smooth=4,
+			map=tac.map,
 			scale=map.getscale()
 			mix=scale*map.wid/2,
 			max=window.innerWidth-scale*map.wid/2,
 			miy=scale*map.hig/2,
 			may=window.innerHeight-scale*map.hig/2,
+			skipx=false,
+			skipy=false,
 			wid=map.wid*scale,
 			hig=map.hig*scale,
 			sx=window.innerWidth/wid,
 			sy=window.innerHeight/hig
 		
-		if(map.vec.x){
-			map.x+=map.vec.x
-			map.vec.x*=0.9
-			if(Math.abs(map.vec.x)<0.01){
-				map.vec.x=0
-			}
-		}
-		if(map.vec.y){
-			map.y+=map.vec.y
-			map.vec.y*=0.9
-			if(Math.abs(map.vec.y)<0.01){
-				map.vec.y=0
-			}
-			
-		}
-		
-		if(wid<window.innerWidth && sx>sy){
-			scale=window.innerWidth/map.wid
-			if(map.goscale<scale){
-				map.goscale=scale
-				map.scale=scale
-			}
-			map.x=window.innerWidth/2
-			mix=scale*map.wid/2,
-			max=window.innerWidth-scale*map.wid/2		
-			miy=scale*map.hig/2,
-			may=window.innerHeight-scale*map.hig/2				
-		} else if(hig<window.innerHeight && sy>sx){
-			scale=window.innerHeight/map.hig
-			if(map.goscale<scale){
-				map.goscale=scale
-				map.scale=scale
-			}
-			map.y=window.innerHeight/2
-			mix=scale*map.wid/2,
-			max=window.innerWidth-scale*map.wid/2				
-			miy=scale*map.hig/2,
-			may=window.innerHeight-scale*map.hig/2		
-		}
-		
-		
-		if(map.x>mix){
-			map.x=mix
-		} else if(map.x<max){
-			map.x=max
-		}
-		if(map.y>miy){
-			map.y=miy
-		} else if(map.y<may){
-			map.y=may
-		}
-		if(map.goscale>1){
-			map.goscale=1
+		if(tac.map.scale!=tac.map.goscale){
+			var sc=(tac.map.goscale-tac.map.scale)/smooth
+			tac.map.scale+=sc
 		}	
+		if(map.goscale!=1){
+			map.fol={
+				x:window.innerWidth/2,					
+				y:window.innerHeight/2				
+			}		
+		}
+		if(map.fol){			
+			var dif=c0.sub(map.fol,map.pos())
+			if(Math.abs(dif.x)<0.01){
+				tac.map.x=tac.map.fol.x
+			} else {
+				tac.map.x+=dif.x/smooth
+			}
+			if(Math.abs(dif.y)<0.01){
+				tac.map.y=tac.map.fol.y
+			} else {
+				tac.map.y+=dif.y/smooth
+			}
+			if(map.fol.x==map.x && map.fol.y==map.y){
+				map.fol=0
+			}
+		} else {		
+			if(map.vec.x){
+				map.x+=map.vec.x
+				map.vec.x*=0.9
+				if(Math.abs(map.vec.x)<0.01){
+					map.vec.x=0
+				}
+			}
+			if(map.vec.y){
+				map.y+=map.vec.y
+				map.vec.y*=0.9
+				if(Math.abs(map.vec.y)<0.01){
+					map.vec.y=0
+				}
+				
+			}
+		}
+		//limit min max
+		if(map.scale==1){ 			
+			var pos=map.getpos(),
+				wid=map.wid,
+				mix=wid/2-pos.x,
+				miy=hig/2-pos.y,
+				max=window.innerWidth-wid/2-pos.x,
+				may=window.innerHeight-hig/2-pos.y
+			
+			if(mix<0){								
+				map.x=map.wid/2
+				map.fol.x=map.x
+			} else if(max>0){
+				map.x=window.innerWidth-wid/2
+				map.fol.x=map.x				
+			}			
+			if(miy<0){
+				map.y=map.hig/2
+				map.fol.y=map.y
+			} else if(may>0){
+				map.y=window.innerHeight-hig/2
+				map.fol.y=map.y
+			}
+		}
 		if(Math.abs(map.scale-map.goscale)<0.0001){
 			map.scale=map.goscale
-		}
-		
+		}		
+	},
+	handleunits:function(dt){
+		var dot,
+			dif,
+			dist
+		loop(tac.units,function(i,unit){
+			if(unit.fol){				
+				dif=c0.sub(unit.fol.pos(),unit.pos())
+				dist=c0.dist(dif)
+				if(dist<64){
+				} else {
+					dif=c0.norm(dif)
+					unit.x+=dif.x*dt/10
+					unit.y+=dif.y*dt/10
+				}				
+			} else if(unit.path.length){
+				dot=unit.path[0]
+				dif=c0.sub(dot,unit.pos())
+				dist=c0.dist(dif)
+				if(dist<1){
+					unit.x=dot.x
+					unit.y=dot.y
+					unit.path.splice(0,1)
+					dot.rem()
+				} else {
+					dif=c0.norm(dif)
+					unit.x+=dif.x*dt/10
+					unit.y+=dif.y*dt/10
+				}
+			}
+		})
 	},
 	units:[],
-	pls:[]	
+	pls:[],
+	actunit:0,
+	addunit:function(a){
+		var unit=c0.imgd({
+			data:gfx.imgs.bsword,
+			x:a.x,
+			y:a.y,
+			wid:64,
+			hig:64,
+			path:[],
+			fol:0,
+			speed:64
+			//opa:0.8
+		}).to(tac.map.units)
+		unit.clearpath=function(){
+			loop(unit.path,function(i,dot){
+				dot.rem()
+			})
+			unit.path=[]
+		}
+		unit.on('mousedown',function(e){
+			e.stop=true
+			tac.actunit=e.node
+			tac.actunit.fol=0
+			tac.actunit.clearpath()
+		})
+		unit.on('mousemove',function(e){
+			if(tac.actunit && tac.actunit!=e.node){
+				//follow
+				tac.actunit.clearpath()
+				tac.actunit.fol=e.node
+				tac.actunit=e.node
+				tac.actunit.path=[]
+			}
+		})
+		this.units.push(unit)
+	},
+	addpl:function(pl){
+		this.pls[pl.name]=pl
+	}
 }
 tac.initmap()
 
@@ -272,7 +514,7 @@ var c2=c0.circ({
 	y:0,
 	color:'orange',
 	rad:10
-}).to()
+}).to(tac.map)
 var i1=c0.img({
 	src:'tactics.png',
 	x:100,
@@ -282,25 +524,24 @@ var i1=c0.img({
 	offx:0,
 	offy:64
 }).to(tac.map)
-c0.ondraw=function(){
-	//c1.pos(c0.m)
-	var dif=(tac.map.goscale-tac.map.scale)/4
-	tac.map.scale+=dif
-	if(tac.map.scale!=tac.map.goscale){		
-		var scale=tac.map.getscale(),
-			pos=tac.map.getpos(),
-			dif={
-				x:(tac.map.focus.x*scale+pos.x)-tac.map.mouse.x,
-				y:(tac.map.focus.y*scale+pos.y)-tac.map.mouse.y
-			}
-		if(dif.x!=0 || dif.y!=0){			
-			tac.map.x-=dif.x
-			tac.map.y-=dif.y
-			c1.pos(tac.map.focus)
-			c2.pos(tac.map.mouse)
-		}
+d.on('gfxready',function(e){
+	
+	loop(24,function(i){
+		tac.addunit({
+			x:(Math.random()-0.5)*tac.map.wid,
+			y:(Math.random()-0.5)*tac.map.hig
+		})
+	})
+	/**/
+})
+
+c0.ondraw=function(dt){
+	tac.handle(dt)
+	/*
+	if(gfx.imgs.sword){
+		c0.c.drawImage(gfx.imgs.sword,0,0,64,64)
 	}
-	tac.handlemap()
+	/**/
 }
 d.body.on('keypress',function(e){
 	console.log('click1')
