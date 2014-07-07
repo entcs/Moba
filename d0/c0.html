@@ -5,10 +5,32 @@
 	}
 	
 </style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+<script src="https://cdn.socket.io/socket.io-1.0.0.js"></script>
+-->
+<script src="node_modules\socket.io\node_modules\socket.io-client\socket.io.js"></script> 
+
 <body></body>
 <script src='d0.js'></script>
 <script src='c0.js'></script>
 <script>
+d.on('ready',function(e){
+	console.log('ready')
+	var socket = io('http://localhost:1111');
+	socket.on('connect', function(){
+		console.log('con')
+		socket.emit('event', { some: 'data' });
+		socket.on('event', function(data){
+			console.log('got event',data)
+		});
+		socket.on('disconnect', function(){
+			console.log('disco')
+		});
+	});
+})
+
+
 c0.run('resize')
 var gfx={	
 	init:function(){
@@ -47,82 +69,56 @@ var gfx={
 		this.c.height=hig
 	},
 	draw:function(a){		
-		if(a.img.ready){
-			/*
-			if(a.opa==undefined){
-				a.opa=1
-			}
-			*/
-			scale=a.scale || 1
-			//this.c2.globalAlpha = a.opa		
-			x=a.x-(a.wid/2)
-			y=a.y-(a.hig/2)
-			offx=a.offx||0
-			offy=a.offy||0
-			this.c2.drawImage(a.img.imgo,offx,offy, a.wid,a.hig,x,y, a.wid*scale, a.hig*scale)
-			//this.c2.globalAlpha = 1
-		} else {
-			
-			setTimeout(function(){
-				gfx.draw(a)
-			},100)
-		}
+		this.c2.drawImage(a.img.imgo,a.x,a.y,64,64,0,0,64,64)
+		var img=new Image()
+		img.src=gfx.c.toDataURL("image/png")			
+		return img		
 	},
 	gen:function(){
-		var img,
-			wid=64,
-			hig=64
-		gfx.draw({
-			x:32,
-			y:32,
-			wid:wid,
-			hig:hig,
-			offx:320,
-			offy:64,
-			img:gfx.raws['tactics.png']
-		})		
-		img=new Image()
-		img.src=gfx.c.toDataURL("image/png")			
-		gfx.imgs['bcirc']=img
+		var units={
+				bswo:[[320,64],[0,64]],
+				bswoh:[[320,64],[0,64],[196,64]],
+				bswom:[[320,64],[0,64],[256,64]],
+				bswohm:[[320,64],[0,64],[196,64],[256,64]],
 				
-		gfx.draw({
-			x:32,
-			y:32,
-			wid:wid,
-			hig:hig,
-			offx:0,
-			offy:64,
-			img:gfx.raws['tactics.png']
-		})
-		img=new Image()
-		img.src=gfx.c.toDataURL("image/png")			
-		gfx.imgs['bsword']=img
+				bsper:[[320,64],[64,64]],
+				bspeh:[[320,64],[64,64],[196,64]],
+				bspem:[[320,64],[64,64],[256,64]],
+				bspehm:[[320,64],[64,64],[196,64],[256,64]],
+				
+				bbow:[[320,64],[128,64]],
+				bbowh:[[320,64],[128,64],[196,64]],
+				bbowm:[[320,64],[128,64],[256,64]],
+				bbowhm:[[320,64],[128,64],[196,64],[256,64]],
+
+				wswo:  [[320,0],[0,0]],
+				wswoh: [[320,0],[0,0],[196,0]],
+				wswom: [[320,0],[0,0],[256,0]],
+				wswohm:[[320,0],[0,0],[196,0],[256,0]],
+				             
+				wspe: [[320,0],[64,0]],
+				wspeh: [[320,0],[64,0],[196,0]],
+				wspem: [[320,0],[64,0],[256,0]],
+				wspehm:[[320,0],[64,0],[196,0],[256,0]],
+				             
+				wbow: [[320,0],[128,0]],
+				wbowh: [[320,0],[128,0],[196,0]],
+				wbowm: [[320,0],[128,0],[256,0]],
+				wbowhm:[[320,0],[128,0],[196,0],[256,0]]
+				
+			}
 		
-		gfx.draw({
-			x:32,
-			y:32,
-			wid:wid,
-			hig:hig,
-			offx:196,
-			offy:64,
-			img:gfx.raws['tactics.png']
+		loop(units,function(name,vals){
+			loop(vals,function(i2,val){
+				gfx.imgs[name]=gfx.draw({
+					x:val[0],
+					y:val[1],
+					img:gfx.raws['tactics.png']
+				})
+			})
+			gfx.clear()
 		})
-		img=new Image()
-		img.src=gfx.c.toDataURL("image/png")			
-		gfx.imgs['bhsword']=img
-		
-		gfx.draw({
-			x:32,
-			y:32,
-			wid:wid,
-			hig:hig,
-			offx:256,
-			offy:64,
-			img:gfx.raws['tactics.png']
-		})
-		img=new Image()
-		img.src=gfx.c.toDataURL("image/png")			
-		gfx.imgs['bhmsword']=img		
+						
 		/*
 		gfx.draw({
 			x:32,
@@ -211,53 +207,72 @@ var tac={
 			map.vec.y=0
 		})
 		map.on('mouseup',function(e){
+			//onclick zoom
+			if(map.moved){
+			
+			} else {
+				if(map.goscale==1 && map.down){
+					tac.setscale()
+				} else if(map.goscale!=1){
+					tac.setscale(1)
+				}
+			}
+					
 			if(map.down){
 				var pos=map.mpos()	
 				//i1.pos(pos)			
-				map.fol=0
-				map.vec.x=c0.mvec.x
-				map.vec.y=c0.mvec.y				
+				if(map.scale==1){// && map.goscale==map.scale){
+					map.fol=0				
+					map.vec.x=c0.mvec.x
+					map.vec.y=c0.mvec.y													
+				}
 				map.down=false
 			}
-			tac.actunit=0
-			/*
-			//onclick zoom
-			if(map.goscale==1 && !map.moved){
-				tac.setscale()
-			} else if(map.goscale!=1){
-				tac.setscale(1)
+			if(tac.actunit){
+				var mpos=map.mpos(),
+					dot=c0.circ({
+					x:mpos.x,
+					y:mpos.y,
+					rad:16,
+					color:'rgba(255,255,255,0.3)'
+				}).to(map.terra)
+				tac.actunit.path.push(dot)				
 			}
-			/**/
+			tac.actunit=0			
 			map.moved=false
+			map.down=false
+			
 		})			
 		map.on('mousemove',function(e){
-			if(tac.actunit){
-				var unit=tac.actunit,
-					mpos=map.mpos(),
-					pos=tac.actunit.pos()
-				if(unit.path.length){
-					pos=unit.path[unit.path.length-1]
-				}
-				var dist=c0.dist(mpos,pos)
-				if(dist>64){
-					var dot=c0.circ({
-						x:mpos.x,
-						y:mpos.y,
-						rad:16,
-						color:'rgba(255,255,255,0.3)'
-					}).to(map.terra)
-					unit.path.push(dot)
-					unit.fol=0
-				}
-				//console.log('dist:',dist,map.mpos(),tac.actunit.pos())
-			} else {			
-				if(map.down && map.goscale==1){
-					var dif=c0.sub(c0.m,map.start)				
-					map.fol=dif
-					if(dif.x!=0 || dif.y!=0){
-						map.moved=true
+			if(map.goscale==1){
+				if(tac.actunit){
+					var unit=tac.actunit,
+						mpos=map.mpos(),
+						pos=tac.actunit.pos()
+					if(unit.path.length){
+						pos=unit.path[unit.path.length-1]
 					}
-				}	
+					var dist=c0.dist(mpos,pos)
+					if(dist>64){
+						var dot=c0.circ({
+							x:mpos.x,
+							y:mpos.y,
+							rad:16,
+							color:'rgba(255,255,255,0.3)'
+						}).to(map.terra)
+						unit.path.push(dot)
+						unit.fol=0
+					}
+					//console.log('dist:',dist,map.mpos(),tac.actunit.pos())
+				} else {					
+					if(map.down && map.goscale==1){
+						var dif=c0.sub(c0.m,map.start)				
+						map.fol=dif
+						if(dif.x!=0 || dif.y!=0){
+							map.moved=true
+						}
+					}	
+				}
 			}
 		})
 		map.on('mousewheel',function(e){
@@ -268,6 +283,16 @@ var tac={
 				tac.setscale()
 			}			
 		})		
+		
+		this.unitstats=c0.node({}).to(map.terra)
+		this.unitstats.sight=c0.circ({
+			rad:256,			
+			color:'rgba(255,255,255,0.1)'
+		}).to(this.unitstats)
+		this.unitstats.range=c0.circ({
+			rad:128,			
+			color:'rgba(255,128,0,0.2)'
+		}).to(this.unitstats)				
 		tac.map=map
 	},
 	setscale:function(set){
@@ -282,7 +307,7 @@ var tac={
 					y:mpos.y*scale
 				},
 				dif=c0.sub(spos,mpos)
-			c2.pos(spos)
+			
 			map.fol={
 				x:pos.x+dif.x,
 				y:pos.y+dif.y
@@ -301,31 +326,6 @@ var tac={
 			} else if(map.fol.y<may){
 				map.fol.y=may
 			}
-			/*
-			min max
-			var pos=map.getpos(),
-				wid=map.wid,
-				mix=wid/2-pos.x,
-				miy=hig/2-pos.y,
-				max=window.innerWidth-wid/2-pos.x,
-				may=window.innerHeight-hig/2-pos.y
-			
-			if(mix<0){								
-				map.x=map.wid/2
-				map.fol.x=map.x
-			} else if(max>0){
-				map.x=window.innerWidth-wid/2
-				map.fol.x=map.x				
-			}			
-			if(miy<0){
-				map.y=map.hig/2
-				map.fol.y=map.y
-			} else if(may>0){
-				map.y=window.innerHeight-hig/2
-				map.fol.y=map.y
-			}			
-			*/
-			
 		} else {
 			var sx=window.innerWidth/map.wid,
 				sy=window.innerHeight/map.hig,
@@ -340,6 +340,7 @@ var tac={
 	handle:function(dt){
 		this.handlemap(dt)
 		this.handleunits(dt)	
+		this.handlehps()
 	},
 	handlemap:function (){
 		var smooth=4,
@@ -367,6 +368,7 @@ var tac={
 			}		
 		}
 		if(map.fol){			
+			//console.log('fol')
 			var dif=c0.sub(map.fol,map.pos())
 			if(Math.abs(dif.x)<0.01){
 				tac.map.x=tac.map.fol.x
@@ -381,7 +383,8 @@ var tac={
 			if(map.fol.x==map.x && map.fol.y==map.y){
 				map.fol=0
 			}
-		} else {		
+		} else {
+			//console.log('vec')
 			if(map.vec.x){
 				map.x+=map.vec.x
 				map.vec.x*=0.9
@@ -426,52 +429,222 @@ var tac={
 			map.scale=map.goscale
 		}		
 	},
+	getlastfol:function(unit){
+		var fol
+		if(unit.fol){
+			fol=tac.getlastfol(unit.fol)
+		} else {
+			fol=unit
+		}
+		return fol
+	},
 	handleunits:function(dt){
 		var dot,
 			dif,
-			dist
+			dist,
+			range=64,
+			ct=new Date().getTime()
+			
 		loop(tac.units,function(i,unit){
 			if(unit.fol){				
 				dif=c0.sub(unit.fol.pos(),unit.pos())
-				dist=c0.dist(dif)
-				if(dist<64){
+				dist=c0.dist(dif)				
+				if(unit.team!=unit.fol.team){
+					range=unit.range
+				} else {
+					range=64
+				}
+				if(dist<range){
+					
 				} else {
 					dif=c0.norm(dif)
-					unit.x+=dif.x*dt/10
-					unit.y+=dif.y*dt/10
+					unit.x+=unit.speed*dif.x*dt/1000
+					unit.y+=unit.speed*dif.y*dt/1000
 				}				
 			} else if(unit.path.length){
 				dot=unit.path[0]
 				dif=c0.sub(dot,unit.pos())
 				dist=c0.dist(dif)
 				if(dist<1){
-					unit.x=dot.x
-					unit.y=dot.y
 					unit.path.splice(0,1)
 					dot.rem()
-				} else {
+				}
+				if(unit.path.length){
+					dot=unit.path[0]
+					dif=c0.sub(dot,unit.pos())				
 					dif=c0.norm(dif)
-					unit.x+=dif.x*dt/10
-					unit.y+=dif.y*dt/10
+					unit.x+=unit.speed*dif.x*dt/1000
+					unit.y+=unit.speed*dif.y*dt/1000
 				}
 			}
+			//attack
+			if(ct-unit.lastatt>unit.cooldown){
+				unit.lastatt=ct				
+				tar=tac.getclosestenemy(unit)
+				if(tar){
+					tac.attack(unit,tar)
+				}
+			}
+			var rad=32*unit.hp/unit.maxhp
+			if(rad<0){
+				rad=0
+			}
+			unit.hpbar.rad=rad
 		})
+		
+		//rem dead units
+		loop(tac.units,function(i,unit){
+			if(unit.hp<=0){
+				tac.remunit(unit)
+			}
+		})
+		
+		if(tac.actunit){
+			tac.unitstats.visible=true
+			var mpos=tac.map.mpos()
+			tac.unitstats.pos(mpos)//tac.actunit.pos())
+			tac.unitstats.range.rad=tac.actunit.range
+			tac.unitstats.sight.rad=tac.actunit.sight
+		} else {
+			tac.unitstats.visible=false
+		}
 	},
 	units:[],
 	pls:[],
 	actunit:0,
+	hps:[],
+	handlehps:function(){
+		var remlist=[],
+			ct=new Date().getTime(),
+			dif
+		loop(tac.hps,function(i,hp){
+			dif=1-((ct-hp.start)/300)
+			hp.color='rgba(255,0,0,'+dif+')'
+			hp.line.color='rgba(255,0,0,'+dif+')'
+			hp.pos(hp.tar.pos())
+			hp.line.p1=hp.unit.pos()
+			hp.line.p2=hp.tar.pos()
+			if(dif<0){
+				remlist.push(hp)
+			}
+		})
+		loop(remlist,function(i,hp){
+			hp.line.rem()
+			hp.rem()
+			
+			tac.hps.splice(tac.hps.indexOf(hp),1)
+		})
+	},
+	attack:function(unit,tar){
+		var hp=c0.circ({
+			x:tar.x,
+			y:tar.y,			
+			color:'red',
+			rad:35,
+			tar:tar,
+			unit:unit,
+			start:new Date().getTime()			
+		}).to(tac.map.terra)
+		hp.line=c0.line({
+			x:0,
+			y:0,
+			p1:unit.pos(),
+			p2:tar.pos(),
+			linewid:4,
+			color:'red'
+		}).to(tac.map.terra)
+		tac.hps.push(hp)
+		tar.hp-=unit.dam
+	},
+	getclosestenemy:function(unit){
+		var tar=0,
+			min=Number.MAX_VALUE,
+			dist
+		loop(tac.units,function(i,enemy){
+			if(unit.team!=enemy.team){
+				dist=c0.dist(unit,enemy)
+				if(dist<unit.range+32 && dist<min){
+					min=dist
+					tar=enemy
+				}
+			}
+		})
+		return tar
+	},
 	addunit:function(a){
+		var name=a.col+a.type,
+			speed=64,
+			sight=256,
+			range=64,
+			team=1,
+			hp=120,
+			dam=12
+		if(a.col=='b'){
+			team=2
+		}
+			
+		if(a.type=='bow'){
+			range+=128
+			dam-=6
+		}
+			
+		if(a.armored){
+			name+='h'
+			speed-=16
+			sight-=32
+			hp+=60
+			if(a.type=='bow'){
+				range+=32
+			}
+			
+		}
+		if(a.mounted){
+			name+='m'
+			speed+=48
+			sight+=32
+			if(a.type=='bow'){
+				range-=64
+			}			
+		}	
+	
+		var img=gfx.imgs[name]		
 		var unit=c0.imgd({
-			data:gfx.imgs.bsword,
+			data:img,
 			x:a.x,
 			y:a.y,
 			wid:64,
 			hig:64,
 			path:[],
 			fol:0,
-			speed:64
+			team:team
 			//opa:0.8
 		}).to(tac.map.units)
+		
+		unit.hpbar=c0.circ({
+			rad:32,
+			linewid:4,
+			//linecolor:'rgba(154, 205, 50,0.7)'
+			linecolor:'rgba(255, 125, 0,0.8)'
+		}).to(unit)
+		
+		var ext={
+			pl:0,
+			speed:speed,
+			maxhp:hp,
+			hp:hp,
+			dam:dam,
+			range:range,
+			sight:sight,
+			cooldown:1000,
+			lastatt:0
+		}
+		loop(ext,function(k,v){
+			unit[k]=v
+		})
+		loop(a,function(k,v){
+			unit[k]=v
+		})
+		
 		unit.clearpath=function(){
 			loop(unit.path,function(i,dot){
 				dot.rem()
@@ -489,11 +662,21 @@ var tac={
 				//follow
 				tac.actunit.clearpath()
 				tac.actunit.fol=e.node
-				tac.actunit=e.node
-				tac.actunit.path=[]
+				if(tac.actunit.team==e.node.team){
+					tac.actunit=e.node
+					tac.actunit.clearpath()
+				} else {
+					tac.actunit=0
+				}
 			}
 		})
 		this.units.push(unit)
+	},
+	remunit:function(unit){
+		tac.units.splice(tac.units.indexOf(unit),1)
+		unit.clearpath()
+		unit.hpbar.rem()
+		unit.rem()
 	},
 	addpl:function(pl){
 		this.pls[pl.name]=pl
@@ -501,42 +684,82 @@ var tac={
 }
 tac.initmap()
 
-
-
-var c1=c0.circ({
-	x:50,
-	y:50,
-	color:'red',
-	rad:10
-}).to(tac.map)
-var c2=c0.circ({
-	x:0,
-	y:0,
-	color:'orange',
-	rad:10
-}).to(tac.map)
-var i1=c0.img({
-	src:'tactics.png',
-	x:100,
-	y:100,
-	wid:64,
-	hig:64,
-	offx:0,
-	offy:64
-}).to(tac.map)
 d.on('gfxready',function(e){
+	tac.addunit({
+		x:0,
+		y:0,		
+		col:'w',
+		type:'bow',
+		armored:false,
+		mounted:false
+	})	
+	tac.addunit({
+		x:64,
+		y:0,		
+		col:'b',
+		type:'swo',
+		armored:false,
+		mounted:true
+	})	
 	
-	loop(24,function(i){
-		tac.addunit({
-			x:(Math.random()-0.5)*tac.map.wid,
-			y:(Math.random()-0.5)*tac.map.hig
-		})
-	})
+	tac.addunit({
+		x:128,
+		y:-400,		
+		col:'w',
+		type:'bow',
+		armored:false,
+		mounted:true
+	})	
+	
+	tac.addunit({
+		x:196,
+		y:-400,		
+		col:'w',
+		type:'spe',
+		armored:true,
+		mounted:true
+	})	
+	
+	tac.addunit({
+		x:0,
+		y:64,		
+		col:'b',
+		type:'bow',
+		armored:true,
+		mounted:false
+	})		
+	tac.addunit({
+		x:64,
+		y:64,		
+		col:'b',
+		type:'bow',
+		armored:false,
+		mounted:false
+	})	
+	
+	tac.addunit({
+		x:128,
+		y:64,		
+		col:'b',
+		type:'bow',
+		armored:false,
+		mounted:true
+	})	
+	tac.addunit({
+		x:196,
+		y:64,		
+		col:'b',
+		type:'bow',
+		armored:true,
+		mounted:true
+	})	
 	/**/
 })
 
 c0.ondraw=function(dt){
+	//console.log(c0.mvec)
 	tac.handle(dt)
+	
 	/*
 	if(gfx.imgs.sword){
 		c0.c.drawImage(gfx.imgs.sword,0,0,64,64)

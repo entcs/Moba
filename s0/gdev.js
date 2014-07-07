@@ -198,7 +198,7 @@ d.on('ready',function(e){
 			
 			//menu
 			var names=[
-					'games','developers','events','resources','about'
+					'games','resources','about'
 				],				
 				item
 			loop(names,function(i,name){

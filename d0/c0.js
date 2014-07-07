@@ -534,7 +534,6 @@ var c0={
 			sp2.y*=scale
 			var p2=c0.add(pos,sp2)
 				
-				
 			c.beginPath()
 			c.moveTo(p1.x,p1.y)
 			c.lineTo(p2.x,p2.y)			

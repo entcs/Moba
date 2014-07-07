@@ -2,14 +2,28 @@ var http = require("http"),
     url = require("url"),
     path = require("path"),
     fs = require("fs")
-    port = process.argv[2] || 2222;
+    port = process.argv[2] || 2222
+	
+var io = require('socket.io')();
+io.on('connection', function(socket){
+	console.log('con')
+	socket.on('event', function(data){
+		console.log('event')
+		socket.emit('event', { some: 'data' });
+	});
+	socket.on('disconnect', function(){
+		console.log('disco')
+	});
+	
+})
+io.listen(1111)
  
 http.createServer(function(request, response) {
  
   var uri = url.parse(request.url).pathname
     , filename = path.join(process.cwd(), uri);
   
-  path.exists(filename, function(exists) {
+  fs.exists(filename, function(exists) {
     if(!exists) {
       response.writeHead(404, {"Content-Type": "text/plain"});
       response.write("404 Not Found\n");
@@ -34,4 +48,4 @@ http.createServer(function(request, response) {
   });
 }).listen(parseInt(port, 10));
  
-console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
+console.log('server:',port);
