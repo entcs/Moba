@@ -1210,12 +1210,6 @@ d.on('gfxready',function(e){
 c0.ondraw=function(dt){
 	//console.log(c0.mvec)
 	tac.handle(dt)
-	
-	/*
-	if(gfx.imgs.sword){
-		c0.c.drawImage(gfx.imgs.sword,0,0,64,64)
-	}
-	/**/
 }
 d.body.on('keypress',function(e){
 	console.log('click1')
