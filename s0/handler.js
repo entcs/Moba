@@ -97,6 +97,16 @@ Number.prototype.round=function(rounding){
 }
 var tacmap={
 	unitstats:{},
+	setmapdata:function(){
+		tacmap.bushes=[]
+		tacmap.size=2000
+		loop(256,function(i){
+			tacmap.bushes.push({
+				x:Math.random(),
+				y:Math.random()
+			})
+		})		
+	},
 	setunitstats:function(){
 		var types={
 				swo:{
@@ -251,6 +261,13 @@ var tacmap={
 			data.type='unitstats'
 			data.unitstats=tacmap.unitstats
 			socket.emit('tacmap',data)
+			
+			//send bushes
+			socket.emit('tacmap',{
+				type:'setmapdata',
+				size:tacmap.size,
+				bushes:tacmap.bushes
+			})
 			//socket.name='new name'
 			//tacmap.pls.add(socket)
 		} else if(data.type=='joinque'){			
@@ -291,6 +308,7 @@ var tacmap={
 	}
 }
 tacmap.setunitstats()
+tacmap.setmapdata()
 	
 exports.http=function(req,res){
 	req.user=sessions.get(req.cookies.user)

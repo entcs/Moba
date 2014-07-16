@@ -52,6 +52,9 @@ d.on('ready',function(e){
 				remunit:function(data){
 					var unit=tac.getunit(data.uid)
 					tac.remunit(unit)
+				},
+				setmapdata:function(data){					
+					tac.setmapdata(data)
 				}
 			}				
 			if(handle[data.type]){
@@ -630,7 +633,7 @@ var tac={
 		map.terra=c0.node({}).to(map)
 		map.units=c0.node({}).to(map)		
 		map.gfx=c0.node({}).to(map)
-		
+		/*
 		//bushes
 		var bushes=[],
 			bush,
@@ -648,7 +651,8 @@ var tac={
 				offy:128,
 				opa:0.5
 			}).to(map.terra)
-		})		
+		})
+		*/
 		map.on(down,function(e){
 			if(tac.actunit){
 				console.log('actunit',down)
@@ -759,6 +763,28 @@ var tac={
 			color:'rgba(255,128,0,0.2)'
 		}).to(this.unitstats)				
 		tac.map=map
+	},
+	setmapdata:function(data){
+		tac.map.wid=data.size
+		tac.map.hig=data.size
+		//bushes
+		var bushes=[],
+			bush,
+			x,y
+		loop(data.bushes,function(i,b){
+			x=b.x*tac.map.wid-tac.map.wid/2
+			y=b.y*tac.map.hig-tac.map.hig/2
+			bush=c0.img({
+				x:x,
+				y:y,
+				src:'tactics.png',
+				wid:64,
+				hig:64,
+				offx:196,
+				offy:128,
+				opa:0.5
+			}).to(tac.map.terra)
+		})	
 	},
 	setscale:function(set){
 		var map=tac.map
@@ -1019,6 +1045,9 @@ var tac={
 				rad:16,
 				color:'rgba(255,255,255,0.3)'
 			}).to(tac.map.terra)
+			if(unit.team!=tac.team){
+				dot.visible=false
+			}
 			unit.path.push(dot)			
 		})		
 	},
