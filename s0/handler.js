@@ -111,7 +111,7 @@ var tacmap={
 				},
 				spe:{
 					hp:0.9,
-					dam:0.7,
+					dam:0.8,
 					speed:0.9,
 					range:1,
 					spot:1,
@@ -153,9 +153,9 @@ var tacmap={
 				},
 				m:{
 					hp:1.6,
-					dam:1.2,
+					dam:1.6,
 					speed:1.6,
-					range:0.75,
+					range:0.5,
 					spot:1.2,
 					vmounted:1,
 					vfoot:1.6,
@@ -180,7 +180,7 @@ var tacmap={
 		}
 		loop(types,function(i1,n1){
 			loop(mods,function(i2,n2){					
-				name=i1+i2
+				name=i1+i2				
 				tacmap.unitstats[name]={
 					//basestats
 					hp:(hp*types[i1].hp*mods[i2].hp).round(),
@@ -189,6 +189,9 @@ var tacmap={
 					range:(range*types[i1].range*mods[i2].range).round(),
 					spot:(spot*types[i1].spot*mods[i2].spot).round(),
 					name:n2.name+' '+n1.name
+				}
+				if(i1!='bow'){
+					tacmap.unitstats[name].range=64
 				}
 			})
 		})	
@@ -276,6 +279,10 @@ var tacmap={
 			tacmap.que.rem(socket)			
 			console.log('que:',tacmap.que.list.length)
 		} else if(data.type=='action'){
+			var game=socket.game
+			game.p1.emit('tacmap',data)
+			game.p2.emit('tacmap',data)			
+		} else if(data.type=='remunit'){
 			var game=socket.game
 			game.p1.emit('tacmap',data)
 			game.p2.emit('tacmap',data)			

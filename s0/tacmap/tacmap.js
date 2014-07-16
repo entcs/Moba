@@ -48,6 +48,10 @@ d.on('ready',function(e){
 				},
 				action:function(data){
 					tac.setaction(data)
+				},
+				remunit:function(data){
+					var unit=tac.getunit(data.uid)
+					tac.remunit(unit)
 				}
 			}				
 			if(handle[data.type]){
@@ -474,7 +478,7 @@ var lobby={
 			if(name){
 				var unit=d.findall('.units .unit')[ind]
 				unit.find('img').src=gfx.imgs['b'+name].src				
-				unit.find('div').h(unitstats[name].hp)
+				unit.find('div').h(unitstats[name].hp+'/'+unitstats[name].dam)
 				lobby.units[ind]=name
 			} else {
 				var unit=d.findall('.units .unit')[ind]
@@ -510,11 +514,11 @@ var lobby={
 				ele.src=gfx.imgs['b'+k].src
 				ele.unitname=k
 				td.r('div')
-					.h(v.hp)
-					.s('position:absolute top:0px left:0px font-size:24px color:#fff width:100% pointer-events:none')
+					.h(v.hp+'/'+v.dam)
+					.s('position:absolute top:20px left:0px font-size:19px color:#fff width:100% pointer-events:none')
 				if(lobby.maxhp-lobby.totalhp<v.hp){
 					ele.addclass('expensive')
-					ele.s('border:2px solid orange border-radius:64px')					
+					ele.s('border:2px solid orange border-radius:64px')
 				} else {
 					ele.s('border:2px solid yellowgreen border-radius:64px')
 					ele.on(press,function(e){
@@ -601,7 +605,7 @@ var lobby={
 	}
 }
 
-
+var size=1000
 var tac={
 	team:0,
 	initmap:function(){
@@ -609,8 +613,8 @@ var tac={
 			//src:'tactics.png',
 			x:window.innerWidth/2,
 			y:window.innerHeight/2,
-			wid:4000,
-			hig:4000,
+			wid:size,
+			hig:size,
 			color:'yellowgreen',
 			start:{},
 			goscale:1,
@@ -667,7 +671,7 @@ var tac={
 				tac.actunit=0
 				tac.path=[]
 				tac.fol=0
-			} else {
+			} else if(map.down){
 				//do zoom
 				if(map.goscale==1){
 					tac.setscale()
@@ -959,7 +963,11 @@ var tac={
 		//rem dead units
 		loop(tac.units,function(i,unit){
 			if(unit.hp<=0){
-				tac.remunit(unit)
+				//tac.remunit(unit)
+				socket.emit('tacmap',{
+					type:'remunit',
+					uid:unit.uid
+				})
 			}
 		})
 		
@@ -990,7 +998,7 @@ var tac={
 			type:'action',
 			uid:tac.actunit.uid,
 			path:path,
-			fol:tac.fol
+			fol:tac.fol ? tac.fol.uid : 0
 		}		
 		socket.emit('tacmap',data)
 		tac.actunit=0
@@ -1001,7 +1009,7 @@ var tac={
 		console.log('set action',data)
 		var unit=tac.getunit(data.uid),
 			dot
-		unit.fol=data.fol
+		unit.fol=tac.getunit(data.fol)
 		unit.clearpath()
 		loop(data.path,function(i,p){
 			console.log('p:',p)
@@ -1013,6 +1021,12 @@ var tac={
 			}).to(tac.map.terra)
 			unit.path.push(dot)			
 		})		
+	},
+	clearpath:function(){
+		loop(tac.path,function(i,p){
+			p.rem()
+		})
+		tac.path=[]
 	},
 	getunit:function(uid){
 		var unit
@@ -1039,12 +1053,12 @@ var tac={
 					if(pl.team==1){
 						pos={
 							x:step,
-							y:-tac.map.hig/2+200
+							y:-tac.map.hig/2+400
 						}
 					} else {
 						pos={
 							x:step,
-							y:tac.map.hig/2-200
+							y:tac.map.hig/2-400
 						}						
 					}
 					unit.pos(pos)
@@ -1103,7 +1117,22 @@ var tac={
 			color:'rgba(255,0,0,0.5)',
 		}).to(tac.map.terra)
 		tac.hps.push(hp)
-		tar.hp-=unit.dam
+		var dam=unit.dam
+		//spe vs mounted
+		if(unit.unitname=='spe' || unit.unitname=='speh'){
+			if(tar.unitname.indexOf('m')!=-1){
+				console.log('double dam')
+				dam*=2
+			}
+		}
+		if(tar.unitname=='spe' || tar.unitname=='speh'){
+			if(unit.unitname.indexOf('m')!=-1){
+				console.log('half dam')
+				dam/=2
+			}
+		}
+		console.log('did dam:',dam)
+		tar.hp-=dam
 	},
 	getclosestenemy:function(unit){
 		var tar=0,
@@ -1136,7 +1165,7 @@ var tac={
 			path:[],
 			fol:0,
 			team:pl.team,
-			name:name
+			unitname:name
 			//opa:0.8
 		}).to(tac.map.units)
 		
@@ -1167,7 +1196,7 @@ var tac={
 			unit.path=[]
 		}
 		unit.on(down,function(e){
-			if(e.node.team==tac.team){
+			if(tac.map.goscale==1 && e.node.team==tac.team){
 				e.stop=true
 				tac.actunit=e.node
 				tac.actunit.fol=0
@@ -1179,25 +1208,34 @@ var tac={
 		unit.on(move,function(e){
 			if(tac.actunit && tac.actunit!=e.node){
 				//follow
-				tac.actunit.clearpath()				
-				tac.actunit.fol=e.node
+				tac.clearpath()				
+				tac.fol=e.node
+				//tac.actunit.fol=e.node
 				if(tac.actunit.team==e.node.team){
+					tac.sendaction()
 					tac.actunit=e.node
-					tac.actunit.clearpath()
+					tac.sendaction()
+					tac.actunit=e.node
+					//tac.actunit.clearpath()
 				} else {
-					tac.actunit=0
+					tac.fol=unit
+					tac.sendaction()
+					//tac.map.down=false
+					//tac.actunit=0
 				}
 			}
 		})
-		unit.uid=this.units.length
+		unit.uid=this.units.length+1
 		this.units.push(unit)
 		return unit
 	},
 	remunit:function(unit){
-		tac.units.splice(tac.units.indexOf(unit),1)
-		unit.clearpath()
-		unit.hpbar.rem()
-		unit.rem()
+		if(unit){
+			tac.units.splice(tac.units.indexOf(unit),1)
+			unit.clearpath()
+			unit.hpbar.rem()
+			unit.rem()
+		}
 	},
 	addpl:function(pl){
 		tac.pls[pl.name]=pl
