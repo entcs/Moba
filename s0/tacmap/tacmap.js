@@ -1098,7 +1098,7 @@ var tac={
 				tac.team=pl.team					
 				console.log(pl.name,pl.team,unit)
 				var pos=unit.pos()
-				pos.x=pos.x+window.innerWidth/4
+				pos.x=-pos.x+window.innerWidth/2
 				pos.y=-pos.y+window.innerHeight/2				
 				tac.map.fol=pos				
 			}
