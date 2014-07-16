@@ -129,12 +129,6 @@ handle.bases={
 					err:err
 				}))
 			})
-			/*
-			connection.query(req.query.query,function(err,qres){
-				console.log('exec query:',req.query.query)					
-				res.send(JSON.stringify({res:qres}))
-			})
-			/**/
 		}
 	}		
 }
@@ -151,8 +145,7 @@ handle.tables={
 				line.push([fi.Field,fi.Type,fi.Extra].join(' '))
 			})				
 			q.push('('+line.join(',')+')')
-			q=q.join(' ')+';'
-			console.log('query:',q)
+			q=q.join(' ')+';'			
 			connection.query(q,function(err,qres){
 				if(err) console.log(err)
 				res.send({
@@ -166,7 +159,6 @@ handle.tables={
 	rem:{
 		get:function(req,res){
 			var q='drop table '+req.query.tablename
-			console.log('q:',q)
 			connection.query(q,function(err,qres){
 				if(err) console.log(err)
 				res.send({
@@ -178,8 +170,7 @@ handle.tables={
 	},
 	get:{
 		get:function(req,res){
-			var query="show columns from "+req.query.table
-			//console.log(query)
+			var query="show columns from "+req.query.table			
 			connection.query(query,function(err,qres){						
 				res.send(JSON.stringify(qres))
 			})	
@@ -188,24 +179,22 @@ handle.tables={
 	set:{
 		post:function(req,res){
 			var data=req.body
-			console.log('data:',data)
 			
 			//get existing columns
 			var q="show columns from "+data.tablename	
-			console.log('q;',q)
-			connection.query(q,function(err,qres){						
-				console.log('got qres:',q,qres)
+
+			connection.query(q,function(err,qres){
 				var todel=[],
 					toadd=[],
 					tomod=[],
 					ind
-				console.log('here:',qres)
+				
 				loop(data.schema,function(i1,field1){
 					if(!field1.action){
 						field1.action='add'
 						toadd.push(field1)
 					}
-					console.log('here1:',qres)
+					
 					loop(qres,function(i2,field2){
 						if(!field2.action){
 							field2.action='drop'
@@ -235,8 +224,7 @@ handle.tables={
 				
 				var query,
 					line
-					
-				console.log('del:',tomod)	
+									
 				if(todel.length){		
 					query=['alter table '+data.tablename],
 					line=[]						
@@ -245,12 +233,11 @@ handle.tables={
 					})						
 					query.push(line.join(','))
 					query=query.join(' ')+';'
-					console.log('query:',query.split(','))						
+					
 					connection.query(query,function(err,qres){
 						if(err) console.log(err)
 					})
-				}
-				console.log('mod:',tomod)
+				}				
 				if(tomod.length){
 					query=['alter table '+data.tablename],
 					line=[]
@@ -259,12 +246,12 @@ handle.tables={
 					})
 					query.push(line.join(','))
 					query=query.join(' ')+';'
-					console.log('query:',query.split(','))
+					
 					connection.query(query,function(err,qres){
 						if(err) console.log(err)
 					})
 				}
-				console.log('add:',toadd)
+				
 				if(toadd.length){
 					query=['alter table '+data.tablename],
 					line=[]
@@ -273,7 +260,7 @@ handle.tables={
 					})
 					query.push(line.join(','))
 					query=query.join(' ')+';'
-					console.log('query:',query.split(','))
+					//console.log('add query:',query)
 					connection.query(query,function(err,qres){
 						if(err) console.log(err)
 					})
@@ -311,8 +298,7 @@ handle.items={
 				q='insert into '+data.tablename+' set ?',
 				columns=[],
 				values=[]		
-
-			console.log('items add:',q,data)
+			
 			connection.query(q,data.item,function(err,qres){						
 				if(err){
 					data.err=err
@@ -320,7 +306,7 @@ handle.items={
 					data.res=qres
 				}
 				if(data.want=='list' && !err){
-					handle.items.list.get({query:{tablename:data.tablename}},res)
+					handle.items.list.get(req,res)
 				} else {
 					res.send(JSON.stringify(data))
 				}
@@ -340,7 +326,7 @@ handle.items={
 					data.res=qres
 				}
 				if(data.want=='list' && !err){
-					handle.items.list.get({query:{tablename:data.tablename}},res)
+					handle.items.list.get(req,res)
 				} else {
 					res.send(JSON.stringify(data))
 				}
@@ -414,7 +400,6 @@ handle.items={
 		}
 	}
 }
-console.log('handle:',handle)	
 exports.handler=function(req,res){	
 	if(req.url=='' || req.url=='/'){
 		req.url='/index.html'

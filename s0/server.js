@@ -3,7 +3,8 @@ var http=require('http'),
 	path=require('path'),
 	loop=require('loop.js').loop,
 	fs=require('fs'),	
-	url=require('url'),	
+	url=require('url'),
+	socketio = require('socket.io'),
 	reqp = http.IncomingMessage.prototype,
 	resp = http.ServerResponse.prototype,
 	data,
@@ -25,9 +26,6 @@ var http=require('http'),
 			})					
 			req.cookies=data
 		}
-		//res.cookies=data
-		
-		//res.headers['Set-Cookie']=req.headers.cookie
 	}
 reqp.user=''
 resp.isauth=false
@@ -37,7 +35,6 @@ resp.sendfile=function(req,res){
 		ext=path.extname(req.pathname).replace('.',''),
 		dirname
 		
-	console.log('filename:',filename)
 	if(ext){
 		dirname=path.dirname(filename)
 	} else {
@@ -77,6 +74,13 @@ resp.sendfile=function(req,res){
 				var rs = fs.createReadStream(filename)
 				rs.pipe(res)
 				break
+			case 'js':
+				res.writeHead(200, {
+					'Content-Type': 'text/javascript', 
+				})
+				var rs = fs.createReadStream(filename)
+				rs.pipe(res)
+				break
 			default:
 				res.writeHead(200, {
 					'Content-Type': 'text/plain', 
@@ -111,9 +115,21 @@ resp.setcookie=function(name,val,days){
 	//console.log('exam:','sid=123; Max-Age=900; Path=/; Expires=Sat, 17 May 2014 19:55:47 GMT')
 	this.cookies[name]=text
 }
-http.createServer(function(req,res){
-	//req handling
-	if(handler){
+
+var fpath=path.resolve(__dirname+'/handler.js'),
+	gethandler=function(){
+		try{
+			handler=require(fpath)
+			console.log('handler:',handler)
+		} catch(err){
+			console.log(err.stack)
+		}		
+	}
+gethandler()
+
+var server=http.createServer(function(req,res){
+	//req handling	
+	if(handler.http){
 		data=url.parse(req.url, true)
 		req.query=data.query
 		req.pathname=data.pathname
@@ -131,34 +147,37 @@ http.createServer(function(req,res){
 			req.on('end', function () {
 				req.data=body
 				try{
-					handler.handler(req,res)
+					handler.http(req,res)
 				} catch(err){
 					console.log(err.stack)
 				}
 			})
 		} else {
 			try{				
-				handler.handler(req,res)
+				handler.http(req,res)
 			} catch(err){
 				console.log(err.stack)
 			}		
 		}		
 	}	
-}).listen(port)
+})
 
-//load handler
-var fpath=path.resolve(__dirname+'/handler.js')	
-try{
-	handler=require(fpath)	
-} catch(err){
-	console.log(err.stack)
-}
+server.listen(port)
+
+var io=socketio.listen(server)
+io.on('connection', function(socket){
+	if(handler.socket){
+		handler.socket(socket)
+	}
+})	
+
 
 //watch and reload handler
 fs.watch(fpath, function (e, filename) {	
 	delete require.cache[fpath]
 	try{
-		handler=require(fpath)	
+		//handler=require(fpath)	
+		gethandler()
 	} catch(err){
 		console.log(err.stack)
 	}

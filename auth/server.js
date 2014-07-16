@@ -1,5 +1,4 @@
 //s0
-console.log(process.cwd())
 var http=require('http'),
 	path=require('path'),
 	loop=require('./loop.js').loop,

@@ -2,7 +2,7 @@
 	<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
 	<script src='https://rawgithub.com/entcs/Moba/master/d0/d0.js'></script>
 </head>
-<body><h1>BASE</h1><a href='/'>home</a></body>
+<body></body>
 <script>
 
 function nicejson(json){
@@ -135,6 +135,17 @@ d.on('ready',function(e){
 		},
 		show:function(){
 			base.html=d.body.r('div class=base')
+			var header=base.html.r('div class=header'),
+				logout=header.r('button class=logout html=logout')
+					.on('click',function(e){
+						d.send('/logout',function(res){
+							console.log('res:',res)
+							location='authent/login'
+						})
+					})
+				
+			
+			
 			var bases=base.html.r('div class=bases section')
 				
 			bases.r('div class=list')
@@ -384,7 +395,7 @@ d.on('ready',function(e){
 						.r('input class=tablename').p
 						.r('button html=add as new table')
 							.on('click',function(e){
-								var tablename=d.find('.addnewtable .tablename').val
+								var tablename=d.find('.addnewtable .tablename').val()
 								if(tablename){
 									var data={
 										tablename:tablename,
@@ -421,7 +432,7 @@ d.on('ready',function(e){
 					v=(v ? 'DEFAULT '+v : '')
 				}
 				
-				inp.val=v
+				inp.val(v)
 				inp.on('change',function(e){
 					/*
 					var but=this.findup('tr').find('button.set')
@@ -498,7 +509,7 @@ d.on('ready',function(e){
 						}
 					}
 					inp.id=k
-					inp.val=v
+					inp.val(v)
 
 				})
 				//controls
@@ -549,7 +560,7 @@ d.on('ready',function(e){
 					inp.set('data-'+name,val)
 				})
 				/**/
-				inp.val=''
+				inp.val('')
 			})	
 			//controls
 			row.r('td')

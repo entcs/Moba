@@ -107,7 +107,7 @@ var sessions={
 		delete this.users[name]
 	},
 	get:function(name){
-		return this.users[name] || ''
+		return this.users[name] || false
 	},
 	run:function(){
 		setTimeout(function(){
@@ -135,7 +135,7 @@ var filters={
 		if(user){
 			if(user.sid==sid){
 				if(time<user.time){
-					return true
+					return user
 				} else {
 					sessions.rem(user.name)
 				}
@@ -147,7 +147,11 @@ var filters={
 		return false
 	},	
 	'isadmin':function(req,res){
-		return true
+		var user=filters.isauth()
+		if(user && user.name=='admin'){
+			return true
+		}
+		return false
 	}
 }
 var actions={
@@ -398,6 +402,7 @@ actions.add({
 					})
 					query.push(line.join(','))
 					query=query.join(' ')+';'
+					console.log('add:',query)
 					connection.query(query,function(err,qres){
 						if(err) console.log(err)
 					})
@@ -433,7 +438,7 @@ actions.add({
 				q='insert into '+data.tablename+' set ?',
 				columns=[],
 				values=[]		
-
+			console.log('add:',q)
 			connection.query(q,data.item,function(err,qres){						
 				if(err){
 					data.err=err
@@ -496,6 +501,7 @@ actions.add({
 			req.body=JSON.parse(req.data)
 			var data=req.body,
 				q='UPDATE '+data.tablename+' SET ? '+'where id='+data.item.id
+			console.log('q:',q,data.item)
 			connection.query(q,data.item,function(err,qres){						
 				if(err){
 					data.err=err
@@ -689,9 +695,17 @@ actions.add({
 			}			
 		}
 	},
-	'/logout get':{
+	'/logout get':{		
 		fn:function(req,res,callback){
-			req.body=JSON.parse(req.data)
+			var user=filters.isauth(req,res)
+			console.log('logout:',user)
+			if(user=='12345'){
+				var q=req.query
+				console.log('q:',q)
+			} else {
+				res.end('good try')
+			}
+			//req.body=JSON.parse(req.data)
 		}
 	}	
 })
