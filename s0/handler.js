@@ -176,7 +176,7 @@ var tacmap={
 			hp=100,
 			dam=10,
 			speed=50,
-			range=64,
+			range=72,
 			spot=192
 		mods.hm={
 			hp:mods.h.hp*mods.m.hp,
@@ -188,20 +188,26 @@ var tacmap={
 			vfoot:mods.h.vfoot*mods.m.vfoot,
 			name:'heavy mounted'
 		}
+		var desc=''
 		loop(types,function(i1,n1){
 			loop(mods,function(i2,n2){					
-				name=i1+i2				
-				tacmap.unitstats[name]={
+				name=i1+i2
+				desc=''
+				if(i1=='spe' && i2.indexOf('m')==-1){
+					desc='Double dam vs mounted.Half dam from mounted'
+				}
+				tacmap.unitstats[name]={				
 					//basestats
 					hp:(hp*types[i1].hp*mods[i2].hp).round(),
 					dam:(dam*types[i1].dam*mods[i2].dam).round(),
 					speed:(speed*types[i1].speed*mods[i2].speed).round(),
 					range:(range*types[i1].range*mods[i2].range).round(),
 					spot:(spot*types[i1].spot*mods[i2].spot).round(),
-					name:n2.name+' '+n1.name
+					name:n2.name+' '+n1.name,
+					desc:desc
 				}
 				if(i1!='bow'){
-					tacmap.unitstats[name].range=64
+					tacmap.unitstats[name].range=range
 				}
 			})
 		})	
@@ -252,59 +258,63 @@ var tacmap={
 			tacmap.games.list.splice(ind,1)
 		}
 	},
-	match:function(){
-		
-	},
 	socket:function(socket,data){
 		console.log('tacmap:',data)
-		if(data.type=='new'){
-			data.type='unitstats'
-			data.unitstats=tacmap.unitstats
-			socket.emit('tacmap',data)
-			
-			//send bushes
-			socket.emit('tacmap',{
-				type:'setmapdata',
-				size:tacmap.size,
-				bushes:tacmap.bushes
-			})
-			//socket.name='new name'
-			//tacmap.pls.add(socket)
-		} else if(data.type=='joinque'){			
-			socket.userdata.name=data.name
-			socket.userdata.army=data.army
-			socket.emit('tacmap',data)
-			tacmap.que.add(socket)
+		var handle={
+			'new':function(data){
+				data.type='unitstats'
+				data.unitstats=tacmap.unitstats
+				socket.emit('tacmap',data)
+				
+				//send bushes
+				socket.emit('tacmap',{
+					type:'setmapdata',
+					size:tacmap.size,
+					bushes:tacmap.bushes
+				})
+				
+			},
+			joinque:function(data){
+				socket.userdata.name=data.name
+				socket.userdata.army=data.army
+				socket.emit('tacmap',data)
+				tacmap.que.add(socket)
 
-			if(tacmap.que.list.length>1){				
-				var game=tacmap.games.add(socket,tacmap.que.list[0]),					
-					data={
-						type:'joingame',
-						p1:game.p1.userdata,
-						p2:game.p2.userdata						
-					}
+				if(tacmap.que.list.length>1){				
+					var game=tacmap.games.add(socket,tacmap.que.list[0]),					
+						data={
+							type:'joingame',
+							p1:game.p1.userdata,
+							p2:game.p2.userdata						
+						}
+					game.p1.emit('tacmap',data)
+					game.p2.emit('tacmap',data)
+					tacmap.que.rem(game.p1)
+					tacmap.que.rem(game.p2)
+				}
+
+				
+				console.log('que:',tacmap.que.list.length)				
+			},
+			leaveque:function(data){
+				socket.emit('tacmap',data)
+				tacmap.que.rem(socket)			
+				console.log('que:',tacmap.que.list.length)				
+			},
+			action:function(data){
+				var game=socket.game
 				game.p1.emit('tacmap',data)
-				game.p2.emit('tacmap',data)
-				tacmap.que.rem(game.p1)
-				tacmap.que.rem(game.p2)
+				game.p2.emit('tacmap',data)					
+			},
+			remunit:function(data){
+				var game=socket.game
+				game.p1.emit('tacmap',data)
+				game.p2.emit('tacmap',data)						
 			}
-
-			
-			console.log('que:',tacmap.que.list.length)
-		} else if(data.type=='leaveque'){						
-			socket.emit('tacmap',data)
-			tacmap.que.rem(socket)			
-			console.log('que:',tacmap.que.list.length)
-		} else if(data.type=='action'){
-			var game=socket.game
-			game.p1.emit('tacmap',data)
-			game.p2.emit('tacmap',data)			
-		} else if(data.type=='remunit'){
-			var game=socket.game
-			game.p1.emit('tacmap',data)
-			game.p2.emit('tacmap',data)			
 		}
-		//socket.join('inque')		
+		if(handle[data.type]){
+			handle[data.type](data)
+		}
 	}
 }
 tacmap.setunitstats()

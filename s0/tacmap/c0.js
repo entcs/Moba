@@ -291,7 +291,10 @@ var c0={
 
 					ind=c0.nodes.indexOf(this)
 					c0.nodes.splice(ind,1)
-					
+					//rem children
+					loop(this.children,function(i,node){
+						node.rem()
+					})
 					return this
 				},
 				//util	

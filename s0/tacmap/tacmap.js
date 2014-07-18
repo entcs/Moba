@@ -32,7 +32,6 @@ d.on('ready',function(e){
 					d.find('.leaveque').hide()
 				},
 				joingame:function(data){
-					console.log('joingame')
 					var pls=[data.p1,data.p2]
 					d.find('.lobby').hide()
 					tac.startgame(pls)
@@ -41,7 +40,7 @@ d.on('ready',function(e){
 				leavegame:function(data){
 					console.log('leavegame')
 				},
-				unitstats:function(data){
+				unitstats:function(data){					
 					unitstats=data.unitstats
 					lobby.init()
 					
@@ -50,7 +49,7 @@ d.on('ready',function(e){
 					tac.setaction(data)
 				},
 				remunit:function(data){
-					var unit=tac.getunit(data.uid)
+					var unit=tac.getunit(data.uid)					
 					tac.remunit(unit)
 				},
 				setmapdata:function(data){					
@@ -380,8 +379,7 @@ var lobby={
 		var tobattle=top.r('div class=but tobattle')
 			.h('to battle')
 			.s('display:inline-block font-size:32px padding:0px 16px')
-			.on(press,function(e){
-				console.log('to battle:',lobby.units)
+			.on(press,function(e){				
 				var data={
 					units:lobby.units,
 					name:d.find('#name').val()
@@ -530,16 +528,6 @@ var lobby={
 							name=e.target.unitname
 						lobby.unitselect.setunit(ind,name)
 						showstats(e.target.unitname)
-						/*
-						unit.src=e.target.src
-						unit.p.find('div').h(v.hp)
-
-						lobby.units[unit.index]=e.target.unitname
-						console.log('units:',lobby.units)
-						//d.find('.unitselect tfoot').show()
-						showstats(e.target.unitname)
-						lobby.unitselect.calctotalhp()
-						/**/
 					})
 				
 				}				
@@ -562,7 +550,9 @@ var lobby={
 				ele=ust.r('div').h('speed:'+stats.speed)
 				ele=ust.r('div').h('range:'+stats.range)
 				ele=ust.r('div').h('spot:'+stats.spot)
-				ele=ust.r('div').h('description:')
+				if(stats.desc){
+					ele=ust.r('div').h(stats.desc)
+				}
 				//no
 				ele=ust.r('div class=but')
 					.s('background:url(ico64.png) -448px -192px width:64px height:64px')
@@ -612,6 +602,9 @@ var size=1000
 var tac={
 	team:0,
 	initmap:function(){
+		if(tac.map){
+			tac.map.rem()
+		}
 		var map=c0.rect({
 			//src:'tactics.png',
 			x:window.innerWidth/2,
@@ -655,15 +648,14 @@ var tac={
 		*/
 		map.on(down,function(e){
 			if(tac.actunit){
-				console.log('actunit',down)
 			} else {			
-				console.log('map',down)
 				map.down=true
 				map.start.x=c0.m.x-map.x
 				map.start.y=c0.m.y-map.y			
 				map.vec.x=0
 				map.vec.y=0							
 			}
+			e.preventDefault()
 		})
 		map.on(up,function(e){
 			//onclick zoom
@@ -685,29 +677,6 @@ var tac={
 			}
 			map.down=false
 			map.moved=false
-			/*
-				if(map.goscale==1 && map.down){
-					tac.setscale()
-				} else if(map.goscale!=1){
-					tac.setscale(1)
-				}
-				
-				if(map.down){
-					var pos=map.mpos()	
-					//i1.pos(pos)			
-					if(map.scale==1){// && map.goscale==map.scale){
-						map.fol=0				
-						map.vec.x=c0.mvec.x
-						map.vec.y=c0.mvec.y													
-					}
-					map.down=false
-				}				
-			}
-					
-			tac.actunit=0			
-			map.moved=false
-			map.down=false
-			/**/
 		})			
 		map.on(move,function(e){
 			if(map.goscale==1){
@@ -920,40 +889,59 @@ var tac={
 			map.scale=map.goscale
 		}		
 	},
-	getlastfol:function(unit){
-		var fol
-		if(unit.fol){
+	getlastfol:function(unit,loop){
+		loop=loop || unit
+		var fol		
+		if(unit==loop){
+			console.log('got loop')
+			fol=unit.fol
+		} else if(unit.fol){
 			fol=tac.getlastfol(unit.fol)
 		} else {
 			fol=unit
 		}
 		return fol
-	},
+	},	
 	handleunits:function(dt){
 		var dot,
 			dif,
 			dist,
-			range=64,
 			ct=new Date().getTime(),
 			act=tac.actunit
-			
+		//move	
 		loop(tac.units,function(i,unit){
+			//lead
+			if(unit.fols.length && !unit.fol){// && unit.team==tac.team){
+				unit.hpbar.linecolor='rgba(0, 125, 255,0.8)'
+			} else {
+				unit.hpbar.linecolor='rgba(255, 125, 0,0.8)'
+			}
 			if(unit!=tac.actunit){
-				if(unit.fol){				
-					dif=c0.sub(unit.fol.pos(),unit.pos())
-					dist=c0.dist(dif)				
-					if(unit.team!=unit.fol.team){
-						range=unit.range
-					} else {
-						range=64
+				if(unit.tar){
+					if(unit.tar.hp==0){
+						unit.tar=0
+					} else {				
+						dif=c0.sub(unit.tar.pos(),unit.pos())
+						dist=c0.dist(dif)				
+						if(dist>=unit.range){
+							console.log('approach',dist,unit.range)
+							dif=c0.norm(dif)					
+							unit.x+=unit.speed*dif.x*dt/1000
+							unit.y+=unit.speed*dif.y*dt/1000
+						}
 					}
-					if(dist<range){
-						
-					} else {
-						dif=c0.norm(dif)					
-						unit.x+=unit.speed*dif.x*dt/1000
-						unit.y+=unit.speed*dif.y*dt/1000
-					}				
+				}else if(unit.fol){
+					if(unit.fol.hp==0){
+						unit.fol=0
+					} else {					
+						dif=c0.sub(unit.fol.pos(),unit.pos())
+						dist=c0.dist(dif)				
+						if(dist>=65){
+							dif=c0.norm(dif)					
+							unit.x+=unit.speed*dif.x*dt/1000
+							unit.y+=unit.speed*dif.y*dt/1000
+						}		
+					}
 				} else if(unit.path.length){
 					dot=unit.path[0]				
 					dif=c0.sub(dot,unit.pos())
@@ -997,6 +985,34 @@ var tac={
 			}
 		})
 		
+		//collisions
+		var dist,
+			dif,
+			vec,
+			len=64*tac.map.getscale(),
+			veclen,
+			rat
+		loop(tac.units,function(i1,u1){
+			loop(tac.units,function(i2,u2){
+				if(u1!=u2){
+					vec=c0.sub(u1.getpos(),u2.getpos())
+					veclen=c0.dist(vec,{x:0,y:0})										
+					if(veclen<len){
+						//collide
+						rat=1-len/veclen
+						vec.x/=2
+						vec.y/=2
+						vec.x*=rat
+						vec.y*=rat
+						u1.x-=vec.x
+						u1.y-=vec.y
+						u2.x+=vec.x
+						u2.y+=vec.y
+					}
+				}
+			})
+		})
+		
 		if(tac.actunit){
 			tac.unitstats.visible=true
 			var mpos=tac.map.mpos()
@@ -1014,6 +1030,7 @@ var tac={
 	actunit:0,
 	path:[],
 	fol:0,
+	tar:0,
 	sendaction:function(){
 		var path=[]
 		loop(tac.path,function(i,dot){
@@ -1024,21 +1041,37 @@ var tac={
 			type:'action',
 			uid:tac.actunit.uid,
 			path:path,
+			tar:tac.tar ? tac.tar.uid : 0,
 			fol:tac.fol ? tac.fol.uid : 0
 		}		
 		socket.emit('tacmap',data)
 		tac.actunit=0
 		tac.path=[]
 		tac.fol=0
+		tac.tar=0
 	},
 	setaction:function(data){
-		console.log('set action',data)
+		//console.log('set action',data)
 		var unit=tac.getunit(data.uid),
 			dot
-		unit.fol=tac.getunit(data.fol)
+		
+		//unit.fol=tac.getunit(data.fol)
+		unit.follow(tac.getunit(data.fol))
+		unit.tar=tac.getunit(data.tar)
+		
+		if(unit.tar){
+			function settarget(u,t){
+				//handle followers
+				u.tar=t
+				loop(u.fols,function(i,fol){
+					settarget(fol,t)
+				})				
+			}
+			settarget(unit,unit.tar)
+		}
+		
 		unit.clearpath()
-		loop(data.path,function(i,p){
-			console.log('p:',p)
+		loop(data.path,function(i,p){			
 			dot=c0.circ({
 				x:p.x,
 				y:p.y,
@@ -1050,7 +1083,7 @@ var tac={
 			}
 			unit.path.push(dot)			
 		})		
-	},
+	},	
 	clearpath:function(){
 		loop(tac.path,function(i,p){
 			p.rem()
@@ -1150,17 +1183,14 @@ var tac={
 		//spe vs mounted
 		if(unit.unitname=='spe' || unit.unitname=='speh'){
 			if(tar.unitname.indexOf('m')!=-1){
-				console.log('double dam')
 				dam*=2
 			}
 		}
 		if(tar.unitname=='spe' || tar.unitname=='speh'){
-			if(unit.unitname.indexOf('m')!=-1){
-				console.log('half dam')
+			if(unit.unitname.indexOf('m')!=-1 && unit.unitname.indexOf('bow')==-1){
 				dam/=2
 			}
-		}
-		console.log('did dam:',dam)
+		}		
 		tar.hp-=dam
 	},
 	getclosestenemy:function(unit){
@@ -1193,10 +1223,14 @@ var tac={
 			hig:64,
 			path:[],
 			fol:0,
+			fols:[],
+			tar:0,
 			team:pl.team,
 			unitname:name
 			//opa:0.8
 		}).to(tac.map.units)
+		
+		unit.uid=this.units.length+1
 		
 		unit.hpbar=c0.circ({
 			rad:32,
@@ -1204,6 +1238,12 @@ var tac={
 			//linecolor:'rgba(154, 205, 50,0.7)'
 			linecolor:'rgba(255, 125, 0,0.8)'
 		}).to(unit)
+		unit.text=c0.text({
+			x:0,
+			y:0,
+			text:unit.uid
+		}).to(unit)
+		
 		var stats=unitstats[name]
 		loop(stats,function(k,v){
 			unit[k]=v
@@ -1217,7 +1257,22 @@ var tac={
 		loop(ext,function(k,v){
 			unit[k]=v
 		})
-		
+		unit.follow=function(lead){
+			if(lead){
+				if(lead.fols.indexOf(unit)==-1){					
+					lead.fols.push(unit)					
+				}
+				unit.fol=lead
+			} else {
+				if(unit.fol){					
+					var ind=unit.fol.fols.indexOf(unit)
+					//console.log('stop fol',unit.uid,unit.fol.uid,unit.fol.fols.length)
+					//console.log('index:',ind)
+					unit.fol.fols.splice(ind,1)
+				}
+			}
+			unit.fol=lead
+		}
 		unit.clearpath=function(){
 			loop(unit.path,function(i,dot){
 				dot.rem()
@@ -1228,33 +1283,34 @@ var tac={
 			if(tac.map.goscale==1 && e.node.team==tac.team){
 				e.stop=true
 				tac.actunit=e.node
-				tac.actunit.fol=0
-				tac.actunit.clearpath()
 				tac.sendaction()
 				tac.actunit=e.node				
 			}
 		})
 		unit.on(move,function(e){
-			if(tac.actunit && tac.actunit!=e.node){
-				//follow
-				tac.clearpath()				
-				tac.fol=e.node
-				//tac.actunit.fol=e.node
-				if(tac.actunit.team==e.node.team){
-					tac.sendaction()
+			var act=tac.actunit
+			if(act && act!=e.node){
+				tac.clearpath()
+				if(act.team==e.node.team){
+					//clear target actions
 					tac.actunit=e.node
+					tac.fol=0
 					tac.sendaction()
+					
+					//send follow
+					tac.actunit=act
+					tac.fol=e.node
+					tac.sendaction()
+					
+					//set new actunit
 					tac.actunit=e.node
-					//tac.actunit.clearpath()
 				} else {
-					tac.fol=unit
+					//target
+					tac.tar=e.node
 					tac.sendaction()
-					//tac.map.down=false
-					//tac.actunit=0
 				}
 			}
-		})
-		unit.uid=this.units.length+1
+		})		
 		this.units.push(unit)
 		return unit
 	},
@@ -1264,6 +1320,7 @@ var tac={
 			unit.clearpath()
 			unit.hpbar.rem()
 			unit.rem()
+			unit.hp=0
 		}
 	},
 	addpl:function(pl){
