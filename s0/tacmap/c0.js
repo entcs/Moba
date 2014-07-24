@@ -49,7 +49,9 @@ var c0={
 		}
 		this.tasks={}
 		this.deadtasks={}
-		//events
+		//cans
+		this.cans={}
+				//events
 		this.down={}
 		this.up={}
 		this.click={}

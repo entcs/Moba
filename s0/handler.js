@@ -3,17 +3,37 @@ var loop=require('loop.js').loop,
 	crypto=require("crypto"),
 	path=require('path'),
 	fs=require('fs'),	
-	url=require('url')
-		
-//base
-var mysql=require('mysql'),
-	connection=mysql.createConnection({
+	url=require('url'),
+	dbconf={
 		host: 'localhost',
 		port:3333,
 		user:'root',
 		password:'Loikam22',
 		database:'gdev'
-	}),
+	}
+		
+//base
+var mysql=require('mysql'),
+	connection,
+	//connection=mysql.createConnection(),
+	dbconnect=function(){
+		connection = mysql.createConnection(dbconf)
+		connection.connect(function(err) {              // The server is either down
+			if(err) {                                     // or restarting (takes a while sometimes).
+				console.log('error when connecting to db:', err);
+				setTimeout(dbconnect, 1000); // We introduce a delay before attempting to reconnect,
+			}                                     // to avoid a hot loop, and to allow our node script to
+		});                                     // process asynchronous requests in the meantime.
+											  // If you're also serving http, display a 503 error.
+		connection.on('error', function(err) {
+			console.log('db error', err);
+			if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+				dbconnect()                        // lost due to either server restart, or a
+			} else {                                      // connnection idle timeout (the wait_timeout
+				throw err;                                  // server variable configures this)
+			}
+		})
+	},
 	//post to auth server
 	post=function(path,data,fn){
 		if(typeof(data)!='string'){
@@ -48,7 +68,7 @@ var mysql=require('mysql'),
 		}
 		return q
 	}
-
+dbconnect()
 var sessions={
 	users:{},
 	add:function(name){
@@ -258,23 +278,19 @@ var tacmap={
 			tacmap.games.list.splice(ind,1)
 		}
 	},
-	socket:function(socket,data){
-		console.log('tacmap:',data)
+	socket:function(socket,data,io){
+		console.log('connect:',socket.handshake.address)
+		console.log('sockets:',io.sockets.sockets.length)
+		
+		
+		socket.emit('tacmap',{
+			type:'unitstats',
+			unitstats:tacmap.unitstats
+		})
+				
 		var handle={
-			'new':function(data){
-				data.type='unitstats'
-				data.unitstats=tacmap.unitstats
-				socket.emit('tacmap',data)
-				
-				//send bushes
-				socket.emit('tacmap',{
-					type:'setmapdata',
-					size:tacmap.size,
-					bushes:tacmap.bushes
-				})
-				
-			},
 			joinque:function(data){
+				console.log('joinque:',data.name)
 				socket.userdata.name=data.name
 				socket.userdata.army=data.army
 				socket.emit('tacmap',data)
@@ -285,7 +301,9 @@ var tacmap={
 						data={
 							type:'joingame',
 							p1:game.p1.userdata,
-							p2:game.p2.userdata						
+							p2:game.p2.userdata,
+							mapsize:tacmap.size,
+							bushes:tacmap.bushes
 						}
 					game.p1.emit('tacmap',data)
 					game.p2.emit('tacmap',data)
@@ -310,10 +328,24 @@ var tacmap={
 				var game=socket.game
 				game.p1.emit('tacmap',data)
 				game.p2.emit('tacmap',data)						
+			},
+			disconnect:function(){
+				console.log('disco')
 			}
+		
 		}
 		if(handle[data.type]){
 			handle[data.type](data)
+		}
+	},
+	handledisco:function(socket){
+		if(socket.game){
+			console.log('have game:')
+			var data={
+				type:'disco'
+			}
+			socket.game.p1.emit('tacmap',data)
+			socket.game.p2.emit('tacmap',data)
 		}
 	}
 }
@@ -348,12 +380,18 @@ exports.http=function(req,res){
 		res.sendfile(req,res)
 	}
 }
-exports.socket=function (socket) {		
+exports.socket=function (socket,io) {		
 	//connect
 	socket.userdata={}
 	socket.on('tacmap',function(data){
-		tacmap.socket(socket,data)
+		tacmap.socket(socket,data,io)
 	})
+	socket.on('disconnect',function(){
+		console.log('disco',socket.userdata.name)
+		tacmap.handledisco(socket)
+		console.log('sockets:',io.sockets.sockets.length)
+	})
+	
 	/*
 	socket.on('event', function (data) {
 		console.log('Message Received3: ', data)

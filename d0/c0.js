@@ -28,6 +28,513 @@ Node.prototype.on=function(name,fn){
 MouseEvent.prototype.stop=false
 MouseEvent.prototype.node=false
 var c0={
+	canvas:function(a){		
+		var can={
+			nodes:[],
+			test:function(){
+				console.log('this:',this)
+			},
+			node:function(name){
+				var node={x:0,y:0},		
+					ext={
+						init:function(){
+							this.uid=c0.uid()
+							this.type='node'
+							this.name=name
+							this.parent=0	
+							this.children=[]
+							this.visible=true
+							this.an=0
+							this.scale=1
+							this.sx=1
+							this.sy=1
+							this.hit=0
+							this.events={}
+							this.enabled=false
+							this.active=false
+						},
+						//rendering
+						to:function(parent){
+							parent=parent || c0.root
+							if(this.parent){
+								loop(this.parent.children,function(i,e){
+									if(e==this){
+										this.parent.children.splice(i,1)
+										return false
+									}
+								})
+							}
+							parent.children.push(this)
+							this.parent=parent				
+							return this
+						},
+						rem:function(){
+							var ind=this.parent.children.indexOf(this)
+							this.parent.children.splice(ind,1)
+
+							ind=c0.nodes.indexOf(this)
+							c0.nodes.splice(ind,1)
+							
+							return this
+						},
+						//util	
+						mpos:function(){
+							var pos=this.getpos(),
+								scale=this.getscale(),
+								dif=c0.sub(c0.m,pos)
+							pos.x=dif.x/scale
+							pos.y=dif.y/scale
+							return pos
+						},
+						pos:function(p){
+							if(p){
+								this.x=p.x
+								this.y=p.y
+							} else {
+								return {
+									x:this.x,
+									y:this.y
+								}
+							}
+						},
+						getpos:function(){
+							var pos={
+									x:this.x,
+									y:this.y
+								}
+							if(this.parent){
+								var scale=this.parent.getscale()
+								pos.x*=scale
+								pos.y*=scale
+							
+								pos=c0.rot(pos,this.parent.getan())
+								var ppos=this.parent.getpos()
+								pos=c0.add(pos,ppos)
+							}
+							return pos
+						},			
+						getan:function(){
+							var an=this.an
+							if(this.parent){
+								an+=this.parent.getan()
+							}					
+							return an%360
+						},
+						getscale:function(){
+							var s=this.scale
+							if(this.parent){
+								s*=this.parent.getscale()
+							}
+							return s
+						},
+						fol:function(p,speed){
+							var p1=this.pos(),
+								p2=p,
+								dif=p2.sub(p1),
+								norm=c0.norm(dif),
+								dist=c0.dist(p1,p2),			
+								move={
+									x:norm.x*speed*c0.time.td,
+									y:norm.y*speed*c0.time.td
+								}		
+							if(Math.abs(move.x)>Math.abs(dif.x)){
+								move.x=dif.x
+							}
+							if(Math.abs(move.y)>Math.abs(dif.y)){
+								move.y=dif.y
+							}		
+							move=c0.add(p1,move)	
+							this.pos(move)		
+						},				
+						loop:function(p){},//todo
+						dist:function(p){
+							return c0.dist(this.getpos(),p)
+						},
+						ishit:function(p){
+							if(this.hit=='circ'){
+								if(c0.dist(this.getpos(),p)<=this.rad*this.getscale()){
+									c0.canvas.s('cursor:pointer')
+									return true
+								}						
+							} else {
+								//rect
+							}
+							var b=this.bounds
+							if(this.type=='circ'){
+								if(c0.dist(this.pos(),p)<=this.rad){
+									c0.canvas.s('cursor:pointer')
+									return true
+								}
+							} else {
+								var pos=this.getpos(),
+									an=this.getan(),
+									scale=this.getscale(),
+									w2=this.wid/2,
+									h2=this.hig/2
+									
+								pos=c0.sub(p,pos)
+								pos=c0.rot(pos,-an)
+								pos.x/=scale
+								pos.y/=scale										
+								if(pos.x>-w2 && pos.x<w2 && pos.y>-h2 && pos.y<h2){							
+									return true
+								}
+					
+							}
+							return false
+						},
+						move:function(speed){
+							var vec=c0.rot({x:0,y:-speed},this.an)
+							this.x+=vec.x
+							this.y+=vec.y					
+						},
+						//events
+						on:function(name,callback){
+							this.active=true
+							this.events[name]=callback
+							//c0[name][this.uid]=callback
+						},
+						off:function(name){
+							delete this.events[name]
+							//delete c0[name][this.uid]
+						},				
+						//collisions
+						enable:function(){
+							this.enabled=true
+							c0.collidables[this.uid]=this
+							return this
+						},
+						disable:function(){
+							this.enabled=false
+							delete c0.collidables[this.uid]
+							return this
+						}
+					}
+				loop(ext,function(k,v){
+					node[k]=v
+				})
+				node.init()
+				this.nodes.push(node)
+				return node
+			},
+			rect:function(a){
+				var node=this.node('circ')
+				node.type='rect'
+				node.hit='rect'
+				node.wid=100
+				node.hig=50
+				node.color='#aaa'
+				loop(a,function(k,v){
+					node[k]=v
+				})		
+				node.getpoints=function(){
+					var pos=this.getpos(),
+						an=this.getan(),
+						scale=this.getscale(),
+						w2=scale*this.wid/2,
+						h2=scale*this.hig/2,
+						pts=[
+							c0.add(pos,c0.rot({x:-w2,y:-h2},an)),
+							c0.add(pos,c0.rot({x: w2,y:-h2},an)),
+							c0.add(pos,c0.rot({x: w2,y: h2},an)),
+							c0.add(pos,c0.rot({x:-w2,y: h2},an))
+						]
+					
+					return pts
+				}
+				node.draw=function(){
+					var an=this.getan(),
+						pos=this.parent.getpos(),
+						pscale=this.parent.getscale(),
+						scale=this.getscale(),
+						spos=c0.rot(this.pos(),this.parent.an)
+					spos.x*=pscale
+					spos.y*=pscale			
+					pos=c0.add(pos,spos)
+								
+					var w2=node.wid/2,
+						h2=node.hig/2,
+						pts=[
+							c0.rot({x:-w2,y:-h2},an),
+							c0.rot({x: w2,y:-h2},an),
+							c0.rot({x: w2,y: h2},an),
+							c0.rot({x:-w2,y: h2},an)
+						]
+					
+					var c=c0.c		
+					
+					c.beginPath()			
+					c.moveTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
+					c.lineTo(pos.x+pts[1].x*scale,pos.y+pts[1].y*scale)
+					c.lineTo(pos.x+pts[2].x*scale,pos.y+pts[2].y*scale)
+					c.lineTo(pos.x+pts[3].x*scale,pos.y+pts[3].y*scale)
+					c.lineTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
+					c.closePath()					
+					if(this.color){
+						c.fillStyle = this.color
+						c.fill()
+					}
+					if(this.linewid){
+						c.lineWidth = this.linewid*scale
+						c.strokeStyle = this.linecolor
+						c.stroke()
+					}
+				}
+				
+				return node
+			},
+			circ:function(a){
+				var node=this.node('circ')		
+				node.type='circ'
+				node.hit='circ'
+				node.arc=2 * Math.PI
+				loop(a,function(k,v){
+					node[k]=v
+				})
+				node.draw=function(){
+					var c=c0.c,
+						pos=this.parent.getpos(),
+						spos=c0.rot(this.pos(),this.parent.getan()),
+						pscale=this.parent.getscale()
+					
+					spos.x*=pscale
+					spos.y*=pscale
+					
+					pos=c0.add(pos,spos)
+						
+						//+c0.ator(node.getan())
+					c.beginPath()			
+					an=Math.PI*1.5+c0.ator(node.getan())
+					c.arc(pos.x,pos.y, this.rad*this.getscale(), an-node.arc/2, an+node.arc/2, false)
+					if(this.color){
+						c.fillStyle = this.color
+						c.fill()
+					}
+					if(this.linewid){
+						c.lineWidth = this.linewid*this.getscale()
+						c.strokeStyle = this.linecolor
+						c.stroke()
+					}
+				}
+				return node		
+			},
+			line:function(a){
+				var node=this.node('line')
+				node.type='line'
+				loop(a,function(k,v){
+					node[k]=v
+				})
+				node.draw=function(){		
+					var c=c0.c,
+						pos=this.parent.getpos(),
+						an=this.parent.getan(),
+						p1=c0.add(pos,c0.rot(this.p1,an)),				
+						scale=this.getscale()
+						
+					var sp2=c0.rot(this.p2,an)
+					sp2.x*=scale
+					sp2.y*=scale
+					var p2=c0.add(pos,sp2)
+						
+					c.beginPath()
+					c.moveTo(p1.x,p1.y)
+					c.lineTo(p2.x,p2.y)			
+					c.strokeStyle = this.color || 'black'
+					if(this.linewid){
+						c.lineWidth = this.linewid*this.getscale()			
+					}			
+					c.stroke()
+				}
+				return node			
+			},
+			text:function(a){
+				//context.font = "normal normal 20px Verdana";
+				//[font style][font weight][font size][font face]
+				var node=this.node('text')
+				node.hit='rect'
+				loop(a,function(k,v){
+					node[k]=v
+				})		
+				node.type='text'
+				
+				
+				node.draw=function(){
+					var c=c0.c,
+						pos=this.parent.getpos(),
+						an=this.parent.getan(),				
+						scale=this.getscale(),
+						spos=c0.rot(this.pos(),an)
+					//console.log(this.pos())
+					spos.x*=scale
+					spos.y*=scale
+					pos=c0.add(pos,spos)
+					c.font='Xpx sans-serif'.replace('X',(10*scale).round())
+					if(this.font){
+						c.font = this.font
+					}
+					c.fillStyle=this.color || 'black'			
+					if(this.linewid){
+						c.lineWidth = this.linewid
+						c.strokeStyle = this.linecolor || 'black'				
+						c.strokeText(this.text,pos.x,pos.y)
+					}
+					c.fillText(this.text,pos.x,pos.y)
+				}
+				return node			
+			},
+			img:function(a){
+				var node=this.node('img'),
+					imgo
+				node.type='img'
+				node.hit='rect'
+				loop(a,function(k,v){
+					node[k]=v
+				})
+				if(typeof(a.src)=='string'){
+					imgo=new Image()
+					imgo.src = a.src
+					node.imgo=imgo
+					node.imgready=false						
+					imgo.onload = function() {
+						node.imgready=true
+						node.wid=node.wid || node.imgo.width
+						node.hig=node.hig || node.imgo.height			
+						c0.render(node)
+					}
+					
+				} else {
+					node.imgready=true
+					node.wid=node.wid || node.imgo.width
+					node.hig=node.hig || node.imgo.height			
+					imgo=a.src			
+				}
+				node.draw=function(c2){
+					c2=c2 || c0.c
+					if(node.imgready){
+						if(node.opa){
+							c0.c.globalAlpha = node.opa
+						}
+						scale=node.getscale()
+						pos=node.getpos()
+						x=pos.x-(node.wid/2)*scale
+						y=pos.y-(node.hig/2)*scale
+						offx=node.offx||0
+						offy=node.offy||0
+						c2.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
+						c2.globalAlpha = 1
+					}						
+				}
+				return node
+			},
+			imgd:function(a){
+				var node=this.node('imgd'),
+					imgo
+				node.type='imgd'
+				node.hit='rect'
+				loop(a,function(k,v){
+					node[k]=v
+				})
+				node.imgready=true
+				node.wid=node.wid || node.imgo.width
+				node.hig=node.hig || node.imgo.height
+				data=a.data
+				node.draw=function(c2){
+					c2=c2 || c0.c
+					if(node.imgready){
+						if(node.opa){
+							//c0.c.globalAlpha = node.opa
+						}
+						scale=node.getscale()
+						pos=node.getpos()
+						x=pos.x-(node.wid/2)*scale
+						y=pos.y-(node.hig/2)*scale
+						c2.drawImage(a.data,0,0, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
+						//c2.putImageData(data,x,y)
+						//c2.globalAlpha = 1
+					}						
+				}
+				return node
+			},	
+			pat:function(a){
+				var node=this.node('pat')
+				node.type='pat'
+				node.hit='rect'
+				var imgo=new Image()
+				loop(a,function(k,v){
+					node[k]=v
+				})		
+				imgo.src = a.src
+				node.imgo=imgo
+				node.imgready=false						
+				imgo.onload = function() {
+					node.imgready=true
+					node.pat=context.createPattern(node.imgo, 'repeat')
+					c0.render(node)
+				}
+				node.draw=function(){
+					if(node.imgready){
+						pos=node.getpos()
+						x=pos.x-node.wid/2
+						y=pos.y-node.hig/2
+						//c0.c.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid, node.hig)
+						c0.c.fillStyle = node.pat
+						c0.c.fillRect(x, y, node.wid, node.hig) // context.fillRect(x, y, width, height);				
+					}						
+				}
+				return node	
+			},
+			//rendering
+			clear:function(){
+				this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
+			},
+			render:function(node){
+				node=node || c0.root
+				if(node.visible){
+					if(node.draw && !node.hidden){
+						node.draw()
+					}
+					loop(node.children,function(i,e){
+						c0.render(e)
+					})
+				}		
+			},
+			draw:function(){
+				c0.cft=new Date().getTime()		
+				var bounds=c0.canvas.getBoundingClientRect(),
+					x=c0.lm.x-bounds.left,
+					y=c0.lm.y-bounds.top
+				c0.mvec=c0.sub(c0.m,{x:x,y:y})
+				c0.lm.x=c0.m.x
+				c0.lm.y=c0.m.y
+				
+				c0.clear()
+				if(c0.ondraw){
+					c0.ondraw(c0.cft-c0.lft)
+				}
+				c0.render()	
+				
+				//fps
+				c0.c.fillStyle='red'
+				c0.c.fillText('X:'+c0.m.x+'Y:'+c0.m.y+'FPS:'+(1000/(c0.cft-c0.lft)).toFixed(),10,10)		
+					
+				c0.lft=c0.cft
+				window.requestAnimationFrame(c0.draw)
+			},
+		}
+		if(a && a.canvas){
+			can.c=a.canvas
+		} else {
+			can.c=document.createElement('canvas')
+			document.body.appendChild(can.c)
+			if(a && a.id){
+				can.c.id=a.id
+			} else {
+				can.c.id='canvas'+new Date().getTime()
+			}
+		}
+		can.c2=can.c.getContext('2d')		
+		return can
+	},
 	init:function(resize){
 		this.resize=resize || false
 		this.nodes=[]
@@ -232,492 +739,6 @@ var c0={
 		}
 	},
 	//new objs
-	node:function(name){
-		var node={x:0,y:0},		
-			ext={
-				init:function(){
-					this.uid=c0.uid()
-					this.type='node'
-					this.name=name
-					this.parent=0	
-					this.children=[]
-					this.visible=true
-					this.an=0
-					this.scale=1
-					this.sx=1
-					this.sy=1
-					this.hit=0
-					this.events={}
-					this.enabled=false
-					this.active=false
-				},
-				//rendering
-				to:function(parent){
-					parent=parent || c0.root
-					if(this.parent){
-						loop(this.parent.children,function(i,e){
-							if(e==this){
-								this.parent.children.splice(i,1)
-								return false
-							}
-						})
-					}
-					parent.children.push(this)
-					this.parent=parent				
-					return this
-				},
-				rem:function(){
-					var ind=this.parent.children.indexOf(this)
-					this.parent.children.splice(ind,1)
-
-					ind=c0.nodes.indexOf(this)
-					c0.nodes.splice(ind,1)
-					
-					return this
-				},
-				//util	
-				mpos:function(){
-					var pos=this.getpos(),
-						scale=this.getscale(),
-						dif=c0.sub(c0.m,pos)
-					pos.x=dif.x/scale
-					pos.y=dif.y/scale
-					return pos
-				},
-				pos:function(p){
-					if(p){
-						this.x=p.x
-						this.y=p.y
-					} else {
-						return {
-							x:this.x,
-							y:this.y
-						}
-					}
-				},
-				getpos:function(){
-					var pos={
-							x:this.x,
-							y:this.y
-						}
-					if(this.parent){
-						var scale=this.parent.getscale()
-						pos.x*=scale
-						pos.y*=scale
-					
-						pos=c0.rot(pos,this.parent.getan())
-						var ppos=this.parent.getpos()
-						pos=c0.add(pos,ppos)
-					}
-					return pos
-				},			
-				getan:function(){
-					var an=this.an
-					if(this.parent){
-						an+=this.parent.getan()
-					}					
-					return an%360
-				},
-				getscale:function(){
-					var s=this.scale
-					if(this.parent){
-						s*=this.parent.getscale()
-					}
-					return s
-				},
-				fol:function(p,speed){
-					var p1=this.pos(),
-						p2=p,
-						dif=p2.sub(p1),
-						norm=c0.norm(dif),
-						dist=c0.dist(p1,p2),			
-						move={
-							x:norm.x*speed*c0.time.td,
-							y:norm.y*speed*c0.time.td
-						}		
-					if(Math.abs(move.x)>Math.abs(dif.x)){
-						move.x=dif.x
-					}
-					if(Math.abs(move.y)>Math.abs(dif.y)){
-						move.y=dif.y
-					}		
-					move=c0.add(p1,move)	
-					this.pos(move)		
-				},				
-				loop:function(p){},//todo
-				dist:function(p){
-					return c0.dist(this.getpos(),p)
-				},
-				ishit:function(p){
-					if(this.hit=='circ'){
-						if(c0.dist(this.getpos(),p)<=this.rad*this.getscale()){
-							c0.canvas.s('cursor:pointer')
-							return true
-						}						
-					} else {
-						//rect
-					}
-					var b=this.bounds
-					if(this.type=='circ'){
-						if(c0.dist(this.pos(),p)<=this.rad){
-							c0.canvas.s('cursor:pointer')
-							return true
-						}
-					} else {
-						var pos=this.getpos(),
-							an=this.getan(),
-							scale=this.getscale(),
-							w2=this.wid/2,
-							h2=this.hig/2
-							
-						pos=c0.sub(p,pos)
-						pos=c0.rot(pos,-an)
-						pos.x/=scale
-						pos.y/=scale										
-						if(pos.x>-w2 && pos.x<w2 && pos.y>-h2 && pos.y<h2){							
-							return true
-						}
-			
-					}
-					return false
-				},
-				move:function(speed){
-					var vec=c0.rot({x:0,y:-speed},this.an)
-					this.x+=vec.x
-					this.y+=vec.y					
-				},
-				//events
-				on:function(name,callback){
-					this.active=true
-					this.events[name]=callback
-					//c0[name][this.uid]=callback
-				},
-				off:function(name){
-					delete this.events[name]
-					//delete c0[name][this.uid]
-				},				
-				//collisions
-				enable:function(){
-					this.enabled=true
-					c0.collidables[this.uid]=this
-					return this
-				},
-				disable:function(){
-					this.enabled=false
-					delete c0.collidables[this.uid]
-					return this
-				}
-			}
-		loop(ext,function(k,v){
-			node[k]=v
-		})
-		node.init()
-		this.nodes.push(node)
-		return node
-	},
-	rect:function(a){
-		var node=this.node('circ')
-		node.type='rect'
-		node.hit='rect'
-		node.wid=100
-		node.hig=50
-		node.color='#aaa'
-		loop(a,function(k,v){
-			node[k]=v
-		})		
-		node.getpoints=function(){
-			var pos=this.getpos(),
-				an=this.getan(),
-				scale=this.getscale(),
-				w2=scale*this.wid/2,
-				h2=scale*this.hig/2,
-				pts=[
-					c0.add(pos,c0.rot({x:-w2,y:-h2},an)),
-					c0.add(pos,c0.rot({x: w2,y:-h2},an)),
-					c0.add(pos,c0.rot({x: w2,y: h2},an)),
-					c0.add(pos,c0.rot({x:-w2,y: h2},an))
-				]
-			
-			return pts
-		}
-		node.draw=function(){
-			var an=this.getan(),
-				pos=this.parent.getpos(),
-				pscale=this.parent.getscale(),
-				scale=this.getscale(),
-				spos=c0.rot(this.pos(),this.parent.an)
-			spos.x*=pscale
-			spos.y*=pscale			
-			pos=c0.add(pos,spos)
-						
-			var w2=node.wid/2,
-				h2=node.hig/2,
-				pts=[
-					c0.rot({x:-w2,y:-h2},an),
-					c0.rot({x: w2,y:-h2},an),
-					c0.rot({x: w2,y: h2},an),
-					c0.rot({x:-w2,y: h2},an)
-				]
-			
-			var c=c0.c		
-			
-			c.beginPath()			
-			c.moveTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
-			c.lineTo(pos.x+pts[1].x*scale,pos.y+pts[1].y*scale)
-			c.lineTo(pos.x+pts[2].x*scale,pos.y+pts[2].y*scale)
-			c.lineTo(pos.x+pts[3].x*scale,pos.y+pts[3].y*scale)
-			c.lineTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
-			c.closePath()					
-			if(this.color){
-				c.fillStyle = this.color
-				c.fill()
-			}
-			if(this.linewid){
-				c.lineWidth = this.linewid*scale
-				c.strokeStyle = this.linecolor
-				c.stroke()
-			}
-		}
-		
-		return node
-	},
-	circ:function(a){
-		var node=this.node('circ')		
-		node.type='circ'
-		node.hit='circ'
-		node.arc=2 * Math.PI
-		loop(a,function(k,v){
-			node[k]=v
-		})
-		node.draw=function(){
-			var c=c0.c,
-				pos=this.parent.getpos(),
-				spos=c0.rot(this.pos(),this.parent.getan()),
-				pscale=this.parent.getscale()
-			
-			spos.x*=pscale
-			spos.y*=pscale
-			
-			pos=c0.add(pos,spos)
-				
-				//+c0.ator(node.getan())
-			c.beginPath()			
-			an=Math.PI*1.5+c0.ator(node.getan())
-			c.arc(pos.x,pos.y, this.rad*this.getscale(), an-node.arc/2, an+node.arc/2, false)
-			if(this.color){
-				c.fillStyle = this.color
-				c.fill()
-			}
-			if(this.linewid){
-				c.lineWidth = this.linewid*this.getscale()
-				c.strokeStyle = this.linecolor
-				c.stroke()
-			}
-		}
-		return node		
-	},
-	line:function(a){
-		var node=this.node('line')
-		node.type='line'
-		loop(a,function(k,v){
-			node[k]=v
-		})
-		node.draw=function(){		
-			var c=c0.c,
-				pos=this.parent.getpos(),
-				an=this.parent.getan(),
-				p1=c0.add(pos,c0.rot(this.p1,an)),				
-				scale=this.getscale()
-				
-			var sp2=c0.rot(this.p2,an)
-			sp2.x*=scale
-			sp2.y*=scale
-			var p2=c0.add(pos,sp2)
-				
-			c.beginPath()
-			c.moveTo(p1.x,p1.y)
-			c.lineTo(p2.x,p2.y)			
-			c.strokeStyle = this.color || 'black'
-			if(this.linewid){
-				c.lineWidth = this.linewid*this.getscale()			
-			}			
-			c.stroke()
-		}
-		return node			
-	},
-	text:function(a){
-		//context.font = "normal normal 20px Verdana";
-		//[font style][font weight][font size][font face]
-		var node=this.node('text')
-		node.hit='rect'
-		loop(a,function(k,v){
-			node[k]=v
-		})		
-		node.type='text'
-		
-		
-		node.draw=function(){
-			var c=c0.c,
-				pos=this.parent.getpos(),
-				an=this.parent.getan(),				
-				scale=this.getscale(),
-				spos=c0.rot(this.pos(),an)
-			//console.log(this.pos())
-			spos.x*=scale
-			spos.y*=scale
-			pos=c0.add(pos,spos)
-			c.font='Xpx sans-serif'.replace('X',(10*scale).round())
-			if(this.font){
-				c.font = this.font
-			}
-			c.fillStyle=this.color || 'black'			
-			if(this.linewid){
-				c.lineWidth = this.linewid
-				c.strokeStyle = this.linecolor || 'black'				
-				c.strokeText(this.text,pos.x,pos.y)
-			}
-			c.fillText(this.text,pos.x,pos.y)
-		}
-		return node			
-	},
-	img:function(a){
-		var node=this.node('img'),
-			imgo
-		node.type='img'
-		node.hit='rect'
-		loop(a,function(k,v){
-			node[k]=v
-		})
-		if(typeof(a.src)=='string'){
-			imgo=new Image()
-			imgo.src = a.src
-			node.imgo=imgo
-			node.imgready=false						
-			imgo.onload = function() {
-				node.imgready=true
-				node.wid=node.wid || node.imgo.width
-				node.hig=node.hig || node.imgo.height			
-				c0.render(node)
-			}
-			
-		} else {
-			node.imgready=true
-			node.wid=node.wid || node.imgo.width
-			node.hig=node.hig || node.imgo.height			
-			imgo=a.src			
-		}
-		node.draw=function(c2){
-			c2=c2 || c0.c
-			if(node.imgready){
-				if(node.opa){
-					c0.c.globalAlpha = node.opa
-				}
-				scale=node.getscale()
-				pos=node.getpos()
-				x=pos.x-(node.wid/2)*scale
-				y=pos.y-(node.hig/2)*scale
-				offx=node.offx||0
-				offy=node.offy||0
-				c2.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
-				c2.globalAlpha = 1
-			}						
-		}
-		return node
-	},
-	imgd:function(a){
-		var node=this.node('imgd'),
-			imgo
-		node.type='imgd'
-		node.hit='rect'
-		loop(a,function(k,v){
-			node[k]=v
-		})
-		node.imgready=true
-		node.wid=node.wid || node.imgo.width
-		node.hig=node.hig || node.imgo.height
-		data=a.data
-		node.draw=function(c2){
-			c2=c2 || c0.c
-			if(node.imgready){
-				if(node.opa){
-					//c0.c.globalAlpha = node.opa
-				}
-				scale=node.getscale()
-				pos=node.getpos()
-				x=pos.x-(node.wid/2)*scale
-				y=pos.y-(node.hig/2)*scale
-				c2.drawImage(a.data,0,0, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
-				//c2.putImageData(data,x,y)
-				//c2.globalAlpha = 1
-			}						
-		}
-		return node
-	},	
-	pat:function(a){
-		var node=this.node('pat')
-		node.type='pat'
-		node.hit='rect'
-		var imgo=new Image()
-		loop(a,function(k,v){
-			node[k]=v
-		})		
-		imgo.src = a.src
-		node.imgo=imgo
-		node.imgready=false						
-		imgo.onload = function() {
-			node.imgready=true
-			node.pat=context.createPattern(node.imgo, 'repeat')
-			c0.render(node)
-		}
-		node.draw=function(){
-			if(node.imgready){
-				pos=node.getpos()
-				x=pos.x-node.wid/2
-				y=pos.y-node.hig/2
-				//c0.c.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid, node.hig)
-				c0.c.fillStyle = node.pat
-				c0.c.fillRect(x, y, node.wid, node.hig) // context.fillRect(x, y, width, height);				
-			}						
-		}
-		return node	
-	},
-	//rendering
-	clear:function(){
-		this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
-	},
-	render:function(node){
-		node=node || c0.root
-		if(node.visible){
-			if(node.draw && !node.hidden){
-				node.draw()
-			}
-			loop(node.children,function(i,e){
-				c0.render(e)
-			})
-		}		
-	},
-	draw:function(){
-		c0.cft=new Date().getTime()		
-		var bounds=c0.canvas.getBoundingClientRect(),
-			x=c0.lm.x-bounds.left,
-			y=c0.lm.y-bounds.top
-		c0.mvec=c0.sub(c0.m,{x:x,y:y})
-		c0.lm.x=c0.m.x
-		c0.lm.y=c0.m.y
-		
-		c0.clear()
-		if(c0.ondraw){
-			c0.ondraw(c0.cft-c0.lft)
-		}
-		c0.render()	
-		
-		//fps
-		c0.c.fillStyle='red'
-		c0.c.fillText('X:'+c0.m.x+'Y:'+c0.m.y+'FPS:'+(1000/(c0.cft-c0.lft)).toFixed(),10,10)		
-			
-		c0.lft=c0.cft
-		window.requestAnimationFrame(c0.draw)
-	},	
 	//loops and tasks
 	mainloop:function(){
 		this.dotasks()

@@ -167,7 +167,7 @@ server.listen(port)
 var io=socketio.listen(server)
 io.on('connection', function(socket){
 	if(handler.socket){
-		handler.socket(socket)
+		handler.socket(socket,io)
 	}
 })	
 

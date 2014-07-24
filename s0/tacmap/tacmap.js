@@ -14,9 +14,7 @@ d.on('ready',function(e){
 	socket=io()
 	socket.on('connect', function(){
 		console.log('con')
-		socket.emit('tacmap', {
-			type:'new'
-		})
+		socket.emit('tacmap',{})
 		socket.on('tacmap', function(data){
 			var handle={
 				joinque:function(data){
@@ -32,15 +30,14 @@ d.on('ready',function(e){
 					d.find('.leaveque').hide()
 				},
 				joingame:function(data){
-					var pls=[data.p1,data.p2]
-					d.find('.lobby').hide()
-					tac.startgame(pls)
-					
+					tac.startgame(data)
 				},
 				leavegame:function(data){
 					console.log('leavegame')
+					tac.endgame(data)
 				},
-				unitstats:function(data){					
+				unitstats:function(data){
+					console.log('got unitstats')
 					unitstats=data.unitstats
 					lobby.init()
 					
@@ -51,9 +48,6 @@ d.on('ready',function(e){
 				remunit:function(data){
 					var unit=tac.getunit(data.uid)					
 					tac.remunit(unit)
-				},
-				setmapdata:function(data){					
-					tac.setmapdata(data)
 				}
 			}				
 			if(handle[data.type]){
@@ -63,13 +57,16 @@ d.on('ready',function(e){
 		socket.on('disconnect', function(){
 			console.log('disco')
 		})		
+		socket.on('error', function(e){
+			console.log('error',e)
+		})				
 	})
 })
 var css=d.dss.new('lobbystyles')
 function addstyles(){
 	css.new('body',
 		'margin:0px',
-		'background-color:#000'
+		'background-color:yellowgreen'
 	)
 	css.new('body,input,td,th',
 		'font-family:Open Sans Condensed, sans-serif',
@@ -78,20 +75,6 @@ function addstyles(){
 		'color:#222',	
 		'text-align:center',
 		'text-transform: uppercase'	
-	)
-	css.new('.but',
-		'border:3px solid #aaa',
-		'border-radius:64px',
-		'background-color:#fff',
-		'margin:2px',
-		'cursor:pointer',
-		'transition:all 0.5s'
-	)
-
-	css.new('.but:hover',
-		//'border:2px solid orange',
-		'background-color:#222',
-		'color:#eee'
 	)
 	css.new('*.selected',
 		'border:3px solid yellowgreen'
@@ -112,6 +95,25 @@ function addstyles(){
 	css.new('.iblocks>*',
 		'display:inline-block'
 	)
+	css.new('.but',
+		'color:#222',
+		'cursor:pointer',
+		'border-radius: 64px',
+		'border: 2px solid #eee',
+		//'margin: 2px',
+		//'box-sizing:border-box',
+		'background-color:#fff',
+		'box-shadow: inset #222 0px 0px 10px 0px',
+		'transition:all 0.5s'
+	)
+	css.new('.but:hover',
+		'color:#eee',
+		'background-color:#666'
+	)	
+	css.new('.max',
+		'width:100%',
+		'height:100%'
+	)	
 	css.show()
 }
 addstyles()
@@ -350,6 +352,13 @@ var gfx={
 gfx.init()
 gfx.setsize(64,64)
 
+var endbut=d.body.r('div class=endbut')
+	.s('width:64px height:64px background:url(ico64.png) -448px -192px position:absolute top:0px right:0px z-index:1')
+	.on(press,function(e){
+		console.log('end game')
+		tac.endgame()
+	})
+endbut.hide()
 var lobby={
 	unittype:'',
 	armored:false,
@@ -372,6 +381,104 @@ var lobby={
 			.s('position:absolute top:0px left:0px width:100% height:100%')
 			.s('background-color:rgba(0,0,0,0.5)')
 		
+		var headwrap=lo.r('div class=headwrap'),
+			head=headwrap.r('div class=head cols')
+			head.s('background-color:#BEC7B1 width:100%')
+				.r('div class=iblocks')
+					.s('width:1px text-align:center')
+					.r('div class=applogo but')
+						.s('width:64px height:64px background-image:url(ico64.png) background-position: -192px -128px')
+						.on(press,function(e){
+							location='http://88.196.53.29:4444'
+						})
+					/*
+					.p.r('div class=apptitle')
+						.s('font-size:48px color:#7DB100 vertical-align:top')
+						.h('tacmap')
+					*/
+				.p.p.r('div class=menu iblocks')
+					.s('vertical-align:middle')
+					.r('div class=but')
+						.h('battle')
+						.s('font-size:24px padding:0px 18px')
+						.s('border-top-right-radius:0px border-bottom-right-radius:0px')
+					.p.r('div class=but')
+						.h('team up')
+						.s('font-size:24px padding:0px 18px')
+						.s('border-top-left-radius:0px border-bottom-left-radius:0px')
+					.p.r('div class=but')
+						.h('conquer')
+						.s('font-size:24px padding:0px 18px')
+						.on(press,function(e){
+							conquer.show()
+						})
+			
+			function addlogin(){
+				var loginbut=head.r('div')
+					.s('width:1px')
+						.r('div class=but')
+						.s('width:64px height:64px float:right cursor:pointer')
+						.s('background-image:url(ico64.png) background-position:0px -128px')
+				loginbut.on(down,function(e){
+					if(loginbut.hasclass('logout')){
+						
+					} else {
+						var login=d.body.r('div class=login')
+							.s('position:absolute top:0px left:0px width:100% height:100%')
+							.s('background-color:#222')
+							.s('text-align:center')
+						login.r('div')
+							.h('login')
+							.s('font-size:24px color:#eee')							
+						login.r('input id=name class=but')
+							.s('display: block margin: 0 auto text-align:center')
+							.s('font-size:24px')
+						login.r('input id=pasw type=password class=but')
+							.s('display: block margin: 0 auto text-align:center')
+							.s('font-size:24px')
+						bwrap=login.r('div class=iblocks')
+							.s('text-align:center')
+						//save
+						bwrap.r('div id=save class=but')
+							.s('width:64px height:64px background-image:url(ico64.png) background-position:-512px -128px')
+						//cancel
+						bwrap.r('div id=cancel class=but')
+							.s('width:64px height:64px background-image:url(ico64.png) background-position:-448px -192px')
+							.on(down,function(e){
+								login.rem()
+							})
+							
+						//register
+						var register=login.r('div class=register')
+						register.r('div')
+							.h('new user')
+							.s('font-size:24px color:#eee')
+						register.r('input id=name class=but')
+							.s('display: block margin: 0 auto text-align:center')
+							.s('font-size:24px')
+						register.r('input id=pasw type=password class=but')
+							.s('display: block margin: 0 auto text-align:center')
+							.s('font-size:24px')
+						register.r('input id=repasw type=repassword class=but')
+							.s('display: block margin: 0 auto text-align:center')
+							.s('font-size:24px')
+						bwrap=register.r('div class=iblocks')
+							.s('text-align:center')
+						//save
+						bwrap.r('div id=save class=but')
+							.s('width:64px height:64px background-image:url(ico64.png) background-position:-512px -128px')
+						//cancel
+						bwrap.r('div id=cancel class=but')
+							.s('width:64px height:64px background-image:url(ico64.png) background-position:-448px -192px')
+							.on(down,function(e){
+								login.rem()
+							})
+
+					}
+				})
+			}
+			addlogin()
+		
 		//top
 		var top=lo.r('div class=top')
 			.s('height: 100%')
@@ -391,8 +498,24 @@ var lobby={
 						name:name.val(),
 						army:lobby.units
 					})
+					var now = new Date()
+					var time = now.getTime()
+					time += 3600 * 1000*1000
+					now.setTime(time)
+					
 					d.cookie='name='+name.val()
 					d.cookie='army='+JSON.stringify(lobby.units)
+					d.cookie = [
+						'name=' + name.val(),
+						'expires=' + now.toUTCString()
+						//'path=/'
+					].join('; ')
+					d.cookie = [
+						'army=' + JSON.stringify(lobby.units),
+						'expires=' + now.toUTCString()
+						//'path=/'
+					].join('; ')
+						
 				} else {
 					name.focus()
 				}
@@ -580,7 +703,9 @@ var lobby={
 		},
 		hide:function(){
 			var ele=d.find('.lobby .mid .unitselect')
-			ele.h('')
+			if(ele){
+				ele.h('')
+			}
 			return ele
 		},
 		calctotalhp:function(){
@@ -597,7 +722,34 @@ var lobby={
 		}
 	}
 }
-
+var conquer={	
+	show:function(){
+		var co=d.body.r('div class=max conquer')
+		co.s('background-color:#222 position:absolute top:0px left:0px')
+		var close=co.r('div class=but')
+		close.s('width:64px height:64px background-image:url(ico64.png) background-position:-128px -192px')
+			.s('position:absolute top:0px right:0px')
+			.on(press,function(e){
+				conquer.hide()
+			})
+		var conquercanvas=co.r('canvas id=conquercanvas width=512 height=512'),
+			grid=[],
+			sq
+		loop(256,function(i){
+			grid.push(c0.rect({
+				x:x,
+				y:y,
+				wid:30,
+				hig:30,
+				color:'yellowgreen'
+			}))
+		})
+		
+	},
+	hide:function(){
+		d.find('.conquer').rem()
+	}
+}
 var size=1000
 var tac={
 	team:0,
@@ -733,9 +885,14 @@ var tac={
 		}).to(this.unitstats)				
 		tac.map=map
 	},
-	setmapdata:function(data){
-		tac.map.wid=data.size
-		tac.map.hig=data.size
+	setmapdata:function(data){		
+		tac.map.wid=data.mapsize
+		tac.map.hig=data.mapsize
+		
+		loop(tac.map.terra.children,function(i,node){
+			node.rem()
+		})
+		
 		//bushes
 		var bushes=[],
 			bush,
@@ -798,9 +955,11 @@ var tac={
 		}								
 	},
 	handle:function(dt){
-		this.handlemap(dt)
-		this.handleunits(dt)	
-		this.handlehps()
+		if(this.map){
+			this.handlemap(dt)
+			this.handleunits(dt)	
+			this.handlehps()
+		}
 	},
 	handlemap:function (){
 		var smooth=4,
@@ -989,7 +1148,7 @@ var tac={
 		var dist,
 			dif,
 			vec,
-			len=64*tac.map.getscale(),
+			len=32*tac.map.getscale(),
 			veclen,
 			rat
 		loop(tac.units,function(i1,u1){
@@ -1100,8 +1259,18 @@ var tac={
 		})
 		return unit
 	},
-	startgame:function(pls){
+	startgame:function(data){
+		var pls=[
+			data.p1,data.p2
+		]
 		console.log('start game:',pls,d.getcookies('name'))
+		d.find('.lobby').hide()
+		d.find('.endbut').show()
+		console.log('join game')
+		tac.units=[]
+		tac.initmap()
+		tac.setmapdata(data)
+		
 		var unit,
 			pos,
 			step=0
@@ -1137,6 +1306,15 @@ var tac={
 			}
 			
 		})
+	},
+	endgame:function(data){
+		if(tac.map){
+			tac.map.rem()
+		}
+		d.find('.lobby').show()		
+		d.find('.endbut').hide()
+		d.find('.leaveque').trigger(press)
+		
 	},
 	handlehps:function(){
 		var remlist=[],
@@ -1327,7 +1505,7 @@ var tac={
 		tac.pls[pl.name]=pl
 	}
 }
-tac.initmap()
+
 d.on('gfxready',function(e){
 	lobby.show()
 })
