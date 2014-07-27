@@ -45,7 +45,7 @@ var c0={
 							this.children=[]
 							this.visible=true
 							this.an=0
-							this.scale=1
+							//this.scale=1
 							this.sx=1
 							this.sy=1
 							this.hit=0
@@ -55,7 +55,7 @@ var c0={
 						},
 						//rendering
 						to:function(parent){
-							parent=parent || c0.root
+							parent=parent || can.root
 							if(this.parent){
 								loop(this.parent.children,function(i,e){
 									if(e==this){
@@ -97,20 +97,31 @@ var c0={
 								}
 							}
 						},
+						scale:function(a){
+							if(a){
+								this.sx=a
+								this.sy=a
+							} else {
+								return {
+									sx:this.sx,
+									sy:this.sy
+								}
+							}
+						},
 						getpos:function(){
 							var pos={
 									x:this.x,
 									y:this.y
 								}
-							if(this.parent){
+							if(this.parent){								
 								var scale=this.parent.getscale()
-								pos.x*=scale
-								pos.y*=scale
-							
+								pos.x*=scale.sx
+								pos.y*=scale.sy
+								
 								pos=c0.rot(pos,this.parent.getan())
 								var ppos=this.parent.getpos()
 								pos=c0.add(pos,ppos)
-							}
+							}						
 							return pos
 						},			
 						getan:function(){
@@ -121,11 +132,14 @@ var c0={
 							return an%360
 						},
 						getscale:function(){
-							var s=this.scale
+							var sx=this.sx,
+								sy=this.sy
 							if(this.parent){
-								s*=this.parent.getscale()
+								sc=this.parent.getscale()
+								sx*=sc.sx
+								sy*=sc.sy
 							}
-							return s
+							return {sx:sx,sy:sy}
 						},
 						fol:function(p,speed){
 							var p1=this.pos(),
@@ -189,6 +203,12 @@ var c0={
 							this.y+=vec.y					
 						},
 						//events
+						trigger:function(name,data){
+							var fn=this.events[name]
+							if(fn){
+								fn(data)
+							}
+						},
 						on:function(name,callback){
 							this.active=true
 							this.events[name]=callback
@@ -208,6 +228,55 @@ var c0={
 							this.enabled=false
 							delete c0.collidables[this.uid]
 							return this
+						},
+						//animate:function(type,val,time,mode){
+						animate:function(fn){
+							var anim=fn
+							/*
+							var anim={
+								type:type,
+								mode:mode,
+								node:this,
+								val:val,
+								sx:this.sx,
+								sy:this.sy,
+								x:this.x,
+								y:this.y,
+								an:this.an,
+								color:this.color,
+								linecolor:this.linecolor,
+								linewid:this.linewid,
+								time:time,
+								start:new Date().getTime(),
+								end:new Date().getTime()+time,
+								rem:function(){
+									var ind=can.animations.indexOf(this)
+									can.animations.splice(ind,1)
+									node.anim=0
+								},
+								animate:function(dt,ct){									
+									if(ct>this.end){
+										if(this.type=='scale'){
+											//node.sx=this.val											
+											//node.sy=this.val
+										}									
+										this.rem()
+									} else {
+										if(this.type=='scale'){
+											var nr=(ct-this.start)
+											var sin=1+Math.sin((Math.PI)*nr*10/this.time)
+											//console.log(sin)
+											var val=sin*dt/1000
+											node.sx=this.sx+sin/10
+											node.sy=this.sy+sin/10
+										}
+									}
+								}
+							}
+							*/
+							can.animations.push(anim)
+							this.anim=anim
+							return anim
 						}
 					}
 				loop(ext,function(k,v){
@@ -218,7 +287,7 @@ var c0={
 				return node
 			},
 			rect:function(a){
-				var node=this.node('circ')
+				var node=this.node('rect')
 				node.type='rect'
 				node.hit='rect'
 				node.wid=100
@@ -226,59 +295,20 @@ var c0={
 				node.color='#aaa'
 				loop(a,function(k,v){
 					node[k]=v
-				})		
-				node.getpoints=function(){
-					var pos=this.getpos(),
-						an=this.getan(),
-						scale=this.getscale(),
-						w2=scale*this.wid/2,
-						h2=scale*this.hig/2,
-						pts=[
-							c0.add(pos,c0.rot({x:-w2,y:-h2},an)),
-							c0.add(pos,c0.rot({x: w2,y:-h2},an)),
-							c0.add(pos,c0.rot({x: w2,y: h2},an)),
-							c0.add(pos,c0.rot({x:-w2,y: h2},an))
-						]
-					
-					return pts
-				}
+				})
 				node.draw=function(){
-					var an=this.getan(),
-						pos=this.parent.getpos(),
-						pscale=this.parent.getscale(),
-						scale=this.getscale(),
-						spos=c0.rot(this.pos(),this.parent.an)
-					spos.x*=pscale
-					spos.y*=pscale			
-					pos=c0.add(pos,spos)
-								
-					var w2=node.wid/2,
-						h2=node.hig/2,
-						pts=[
-							c0.rot({x:-w2,y:-h2},an),
-							c0.rot({x: w2,y:-h2},an),
-							c0.rot({x: w2,y: h2},an),
-							c0.rot({x:-w2,y: h2},an)
-						]
-					
-					var c=c0.c		
-					
-					c.beginPath()			
-					c.moveTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
-					c.lineTo(pos.x+pts[1].x*scale,pos.y+pts[1].y*scale)
-					c.lineTo(pos.x+pts[2].x*scale,pos.y+pts[2].y*scale)
-					c.lineTo(pos.x+pts[3].x*scale,pos.y+pts[3].y*scale)
-					c.lineTo(pos.x+pts[0].x*scale,pos.y+pts[0].y*scale)
-					c.closePath()					
+					var c=can.c2					
+					c.beginPath()
+					c.rect(-this.wid/2,-this.hig/2,this.wid,this.hig)
 					if(this.color){
 						c.fillStyle = this.color
 						c.fill()
 					}
 					if(this.linewid){
-						c.lineWidth = this.linewid*scale
+						c.lineWidth = this.linewid//*scale
 						c.strokeStyle = this.linecolor
 						c.stroke()
-					}
+					}					
 				}
 				
 				return node
@@ -292,20 +322,10 @@ var c0={
 					node[k]=v
 				})
 				node.draw=function(){
-					var c=c0.c,
-						pos=this.parent.getpos(),
-						spos=c0.rot(this.pos(),this.parent.getan()),
-						pscale=this.parent.getscale()
-					
-					spos.x*=pscale
-					spos.y*=pscale
-					
-					pos=c0.add(pos,spos)
-						
-						//+c0.ator(node.getan())
+					var c=can.c2
 					c.beginPath()			
 					an=Math.PI*1.5+c0.ator(node.getan())
-					c.arc(pos.x,pos.y, this.rad*this.getscale(), an-node.arc/2, an+node.arc/2, false)
+					c.arc(0,0, this.rad, an-node.arc/2, an+node.arc/2, false)
 					if(this.color){
 						c.fillStyle = this.color
 						c.fill()
@@ -324,24 +344,20 @@ var c0={
 				loop(a,function(k,v){
 					node[k]=v
 				})
-				node.draw=function(){		
-					var c=c0.c,
-						pos=this.parent.getpos(),
-						an=this.parent.getan(),
-						p1=c0.add(pos,c0.rot(this.p1,an)),				
-						scale=this.getscale()
-						
-					var sp2=c0.rot(this.p2,an)
-					sp2.x*=scale
-					sp2.y*=scale
-					var p2=c0.add(pos,sp2)
-						
+				node.pos(node.p1)
+				node.draw=function(){
+					node.pos(node.p1)
+					var c=can.c2
 					c.beginPath()
-					c.moveTo(p1.x,p1.y)
-					c.lineTo(p2.x,p2.y)			
+					//c.moveTo(node.p1.x,node.p1.y)
+					c.moveTo(0,0)
+					var scale=this.parent.getscale(),
+						x=node.p2.x-node.p1.x,
+						y=node.p2.y-node.p1.y
+					c.lineTo(x,y)
 					c.strokeStyle = this.color || 'black'
 					if(this.linewid){
-						c.lineWidth = this.linewid*this.getscale()			
+						c.lineWidth = this.linewid*this.getscale().sx			
 					}			
 					c.stroke()
 				}
@@ -354,21 +370,12 @@ var c0={
 				node.hit='rect'
 				loop(a,function(k,v){
 					node[k]=v
-				})		
+				})
 				node.type='text'
-				
-				
-				node.draw=function(){
-					var c=c0.c,
-						pos=this.parent.getpos(),
-						an=this.parent.getan(),				
-						scale=this.getscale(),
-						spos=c0.rot(this.pos(),an)
-					//console.log(this.pos())
-					spos.x*=scale
-					spos.y*=scale
-					pos=c0.add(pos,spos)
-					c.font='Xpx sans-serif'.replace('X',(10*scale).round())
+				node.draw=function(){					
+					var c=can.c2
+					c.textAlign = this.align || 'center'
+					c.font='Xpx sans-serif'.replace('X',node.size)
 					if(this.font){
 						c.font = this.font
 					}
@@ -376,85 +383,53 @@ var c0={
 					if(this.linewid){
 						c.lineWidth = this.linewid
 						c.strokeStyle = this.linecolor || 'black'				
-						c.strokeText(this.text,pos.x,pos.y)
+						c.strokeText(this.text,node.x,node.y)
 					}
-					c.fillText(this.text,pos.x,pos.y)
+					c.fillText(this.text,node.x,node.y)
 				}
 				return node			
 			},
 			img:function(a){
-				var node=this.node('img'),
-					imgo
+				var node=this.node('img')
 				node.type='img'
 				node.hit='rect'
+				node.imgready=false
 				loop(a,function(k,v){
 					node[k]=v
 				})
-				if(typeof(a.src)=='string'){
-					imgo=new Image()
-					imgo.src = a.src
-					node.imgo=imgo
-					node.imgready=false						
-					imgo.onload = function() {
-						node.imgready=true
-						node.wid=node.wid || node.imgo.width
-						node.hig=node.hig || node.imgo.height			
-						c0.render(node)
-					}
-					
+				if(node.img){		
+					//from image object
+					if(node.img.tagName.toLowerCase()=='canvas'){
+						//from canvas
+						var img=new Image()
+						img.src=node.img.toDataURL('image/png')
+						node.img=img
+					}					
+					node.src=node.img.src
 				} else {
-					node.imgready=true
-					node.wid=node.wid || node.imgo.width
-					node.hig=node.hig || node.imgo.height			
-					imgo=a.src			
+					//from src
+					node.img=new Image()				
+					node.img.src=a.src
 				}
-				node.draw=function(c2){
-					c2=c2 || c0.c
-					if(node.imgready){
-						if(node.opa){
-							c0.c.globalAlpha = node.opa
-						}
-						scale=node.getscale()
-						pos=node.getpos()
-						x=pos.x-(node.wid/2)*scale
-						y=pos.y-(node.hig/2)*scale
-						offx=node.offx||0
-						offy=node.offy||0
-						c2.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
-						c2.globalAlpha = 1
-					}						
+				if(node.onload){
+					node.on('load',node.onload)
+				}
+				node.img.onload=function(e){
+					node.imgready=true
+					node.trigger('load')
+					//can.draw(node)
+				}					
+								
+				node.draw=function(){
+					var c=can.c2
+					c.drawImage(node.img, 
+						node.offx||0,node.offy||0,
+						node.wid,node.hig,
+						-node.wid/2,-node.hig/2,
+						node.wid,node.hig)						
 				}
 				return node
 			},
-			imgd:function(a){
-				var node=this.node('imgd'),
-					imgo
-				node.type='imgd'
-				node.hit='rect'
-				loop(a,function(k,v){
-					node[k]=v
-				})
-				node.imgready=true
-				node.wid=node.wid || node.imgo.width
-				node.hig=node.hig || node.imgo.height
-				data=a.data
-				node.draw=function(c2){
-					c2=c2 || c0.c
-					if(node.imgready){
-						if(node.opa){
-							//c0.c.globalAlpha = node.opa
-						}
-						scale=node.getscale()
-						pos=node.getpos()
-						x=pos.x-(node.wid/2)*scale
-						y=pos.y-(node.hig/2)*scale
-						c2.drawImage(a.data,0,0, node.wid,node.hig,x,y, node.wid*scale, node.hig*scale)
-						//c2.putImageData(data,x,y)
-						//c2.globalAlpha = 1
-					}						
-				}
-				return node
-			},	
 			pat:function(a){
 				var node=this.node('pat')
 				node.type='pat'
@@ -485,54 +460,140 @@ var c0={
 			},
 			//rendering
 			clear:function(){
-				this.c.clearRect(0, 0, this.canvas.width, this.canvas.height)
+				this.c2.clearRect(0, 0, this.canvas.width, this.canvas.height)
+			},
+			draw:function(node){
+				var c=this.c2
+				if(!node){
+					node=this.root
+				}				
+				if(node.visible){
+					//console.log('node:',node)
+					c.save()
+					//translate
+					c.translate(node.x,node.y)
+					//rotate
+					c.rotate(c0.ator(node.an))
+					//scale
+					c.scale(node.sx,node.sy)					
+					if(node.draw){
+						node.draw()
+					}					
+					loop(node.children,function(i,chi){
+						can.draw(chi)
+					})
+					//restore
+					c.restore()
+				}
 			},
 			render:function(node){
-				node=node || c0.root
-				if(node.visible){
-					if(node.draw && !node.hidden){
-						node.draw()
+				node=node||this.root
+				this.clear()
+				this.draw(node)
+			},			
+			//events
+			doevents:function(event,node,hits){		
+				hits=hits || []
+				//console.log('doevents:',node.active,node.events)
+				if(node.active && node.events[event]){			
+					if(node.hit){
+						var hit
+						if(node.hit=='rect'){							
+							hit=c0.dr(can.m,node)							
+						} else if(node.hit=='circ'){
+							hit=c0.dc(can.m,node)					
+						}
+						if(hit){
+							hits.splice(0,0,node)
+						}
 					}
-					loop(node.children,function(i,e){
-						c0.render(e)
-					})
-				}		
-			},
-			draw:function(){
-				c0.cft=new Date().getTime()		
-				var bounds=c0.canvas.getBoundingClientRect(),
-					x=c0.lm.x-bounds.left,
-					y=c0.lm.y-bounds.top
-				c0.mvec=c0.sub(c0.m,{x:x,y:y})
-				c0.lm.x=c0.m.x
-				c0.lm.y=c0.m.y
-				
-				c0.clear()
-				if(c0.ondraw){
-					c0.ondraw(c0.cft-c0.lft)
 				}
-				c0.render()	
-				
-				//fps
-				c0.c.fillStyle='red'
-				c0.c.fillText('X:'+c0.m.x+'Y:'+c0.m.y+'FPS:'+(1000/(c0.cft-c0.lft)).toFixed(),10,10)		
-					
-				c0.lft=c0.cft
-				window.requestAnimationFrame(c0.draw)
+				loop(node.children,function(i,chi){
+					can.doevents(event,chi,hits)
+				})
+				return hits
 			},
-		}
-		if(a && a.canvas){
-			can.c=a.canvas
-		} else {
-			can.c=document.createElement('canvas')
-			document.body.appendChild(can.c)
-			if(a && a.id){
-				can.c.id=a.id
-			} else {
-				can.c.id='canvas'+new Date().getTime()
+			ct:new Date().getTime(),
+			lt:new Date().getTime(),
+			dt:0,
+			animations:[],
+			animate:function(){
+				this.ct=new Date().getTime()
+				this.dt=this.ct-this.lt
+				loop(this.animations,function(i,anim){					
+					//anim.animate(can.dt,can.ct)
+					anim(can.dt,can.ct)
+				})
+				this.lt=this.ct
 			}
 		}
-		can.c2=can.c.getContext('2d')		
+		//add root node
+		can.root=can.node('root')
+		
+		if(a && a.canvas){
+			can.canvas=a.canvas
+		} else {
+			can.canvas=document.createElement('canvas')
+			document.body.appendChild(can.canvas)
+			if(a && a.id){
+				can.canvas.id=a.id
+			} else {
+				can.canvas.id='canvas'+new Date().getTime()
+			}
+			if(a.wid){
+				can.canvas.width=a.wid
+			}
+			if(a.hig){
+				can.canvas.height=a.hig
+			}
+		}
+		can.c2=can.canvas.getContext('2d')
+		function addevents(){				
+			can.m={
+				x:0,y:0
+			}
+			var bounds,
+				x=0,
+				y=0,
+				events={
+					click:0,
+					mousedown:0,
+					mouseup:0,
+					dblclick:0,
+					mousewheel:0,
+					mousemove:function(e){
+						bounds=can.canvas.getBoundingClientRect()
+						x=e.x-bounds.left
+						y=e.y-bounds.top
+						can.m.x=x
+						can.m.y=y					
+					},
+					mouseover:0,
+					mouseout:0,
+					touchstart:0,
+					touchmove:0,
+					touchend:0,
+					touchenter:0,
+					touchleave:0,
+					touchcancel:0
+				}
+					
+			loop(events,function(n,fn){
+				can.canvas.on(n,function(e){					
+					if(fn) fn(e)
+					var hits=can.doevents(n,can.root)
+					loop(hits,function(i,node){
+						if(!e.stop){
+							e.node=node
+							node.events[n](e)
+						} else {
+							return false
+						}
+					})				
+				})			
+			})
+		}
+		addevents()
 		return can
 	},
 	init:function(resize){
@@ -565,82 +626,8 @@ var c0={
 		this.collidables={}
 		this.collisions={}
 	},
-	//events
-	addevents:function(){
-		function resize(){
-			if(c0.resize){
-				c0.canvas.width=window.innerWidth//-2	
-				c0.canvas.height=window.innerHeight//-2
-				c0.render()
-			}		
-		}
-		window.onresize=resize
-		resize()
-		
-		var bounds,
-			x=0,y=0,
-			events={
-				//keypress:0,
-				//keydown:0,
-				//keyup:0,
-				click:0,
-				mousedown:0,
-				mouseup:0,
-				dblclick:0,
-				mousewheel:0,
-				mousemove:function(e){
-					bounds=c0.canvas.getBoundingClientRect()
-					x=e.x-bounds.left
-					y=e.y-bounds.top
-					c0.m.x=x
-					c0.m.y=y					
-				},
-				mouseover:0,
-				mouseout:0,
-				touchstart:0,
-				touchmove:0,
-				touchend:0,
-				touchenter:0,
-				touchleave:0,
-				touchcancel:0
-			}
-				
-		loop(events,function(n,fn){
-			c0.canvas.on(n,function(e){
-				if(fn) fn(e)
-				var hits=c0.doevents(n,c0.root)
-				loop(hits,function(i,node){
-					if(!e.stop){
-						e.node=node
-						node.events[n](e)
-					} else {
-						return false
-					}
-				})				
-			})			
-		})
-	},
-	doevents:function(event,node,hits){		
-		hits=hits || []
-		if(node.active && node.events[event]){			
-			if(node.hit){
-				var hit
-				if(node.hit=='rect'){
-					hit=c0.dr(c0.m,node)
-				} else if(node.hit=='circ'){
-					hit=c0.dc(c0.m,node)					
-				}
-				if(hit){
-					hits.splice(0,0,node)
-				}
-			}
-		}
-		loop(node.children,function(i,chi){
-			c0.doevents(event,chi,hits)
-		})
-		return hits
-	},
 	//util
+	uidcount:0,
 	uid:function(){
 		//unigue id
 		var time=new Date().getTime()
@@ -738,7 +725,6 @@ var c0={
 			y:p.y*norm
 		}
 	},
-	//new objs
 	//loops and tasks
 	mainloop:function(){
 		this.dotasks()
@@ -842,7 +828,7 @@ var c0={
 		return sign
 	},
 	dc:function(p,c){
-		if(c0.dist(p,c.getpos())<c.rad*c.getscale()){
+		if(c0.dist(p,c.getpos())<c.rad*c.getscale().sx){
 			return true
 		}
 		return false
@@ -850,8 +836,8 @@ var c0={
 	dr:function(d,r){			
 		var pos=c0.sub(d,r.getpos()),
 			scale=r.getscale(),
-			w2=scale*r.wid/2,
-			h2=scale*r.hig/2
+			w2=scale.sx*r.wid/2,
+			h2=scale.sy*r.hig/2
 		pos=c0.rot(pos,-r.getan())
 		if(pos.x>-w2 && pos.x<w2 && pos.y>-h2 && pos.y<h2){
 			return true
@@ -1004,63 +990,3 @@ var c0={
 	rect v rect	
 	/**/
 }
-/*
-d.on('ready',function(e){
-	c0.run('resize')
-	rect=c0.rect({
-		x:400,
-		y:200,
-		wid:200,
-		hig:200,
-		color:'red'
-	}).to().enable()	
-	me=c0.circ({
-		x:130,
-		y:180,
-		rad:24,
-		color:'yellowgreen'		
-	}).to().enable()
-	dot=c0.circ({
-		x:80,
-		y:180,
-		rad:10,
-		color:'blue'		
-	}).to()
-	
-	line=c0.line({
-		p1:{
-			x:100,
-			y:100
-		},
-		p2:{
-			x:100,
-			y:200
-		},
-		linewid:5,
-		color:'red'
-	}).to().enable()
-
-	
-	c0.ondraw=function(){
-		var dif=c0.sub(c0.m,me.pos())
-		rect.an+=1
-		
-		me.x+=dif.x/10
-		me.y+=dif.y/10		
-		me.color='yellowgreen'
-		c0.collide(function(col){		
-			me.color='orange'
-			dot.pos(col.hit)
-		})
-		
-	}
-})
-/*
-c0.addtask({
-	life:1000,
-	interval:10,
-	fn:function(){
-		console.log('tick')
-	}
-})
-/**/

@@ -732,22 +732,58 @@ var conquer={
 			.on(press,function(e){
 				conquer.hide()
 			})
-		var conquercanvas=co.r('canvas id=conquercanvas width=512 height=512'),
-			grid=[],
-			sq
-		loop(256,function(i){
-			grid.push(c0.rect({
-				x:x,
-				y:y,
-				wid:30,
-				hig:30,
-				color:'yellowgreen'
-			}))
-		})
+			
+ 
+    // create an new instance of a pixi stage
+		var stage = new PIXI.Stage(0x66FF99);
+		
+		
+		// create a renderer instance.
+		var size=512
+			
+		var renderer = PIXI.autoDetectRenderer(size, size);
+		this.stage=stage
+		this.renderer=renderer
+		// add the renderer view element to the DOM
+		document.body.appendChild(renderer.view);
+		renderer.view.s('position:absolute top:0px left:50%')
+			.s('margin-left:-'+size/2)
+		requestAnimFrame( animate )
+	 
+		// create a texture from an image path
+		var texture = PIXI.Texture.fromImage("ico64.png");
+		// create a new Sprite using the texture
+		//var bunny = new PIXI.Sprite(texture);
+		var bunny = new PIXI.TilingSprite(texture,64,64);
+		bunny.tilePosition.x=64
+		console.log('pos:',bunny.tilePosition)
+	 
+		// center the sprites anchor point
+		bunny.anchor.x = 0.5;
+		bunny.anchor.y = 0.5;
+	 
+		// move the sprite t the center of the screen
+		bunny.position.x = size/2;
+		bunny.position.y = size/2;
+	 
+		stage.addChild(bunny);
+	 
+		function animate() {
+	 
+			requestAnimFrame( animate );
+	 
+			// just for fun, lets rotate mr rabbit a little
+			bunny.rotation += 0.1;
+	 
+			// render the stage   
+			renderer.render(stage);
+		}
 		
 	},
 	hide:function(){
 		d.find('.conquer').rem()
+		conquer.renderer.view.rem()
+		conquer.stage.removeChildren()
 	}
 }
 var size=1000

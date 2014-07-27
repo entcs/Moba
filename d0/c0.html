@@ -3,7 +3,9 @@
 		margin:0px;
 		background-color:#000;
 	}
-	
+	canvas{
+		background-color:#eee;
+	}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <body></body>
@@ -11,9 +13,88 @@
 <script src='c0.js'></script>
 <script>
 d.on('ready',function(e){
-	console.log('ready')
+	var mouse=d.body.r('div')
+		.s('position:absolute top:0px left:0px')
+	cc.canvas.on('mousemove',function(e){
+		var bounds=e.target.getBoundingClientRect()
+		mouse.h(['x:',e.pageX-bounds.left,'y:',e.pageY-bounds.top].join(''))
+	})
+	
 })
-var c1=c0.canvas()
+var cc=c0.canvas({
+	wid:600,
+	hig:600
+})
+/*
 
-//c0.run('resize')
+var c1=cc.circ({
+	x:200,
+	y:200,
+	rad:50,
+	//sy:3,
+	color:'green',
+	linewid:2,
+	linecolor:'#222'
+}).to(r1)
+c1.scale(2)
+var l1=cc.line({
+	p1:{x:0,y:0},
+	p2:{x:100,y:0},	
+	color:'green',
+	linewid:2,
+	linecolor:'#222'
+}).to(r1)
+l1.scale(2)
+var t1=cc.text({
+	text:'hello',
+	x:0,
+	y:0,
+	size:20,
+	//an:10,	
+	color:'blue',
+	align:'center'
+}).to(r1)
+t1.scale(2)
+*/
+var n1=cc.node({
+	x:0,
+	y:0
+}).to()
+//n1.scale(0.5)
+var r1=cc.rect({
+	x:300,
+	y:300,
+	wid:100,
+	hig:100,
+	//an:30,
+	color:'red',
+	linewid:2,
+	linecolor:'#222'
+}).to(n1)
+var val=1,
+	start=new Date().getTime(),
+	dif,
+	sin,
+	freq=2,//2 1 sec,
+	time=800,///(freq),
+	size=0.1
+r1.on('mousedown',function(e){
+	start=new Date().getTime()
+})
+r1.animate(function(dt,ct){
+	dif=ct-start
+	if(dif>=time){
+		r1.scale(1)
+	} else {		
+		sin=Math.sin(dif*Math.PI/(time/8))*size*(1-dif/time)
+		console.log(dif,sin)
+		r1.scale(val-sin)
+	}
+})
+function run(){
+	cc.animate()
+	cc.render()
+	requestAnimationFrame(run)
+}
+requestAnimationFrame(run)
 </script>
