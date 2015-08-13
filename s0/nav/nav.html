@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>	
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+</head>
+<body>
+<!--
+<button onclick="locme()">LOC</button>
+<div id="dmEvent"></div>
+<div id="moAccel"></div>
+<div id="moAccelGrav"></div>
+<div id="moRotation"></div>
+<div id="moInterval"></div>
+<div id="orient"></div>
+-->
+<script>
+var map,
+	zoom=15;
+function initialize() {
+  var mapOptions = {
+    zoom: zoom,
+    center: new google.maps.LatLng(58.378, 26.73),
+	disableDefaultUI: true,
+	//scrollwheel: false,
+	zoomable:false,
+	//disableDoubleClickZoom: true,
+	//draggable: false, 
+	zoomControl: false
+  };
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+	google.maps.event.addListener(map, 'zoom_changed', function() {
+		if (map.getZoom()!=zoom) map.setZoom(zoom)
+	});
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+/*
+function locme(){
+	navigator.geolocation.getCurrentPosition(
+		function(position) {
+			 alert("Lat: " + position.coords.latitude + "\nLon: " + position.coords.longitude);
+		},
+		function(error){
+			 alert(error.message);
+		}, 
+		{
+			enableHighAccuracy: true, 
+			maximumAge: 10000, 
+			timeout:10000
+		}
+	)
+}
+init();
+
+    
+function init() {
+  if ((window.DeviceMotionEvent) || ('listenForDeviceMovement' in window)) {
+	window.addEventListener('devicemotion', function(eventData){
+		var info, xyz = "name[X, Y, Z]";
+
+		// Grab the acceleration including gravity from the results
+		var acceleration = eventData.acceleration;
+		info = xyz.replace("X", round(acceleration.x));
+		info = info.replace("Y", round(acceleration.y));
+		info = info.replace("Z", round(acceleration.z));
+		info = info.replace("name", 'motion');
+		document.getElementById("moAccel").innerHTML = info;
+
+		// Grab the acceleration including gravity from the results
+		acceleration = eventData.accelerationIncludingGravity;
+		info = xyz.replace("X", round(acceleration.x));
+		info = info.replace("Y", round(acceleration.y));
+		info = info.replace("Z", round(acceleration.z));
+		info = info.replace("name", 'motion+grav');
+		document.getElementById("moAccelGrav").innerHTML = info;
+
+		// Grab the acceleration including gravity from the results
+		var rotation = eventData.rotationRate;
+		info = xyz.replace("X", eventData.alpha);
+		info = info.replace("Y", eventData.beta);
+		info = info.replace("Z", eventData.gamma);
+		document.getElementById("moRotation").innerHTML = info;
+
+		info = eventData.interval;
+		document.getElementById("moInterval").innerHTML = info;		
+	}, false);
+	
+	window.addEventListener('deviceorientation', function(eventData){
+		document.getElementById("orient").innerHTML=['orient',eventData.gamma || 0,eventData.beta || 0,eventData.alpha || 0].join(' ')
+	}, false);
+  } else {
+	document.getElementById("dmEvent").innerHTML = "Not supported on your device or browser.  Sorry."
+  }
+}
+
+function deviceMotionHandler(eventData) {
+
+}
+
+function round(val) {
+  var amt = 10;
+  return Math.round(val * amt) /  amt;
+}
+*/
+</script>
+<div id="map-canvas"></div>
+</body>
+</html>

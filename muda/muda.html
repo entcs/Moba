@@ -1,0 +1,519 @@
+<body></body>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700,300' rel='stylesheet' type='text/css'>
+<style>
+	body{
+		margin:0px;
+		font-family:Open Sans Condensed, sans-serif;
+		font-weight: bold;
+		color:#333;
+		text-transform: uppercase;
+	}
+	.area{
+		width:512px;
+	}
+	.loc{
+		width:64px;
+		height:64px;
+		background-color:#cccc99;
+		display:inline-block;
+		box-sizing:border-box;
+		border:1px solid #999966;
+		cursor:pointer;		
+	}
+	.loc:hover{
+		border:none;
+	}
+	.location{
+		width:512px;
+		height:512px;
+		position:absolute;
+		top:0px;
+		left:0px;
+		background-color:rgba(255,255,255,0.5)
+	}
+	.mob{
+		width:64px;
+		height:64px;
+		
+		box-sizing:border-box;
+		
+		cursor:pointer;
+		background-image:url(mobs.png);
+		background-position:0px 0px;
+	}
+	button{
+		border:4px solid white;
+		box-sizing:border-box;
+		border-radius:64px;
+		cursor:pointer;
+		height:64px;
+		font-size:24px;
+	}
+	.actions{
+		width:512px;
+		height:512px;
+		position:absolute;
+		top:0px;
+		left:0px;
+		background-color:rgba(0,0,0,0.3)
+	}
+	
+</style>
+<script src='d0.js'></script>
+<script>
+d.on('ready',function(e){
+	console.log('ready')
+	
+	Array.prototype.pick=function(count){
+		var res=[]
+		count=count||1
+		if(count<this.length){
+			var arr=this.slice(),				
+				val=arr.length
+				
+			loop(count,function(i){			
+				while(val==arr.length){
+					val=Math.floor(Math.random()*arr.length)				
+				}
+				res.push(arr.splice(val,1)[0])
+			})					
+		}
+		return res		
+	}	
+	document.len=function(o){
+		var len=0,
+			i=0
+		loop(o,function(k,v){
+			i+=1
+		})
+		return i
+	}	
+	
+	var pl={
+		lvl:10
+	}
+	var muda={
+		skills:[
+			{
+				'slash':{
+					en:10
+				}
+			},
+			{
+				'sting':{
+					en:10
+				}
+			},
+			{
+				'smash':{
+					en:10
+				}
+			}
+		],
+		addmob:function(a){
+			var base={
+				hp:100,
+				ap:10,
+				armor:10,
+				sp:10,
+				resist:10,
+				energy:100,
+				recovery:10,
+				speed:10
+			}
+			var mobs=[
+				{
+					name:'orc',
+					level:1,
+					hp:1.5,
+					ap:1.2,
+					skills:['enrage','smash']
+				}
+			]
+		}
+	
+	}
+	var map=d.r('div'),
+		area,
+		loc,
+		cont,
+		lvl,
+		col,
+		lvlspan=6,
+		dif,
+		mob,
+		px=0
+	loop(1,function(i){
+		area=map.r('div class=area')
+			.s('width:512px')
+		loop(64,function(j){
+			loc=area.r('div class=loc')
+			loc.on('click',function(e){
+				location.h('')
+				function genloc(){
+					cont=location.r('div class=content')
+					loop(5+d.rng(10),function(i){
+						lvl=(pl.lvl+lvlspan-(d.rng(lvlspan*2)+1))
+						dif=pl.lvl-lvl
+						if(dif>3){
+							px=0
+						} else if(dif>1){
+							px=-64
+						} else if(dif>-2){
+							px=-128
+						} else if(dif>-4){
+							px=-192
+						} else if(dif>-6){
+							px=-256
+						}
+						mob=cont.r('div class=mob')
+							//.h(lvl+' '+dif)
+							.s('position:absolute')
+							.s('left:'+d.rng(8)*64+'px')
+							.s('top:'+d.rng(8)*64+'px')
+							.s('background-position:'+px+'px '+(d.rng(10)*-64)+'px')
+							.s('border-color:'+col)
+							.on('click',function(e){
+								console.log('mob click')
+								e.stopPropagation()
+								actions.show()
+							})
+						
+					})
+				}
+				genloc()
+				location.show()
+			})
+		})
+	})
+	map.to(d.body)
+	
+	var location=d.body.r('div class=location')
+		.on('click',function(e){
+			location.hide()
+		})		
+	location.hide()
+	var actions=d.body.r('div class=actions')
+		.on('click',function(e){
+			actions.hide()
+		})
+		
+	actions.r('button html=fight')
+		.on('click',function(e){
+			e.stopPropagation()
+			actions.hide()
+		})	
+	actions.r('button html=steal')
+		.on('click',function(e){
+			e.stopPropagation()
+			actions.hide()
+		})	
+	
+	actions.hide()
+	var rng=function(val){
+		var nr=Math.floor(Math.random()*val)
+		if(nr==val) nr=g.rng(val)
+		return nr
+	}
+	var iw=d.body.r('div class=itemswrap'),
+		but=iw.r('button html=gen item'),
+		ta=iw.r('textarea class=itemarea')
+		
+	ta.s('width:500px height:200px')
+	but.on('click',function(e){
+		var item=items.genitem(10)
+		var text=[
+			item.quality.name+' '+item.subtype+' of '+ item.name
+		]
+		text.push('quality: '+item.value+'/'+item.maxvalue+' '+Math.floor(item.value/item.maxvalue*100)+'%')
+		text.push('level: '+item.level)
+		loop(item.stats,function(k,v){
+			text.push(k+' : '+v)			
+		})
+		ta.h(text.join('\n'))
+		ta.s('background-color:'+item.quality.color)
+		//console.log('item',item)
+		items.gen()
+	})
+	
+	
+	var items={
+		drops:{},
+		pickdist:64,
+		gen:function(level,quality){
+			//gen level
+			
+			//gen quality
+			
+			//gen stats
+			
+		},
+		pickobj:function(obj,count){
+			var arr=[],
+				val,
+				ares=[],
+				res={},
+				vobj
+			loop(obj,function(k,v){
+				arr.push(k)
+			})
+			ares=arr.pick(count)		
+			loop(ares,function(i,v){
+				res[v]=obj[v]
+			})
+			return res
+		},		
+		item:function(){
+			var item={
+				type:'item'
+			}
+			return item
+		},
+		genitem:function(level){
+			level=level || 1
+			var item=items.item(),
+				nrofstats=rng(3)+1,
+				showstats=[],
+				quality=items.genquality()				
+				
+			nrofstats=quality.value
+			//item.level=level
+			item.quality=quality
+			item.subtype=items.types.pick()[0]
+			item.stats=items.pickobj(items.stats,nrofstats)
+			item.value=0
+			
+			//stat val
+			console.log(quality.value)
+			var statval=Math.ceil(items.basevalue*quality.value/nrofstats),
+				val
+			item.maxvalue=items.basevalue*quality.value			
+			loop(item.stats,function(name,val){				
+				val=rng(statval)+1
+				item.stats[name]=val
+				item.value+=val
+			})
+			item.name=''
+			item.level=item.value//*item.quality.value
+			if(nrofstats!=1) item.name=items.getname(item)						
+			return item			
+		},
+		drop:function(level,pos){
+			var item=items.genitem(level)
+			item.vis=new Kinetic.Circle({
+				x:pos.x,
+				y:pos.y,
+				radius:8,
+				fill:item.quality.color
+			})
+			item.vis.on('mouseover',function(e){
+				objinfo.show(item)				
+			})
+			item.id=g.genid('item')
+			g.map.bot.add(item.vis)
+			g.items.drops[item.id]=item
+		},
+		pickup:function(item,pl){
+			var picked=pl.inventory.additem(item)
+			if(picked){
+				delete g.items.drops[item.id]
+				
+				//animate
+				var pos=pl.getPosition(),
+					tween = new Kinetic.Tween({
+						node: item.vis, 
+						duration: 0.2,
+						x: pos.x,
+						y: pos.y,
+						radius:1,
+						easing:Kinetic.Easings.EaseOut,
+						onFinish: function() {
+							item.vis.remove()
+						}									
+					})				
+				tween.play()					
+			}
+			return item
+		},
+		canpick:function(pl){
+			var plpos=pl.getPosition(),
+				dist,
+				pos
+				
+			loop(g.items.drops,function(i,item){
+				pos=item.vis.getPosition()
+				dist=g.dist(plpos,pos)
+				if(dist<g.items.pickdist){
+					g.items.pickup(item,pl)
+				}
+			})
+		},
+		genquality:function(){
+			 var quality='magic',
+				 val=Math.random(),
+				 item,
+				 ival
+				
+			loop(items.quality.length,function(i){
+				item=items.quality[items.quality.length-i-1]
+				ival=1-1/item.drop				
+				if(val>ival){
+					quality=item
+					return false
+				}
+			})
+			return quality
+		},
+		basevalue:100,
+		getname:function(item){
+			var match=0,
+				len=d.len(item.stats),
+				mlen,
+				name=''
+			
+			loop(items.names,function(itemname,itemstats){
+				mlen=itemstats.length
+				loop(itemstats,function(ind,statname){					
+					if(statname in item.stats){
+						//console.log('statname:',statname,item.stats)
+						match+=1
+					}
+				})
+				//console.log('match',mlen,match,len)
+				if(mlen==len && mlen==match) {					
+					name=itemname
+					console.log(name)
+					return false
+				}
+				match=0
+			})			
+			return name
+		},
+		names:{
+			combat:[
+				'attackpower',
+				'armor'
+			],
+			rage:[				
+				'attackpower',
+				'regeneration'
+			],
+			fury:[
+				'attackpowr',
+				'hitpoints'
+			],
+			cursing:[
+				'spellpower',
+				'resistance'
+			],			
+			sorcery:[
+				'spellpower',
+				'energy',				
+			],
+			combatcasting:[
+				'spellpower',
+				'armor',				
+			],
+			spellbreaking:[
+				'attackpower',
+				'resistance',				
+			],			
+			swiftness:[
+				'speed',
+				'enregen'
+			],
+			protection:[
+				'armor',
+				'resistance'
+			],
+			destruction:[
+				'attackpower',
+				'spellpower'
+			],
+			vitality:[
+				'hitpoints',
+				'regeneration'
+			],
+			energy:[
+				'energy',
+				'focus'
+			],
+			recovery:[
+				'focus',
+				'regeneration'
+			],
+			plenty:[
+				'hitpoints',
+				'energy'
+			]
+		},
+		stats:{
+			'health':0,
+			'regeneration':0,
+			'attackpower':0,
+			'spellpower':0,
+			'armor':0,
+			'resistance':0,
+			'energy':0,
+			'focus':0
+			//'speed':0
+		},
+		types:[
+			'helmet',
+			'armor',
+			'leggings',
+			'boots',
+			'gloves',
+			'shoulders',
+			'ring',
+			'weapon'			
+		],		
+		quality:[
+			{
+				name:'magical',
+				value:1,
+				drop:1,				
+				color:'yellowgreen'
+			},
+			{
+				name:'exeptional',
+				value:2,
+				drop:2,
+				color:'#1647C4'
+			},
+			{
+				name:'legendary',
+				value:3,
+				drop:3,
+				color:'purple'
+			},
+			{
+				name:'epic',
+				value:4,
+				drop:4,
+				color:'red'
+			},
+			{
+				name:'godmade',
+				value:5,
+				drop:5,
+				color:'orange'
+			}			
+		]
+	}
+	//quality chart
+	var qc=d.body.r('div class=qualitychart')
+	/*
+					name:'magical',
+				value:1,
+				drop:1,
+				color:'yellowgreen'
+	*/
+	loop(items.quality,function(i,q){
+		qc.r('div')
+			.h(q.name)
+			.s('background-color:'+q.color)
+	})
+
+})
+</script>

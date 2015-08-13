@@ -2,47 +2,32 @@
 </body>
 <script src='d0.js'></script>
 <script>
-
-var o={},
-a=[],
-time
-
-alert('-33')
-
-loop(10000000,function(i){
-	o[i]=i
-	a.push(i)
-})
-start = new Date().getTime()
-var x=o[9999999]
-time=new Date().getTime()-start
-alert(time)
-
-
-start = new Date().getTime()
-loop(a,function(i,e){
-	if (e==9999999){
-		time=new Date().getTime()-start
-		alert(time)
+function play(change){
+	var nr=d.rng(3),
+		list=[0,1,2],
+		pick=d.rng(3)
+	
+	if(change){
+		console.log(nr,pick)
+		loop(list,function(i,val){
+			if(val!=nr && val!=pick){
+				list.splice(i,1)
+				return false
+			}
+		})		
+		if(pick==list[0]){
+			pick=list[1]
+		} else {
+			pick=list[0]
+		}
+		console.log(nr,pick)
+		console.log('---')
 	}
+	return pick==nr?1:0
+}
+var count=0
+loop(10,function(i){
+	count+=play(1)
 })
-/*
-pmas
-p6llud
-tegevused
-ptegevused
-selct * from pmas where pmas_id in(
-	select pmas_id from p6llud where p6ld_id in(
-		select p6ld_id from tegevused where tegevus_id=(select id from mistehti where vabatekst='kyndmine')
-	)
-)
-
-select *
-from pmas 
-left join p6llud on (pmas.pmas_id = p6llud.pmas_id)
-left join p6ld 
-
-
-/**/
-
+console.log(count)
 </script>

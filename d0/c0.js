@@ -30,6 +30,8 @@ MouseEvent.prototype.node=false
 var c0={
 	canvas:function(a){		
 		var can={
+			over:0,
+			lastover:0,
 			nodes:[],
 			test:function(){
 				console.log('this:',this)
@@ -516,6 +518,9 @@ var c0={
 			ct:new Date().getTime(),
 			lt:new Date().getTime(),
 			dt:0,
+			run:function(){
+				setTimeout(can.run,20)
+			},
 			animations:[],
 			animate:function(){
 				this.ct=new Date().getTime()
@@ -566,7 +571,26 @@ var c0={
 						x=e.x-bounds.left
 						y=e.y-bounds.top
 						can.m.x=x
-						can.m.y=y					
+						can.m.y=y
+						
+						//mouse over mouse out
+						var hits=can.doevents('mouseover',can.root)
+						//var last=hits.pop()
+						loop(hits,function(i,node){
+							can.lastover=can.over
+							can.over=node
+						})
+						if(can.lastover!=can.over){
+							if(!e.stop){								
+								e.node=can.over
+								can.over.events['mouseover'](e)
+								console.log('mouseover')
+							} else {
+								return false
+							}
+						}
+						
+						
 					},
 					mouseover:0,
 					mouseout:0,
@@ -594,6 +618,7 @@ var c0={
 			})
 		}
 		addevents()
+		can.run()
 		return can
 	},
 	init:function(resize){
