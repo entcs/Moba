@@ -84,49 +84,69 @@ function draw(){
 	$('.gamesmade').html('gamesmade:'+gamesmade)
 
 	//update smallest number of game splayed
-	smallest=Number.MAX_VALUE
+	var smallest=Number.MAX_VALUE		
+	
 	loop(que,function(i,pl){
 		if(pl.games.length<smallest){
 			smallest=pl.games.length
 		}
+		//calc win quality
+		pl.quality=0
+		loop(pl.games,function(j,game){
+			if(game.win){
+				pl.quality+=game.name.rating
+			}
+		})
+		pl.quality/=pl.games.length
+		pl.quality=Math.floor(pl.quality)
 	})
 	$('.match').html('match('+smallest+')')
+	
+	
 
-
-	//sort que by rating
+	//sort que by rating 7 quality
 	que.sort(function(a,b){
 		if(a.rating>b.rating){
 			return -1
 		} else if(a.rating<b.rating){
 			return 1
 		} else {
-			return 0
+			if(a.quality>b.quality){
+				return -1
+			} else if(a.quality<b.quality){
+				return 1
+			} else {
+				return 0
+			}
 		}
 	})
+	/*
+		//calculate win quality
+		quality=0
+		if(game.win){
+			quality+=game.name.rating
+			
+		}
+		quality/=pl.games.length	
+	*/
 
 	$('.que').html('')
 	var ele,
 		quality,
 		winlist=[]
+		
 	loop(que,function(i,pl){
-		//calculate win quality
-		quality=0
 		winlist=[]		
-		loop(pl.games,function(i,game){
-			if(game.win){
-				quality+=game.name.rating
-				
-			}
+		loop(pl.games,function(j,game){
 			winlist.push(game.name.name)
 		})		
-		quality/=pl.games.length
 		ele=$([
 			'<div class="player">',
 			'<div>',
 			pl.name,			
 			' r: '+pl.rating,
-			'('+quality+')',
-			' g:'+winlist.join(';')+'('+pl.games.length+')',
+			'('+pl.quality+')',
+			' g:'+pl.games.length,
 			'</div>',			
 			'</div>'
 		].join(''))
@@ -180,11 +200,11 @@ function draw(){
 }
 function addplayer(name){
 	var pl={
-		name:name || 'name'+rng(111),
+		name:name || 'name'+rng(50),
 		games:[],
-		lastgamenr:0,
-		rating:1,
-		wins:0,
+		lastgamenr:0,		
+		rating:0,
+		quality:0,
 		status:'idle'
 	}	
 	players.push(pl)
@@ -314,4 +334,10 @@ $('body').on('click','.iwin',function(e){
 	draw()
 	
 })
+
+/*
+loop(17,function(i){
+	$('.add').trigger('click')
+})
+*/
 </script>
