@@ -238,7 +238,7 @@ var d=document
 		var ele=document.r(str)
 		ele.to(this)
 		return ele
-	}
+	}	
 	Element.prototype.s=function(str){
 		var split=str.split(':'),
 			parts,
@@ -278,6 +278,7 @@ var d=document
 	}	
 	//getters setters
 	d.on('ready',function(e){
+		/*
 		var styles=window.getComputedStyle(d.body)
 		loop(styles,function(name,val){
 			Element.prototype.__defineGetter__(name, function(){
@@ -286,7 +287,8 @@ var d=document
 			Element.prototype.__defineSetter__(name, function(val){
 				this.style[name]=val
 			})			
-		})		
+		})
+*/		
 	})		
 	//Nodelist
 	NodeList.prototype.toarray=function(){

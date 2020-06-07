@@ -1556,6 +1556,13 @@ d.extend(g,{
 var me,aim,move,moveto,vis,mapmouse={x:0,y:0}
 
 d.on('ready',function(){	
+
+Element.prototype.r=function(str){
+		var ele=document.r(str)
+		ele.to(this)
+		return ele
+	}	
+
 	g.renderhtml()
 	g.initkinetic()
 	g.initmap()	
