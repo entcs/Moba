@@ -1,0 +1,293 @@
+<style>
+	body {
+		margin:0px;
+		background-color:#000;
+	}
+	canvas{
+		background-color:#eee;
+	}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<body></body>
+<script src='d0/d0.js'></script>
+<script src='d0/c0.js'></script>
+<script>
+var cc=c0.addcanvas({
+	wid: '100%',
+	hig: '100%',
+})
+
+var marker = c0.node(),
+	range = 100,
+	sight = 300,
+	bulletspeed = 300,
+	movementspeed = 100,
+	cooldown = 10,
+	damage = 1,
+	plsize = 10
+	
+var c1=c0.circ({
+	x:c0.canvas.width/2,
+	y:c0.canvas.height/2,
+	rad:plsize,
+	color:'green',
+	linewid:2,
+	linecolor:'#222'
+})
+var c2=c0.circ({
+	x:0,
+	y:0,
+	rad:range,
+	//color:'green',
+	linewid:1,
+	linecolor:'#222'
+})
+c2.to(c1)
+var c3=c0.circ({
+	x:0,
+	y:0,
+	rad:sight,
+	//color:'green',
+	linewid:0.5,
+	linecolor:'#222'
+})
+c3.to(c1)
+
+var enemies=[]
+c0.canvas.on('click',function(e){	
+	//spawnenemy(c0.m.x,c0.m.y)
+	loop(100,function(i){
+		spawnenemy(30+c0.random(c0.canvas.width-60),30+c0.random(c0.canvas.height-60))
+	})	
+})
+var bullets=[],
+	bul,	
+	lastshot = new Date().getTime()
+	
+var buffs = []
+var random={},
+	rng
+	
+function spawnenemy(x,y){
+	var ene=c0.circ({
+		x:x,
+		y:y,
+		color:'red',
+		rad:plsize
+	})
+	enemies.push(ene)
+}
+//buffs
+function spawnbuff(x,y){	
+	var b=btypes[c0.random(btypes.length)-1]	
+	var buff=c0.circ({
+		rad:7,
+		color:b.color,
+		bufftype:b.type,
+		x:x,
+		y:y
+	})
+	buffs.push(buff)
+}
+function eatbuff(b){
+	if(b.bufftype=='ats'){
+		cooldown*=0.9
+	}else if(b.bufftype=='dmg'){
+		damage+=1
+	}else if(b.bufftype=='spd'){
+		movementspeed+=10
+	}else if(b.bufftype=='vis'){
+		sight+=5
+		c3.rad=sight
+	}else if(b.bufftype=='rng'){
+		range+=5
+		c2.rad=range		
+	}
+	var bt=btexts[b.bufftype]
+	bt.text=bt.updatetextval()
+}
+var btypes=[
+	<!-- { -->
+		<!-- type:'ats', -->
+		<!-- color:'purple', -->
+		<!-- val: function(){return 'attackspeed:'+(cooldown/1000).toFixed(2)} -->
+	<!-- }, -->
+	{
+		type:'dmg',
+		color:'orange',
+		val: function(){return 'damage:'+damage.toFixed(2)}
+	},
+	{
+		type:'spd',
+		color:'yellow',
+		val: function(){return 'movementspeed:'+movementspeed.toFixed(2)}
+	},
+	{
+		type:'vis',
+		color:'lightblue',
+		val: function(){return 'vision:'+sight.toFixed(2)}
+	},		
+	{
+		type:'rng',
+		color:'lightgreen',
+		val: function(){return 'range:'+range.toFixed(2)}
+	}		
+]
+var btexts={}
+loop(btypes, function(i,bt){
+	console.log(20+i*10)
+	btexts[bt.type]=c0.text({
+		text:bt.val(),
+		x:20,
+		y:20+i*10,
+		size:20,
+		color:bt.color,		
+		updatetextval:bt.val
+	})	
+})
+
+//populate
+loop(0,function(i){
+	spawnbuff(30+c0.random(c0.canvas.width-60),30+c0.random(c0.canvas.height-60))
+})
+loop(0,function(i){
+	spawnenemy(30+c0.random(c0.canvas.width-60),30+c0.random(c0.canvas.height-60))
+})
+
+//tasks
+c0.addtask({
+	name:'gameloop',
+	run: function(){
+		//c1.fol(c0.m,movementspeed)
+		var tar,
+			dist = sight,
+			d,
+			p = c1.pos()
+		loop(enemies,function(i,e){
+			d=e.dist(p)
+			if(d<dist){
+				dist=d
+				tar=e
+			}
+		})
+		//collect buffs
+		var buff
+		dist = sight
+		loop(buffs,function(i,b){
+			if(b.dist(p)<dist){
+				dist=b.dist(p)
+				buff=b
+			}
+		})		
+		if(buff){
+			c1.fol(buff.pos(),movementspeed)
+		}
+		if(tar){			
+			if(tar.dist(p)<range){
+				if(c0.ct>lastshot){
+					lastshot = c0.ct+cooldown
+					//shoot
+					bul=c0.circ({
+						x:p.x,
+						y:p.y,
+						rad:2,
+						color:'black'
+					})
+					bul.tar=tar
+					bullets.push(bul)
+				}
+			}else if(!buff){
+				c1.fol(tar,movementspeed)
+			}
+		}
+		
+		
+		var deadbullets=[]
+		loop(bullets,function(i,b){
+			b.fol(b.tar.pos(),bulletspeed)
+			dist = b.dist(b.tar.pos())
+			if(!dist){
+				//hit				
+				b.tar.rad -= damage
+				deadbullets.push(b)
+				if(!b.tar.removed && b.tar.rad<0){
+					//spawn buff
+					var sp=b.tar.pos()
+					spawnbuff(sp.x,sp.y)
+				
+					//dead
+					if(!b.tar.removed){
+						b.tar.rem()
+						enemies.splice(enemies.indexOf(b.tar),1)
+					}
+				}
+			}
+		})		
+		loop(deadbullets,function(i,b){
+			bullets.splice(bullets.indexOf(b),1)
+			b.rem()
+		})	
+		//eat buffs
+		var rembuffs=[]
+		loop(buffs,function(i,b){
+			if(b.dist(p)<30){
+				rembuffs.push(b)
+				eatbuff(b)
+			}
+		})
+		loop(rembuffs,function(i,b){
+			buffs.splice(buffs.indexOf(b),1)
+			b.rem()
+		})	
+		/**/
+	}
+})
+
+/*
+var l1=c0.line({
+	p1:{x:200,y:200},
+	p2:{x:100,y:300},	
+	color:'green',
+	linewid:2,
+	linecolor:'#222'
+})
+var r1=c0.rect({
+	x:300,
+	y:300,
+	wid:100,
+	hig:100,
+	//an:30,
+	color:'red',
+	linewid:2,
+	linecolor:'#222'
+})
+var val=1,
+	start=new Date().getTime(),
+	dif,
+	sin,
+	freq=2,//2 1 sec,
+	time=700,///(freq),
+	size=0.1,
+	fade
+
+r1.on('click',function(e){
+	start=new Date().getTime()
+	r1.color='red'
+})
+
+r1.animate(function(dt,ct){
+	dif=ct-start
+	if(dif>=time){
+		r1.scale(1)
+	} else {		
+		fade=(1-dif/time)
+		//fade=Math.sqrt((1-dif/time))
+		//fade*=fade
+		//fade=1
+		sin=Math.sin(dif*Math.PI/(time/9))*size*fade
+		//console.log(dif,sin)
+		r1.scale(val-sin)
+	}
+})
+/**/
+</script>
