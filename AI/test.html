@@ -1,0 +1,400 @@
+<script src='dom0.js'></script>
+<style>
+	.fleet{
+		width:10px;
+		height:10px;
+		border-radius:10px;
+		font-size:8px;
+		font-family: Verdana;
+		text-align: center;
+		color:#000;
+	}
+	.planet {
+		font-family: Verdana;
+		font-size:10px;
+	}
+</style>
+<script>
+var planets=[],
+	panet,
+	SIZE=800
+	
+var game={
+	planets:[],
+	fleets:[],
+	fleetspeed:20,
+	addplanets:function(){
+		var max=10
+		var nr=max+Math.floor(Math.random()*max)
+		loop(nr,function(i){
+			planet=game.addplanet()
+			mirror=game.addplanet()	
+			mirror.y=SIZE-planet.y
+			mirror.x=planet.x
+			mirror.growth=planet.growth
+			mirror.ships=planet.ships
+			mirror.type='mirror'
+			if(!i){
+				planet.owner=game.pls[0]
+				planet.ships=100
+				planet.growth=5
+				mirror.owner=game.pls[1]
+				mirror.ships=100
+				mirror.growth=5
+			}
+		})					
+	},	
+	addplanet:function(){
+		var planet={
+			x:50+(Math.random()*(SIZE-50)),
+			y:50+(Math.random()*((SIZE/2)-50)),
+			owner:0,
+			type:'normal',
+			growth:Math.ceil(Math.random()*5),
+			ships:Math.ceil(Math.random()*100)
+		}
+		this.planets.push(planet)
+		return planet
+	},	
+	addfleet:function(owner,p1,p2,ships){		
+		var fleet={
+			owner:owner,
+			start:p1,
+			target:p2,
+			turns:game.getflighttime(p1,p2),
+			ships:ships
+		}
+		game.fleets.push(fleet)
+		p1.ships-=ships
+	},
+	getflighttime:function(p1,p2){
+		if(!p1 || !p2){
+			console.log('planet missing')			
+		}
+		var turns=Math.ceil(game.dist(p1,p2)/game.fleetspeed)		
+		return turns
+	},
+	grow:function(){
+		loop(game.planets,function(i,planet){
+			if(planet.owner){
+				planet.ships+=planet.growth
+			}
+		})
+	},
+	movefleets:function(){
+		var remfleets=[]
+		loop(game.fleets,function(i,fleet){			
+			fleet.turns-=1
+			if(fleet.turns==0){
+				remfleets.push(fleet)
+				var planet=fleet.target
+				if(fleet.owner==planet.owner){
+					planet.ships+=fleet.ships
+				} else {
+					planet.ships-=fleet.ships
+					if(planet.ships<0){
+						planet.owner=fleet.owner
+						planet.ships=-planet.ships
+					}
+				}
+			}
+		})
+		var index		
+		loop(remfleets,function(i,fleet){
+			index=game.fleets.indexOf(fleet)
+			game.fleets.splice(index,1)
+		})
+	},
+	handleorders:function(){
+		//handle orders
+		loop(game.pls,function(i,pl){
+			if(!pl.lost){
+				if(pl.submitted){
+					loop(pl.orders,function(i,order){
+						var p1=order[0],
+							p2=order[1],
+							ships=order[2]
+						if(p1.owner!=pl){
+							console.log('wrong owner')
+						} else if(p1.ships<ships){
+							console.log('not enought ships')
+						} else {
+							game.addfleet(pl,p1,p2,Math.floor(ships))							
+						}
+					})
+				} else {
+					console.log('lost pl',pl.id)
+					pl.lost=true
+				}
+			}
+		})		
+		
+	},
+	updateplanets:function(){
+		var plist=d.findall('.planet'),
+			planet,
+			color=['grey','red','blue']
+		
+		loop(plist,function(i,ele){
+			planet=game.planets[i]
+			ele.h(planet.ships)
+			ele.s('background-color:'+color[planet.owner.id || 0])
+		})
+	},
+	updatefleets:function(){
+		var fleets=d.findall('.fleet')
+		loop(fleets,function(i,fleet){
+			fleet.rem()
+		})
+		var map=d.find('.map'),
+			ele,
+			color=['#ddd','pink','lightblue']
+			
+		loop(game.fleets,function(i,fleet){
+			pos=game.getfleetpos(fleet)
+			ele=d.r('div class=fleet')
+			ele.h(fleet.ships)
+			ele.s('color:white position:absolute z-index:1 background-color:'+color[fleet.owner.id || 0])
+			ele.s('left:'+pos.x+'px')
+			ele.s('top:'+pos.y+'px')
+			ele.to(map)
+		})
+	},
+	dist:function(o1,o2){
+		var dx=o1.x-o2.x,
+			dy=o1.y-o2.y,
+			d=Math.sqrt(dx*dx+dy*dy)			
+		return d
+	},
+	getfleetpos:function(fleet){
+		var dx=fleet.target.x-fleet.start.x,
+			dy=fleet.target.y-fleet.start.y,
+			max=game.getflighttime(fleet.target,fleet.start),
+			pos={
+				x:fleet.start.x+dx*(max-fleet.turns)/max,
+				y:fleet.start.y+dy*(max-fleet.turns)/max
+			}
+		
+		return pos
+	},
+	turn:0,
+	startturn:function(){
+		//reset pl submits and orders
+		loop(game.pls,function(i,pl){
+			pl.submitted=false
+			pl.orders=[]
+		})		
+	
+		game.turnstart=new Date().getTime()
+		var data={
+			start:new Date().getTime(),
+			planets:game.planets.slice(),
+			fleets:game.fleets.slice()
+		}		
+		//console.log('---startturn---',game.turn)
+		d.trigger('startturn',data)
+		
+		game.timeout=setTimeout(function(e){
+			d.trigger('endturn')
+		},50)
+	},
+	endturn:function(){
+		game.grow()
+		game.handleorders()
+		game.movefleets()		
+		game.updateplanets()
+		game.updatefleets()
+		
+		//console.log('--- endturn ---',game.turn)
+		game.turn+=1
+		game.startturn()	
+	},
+	timeout:0,
+	turnstart:0,
+	addevents:function(){
+		d.on('endturn',function(e){
+			game.endturn()
+		})
+		d.on('plendturn',function(e){
+			var data=e.args
+			//console.log('got end turn pl',data.pl.id)
+		})
+	},
+	submitorders:function(orders){
+		orders=[
+			[p1,p2,ships],
+			[p1,p2,ships]
+		]
+		d.trigger('end',orders)
+	},
+	pls:[],
+	addpl:function(){
+		var pl={
+			id:game.pls.length+1,
+			orders:[],
+			submitted:false,
+			lost:false,
+			order:function(p1,p2,ships){
+				var order=[p1,p2,ships]
+				this.orders.push(order)
+			},
+			doturn:function(data){
+				pl.endturn()
+				/*
+				if(!pl.lost){
+					setTimeout(function(){
+							pl.endturn(data)
+						},900*pl.id)	
+					//this.endturn()
+				}
+				/**/
+			},
+			endturn:function(data){
+				if(!pl.lost){
+					//console.log('end turn pl',pl.id,game.turn,new Date().getTime()-data.start)
+					this.submitted=true				
+					d.trigger('plendturn',{
+						pl:pl,
+						orders:this.orders
+					})			
+				}				
+			}
+		}
+		d.on('startturn',function(e){
+			var data=e.args
+			data.me=pl
+			pl.doturn(data)
+		})
+		game.pls.push(pl)
+		return pl
+	}
+}
+//2 players
+var pl1=game.addpl()
+pl1.doturn=function(data){
+	var me=data.me,
+		mps=[],
+		eps=[],
+		nps=[],
+		mfs=[],
+		efs=[]
+		
+	loop(data.planets,function(i,planet){
+		if(planet.owner==me){
+			mps.push(planet)
+		} else if (planet.owner==0){
+			nps.push(planet)
+		} else {
+			eps.push(planet)
+		}
+	})
+
+	loop(data.fleets,function(i,fleet){
+		if(fleet.owner==me){
+			mfs.push(fleet)
+		} else {
+			efs.push(fleet)
+		}
+	})
+	
+	//turn logic
+	//turn logic
+	if(!mfs.length){
+		//get best target
+		var notps=nps.concat(eps),
+			val,
+			best=notps[0]
+			
+		loop(notps,function(i,p){
+			if(p.ships<best.ships){
+				best=p
+			}
+		})
+	
+		loop(mps,function(i,mp){
+			if(mp.ships){
+				if(best){
+					me.order(mp,best,mp.ships/4)
+				}
+			}
+		})
+	}	
+	pl1.endturn()
+}
+var pl2=game.addpl()
+pl2.doturn=function(data){
+	//create lists
+	var me=data.me,
+		mps=[],
+		eps=[],
+		nps=[],
+		mfs=[],
+		efs=[]
+		
+	loop(data.planets,function(i,planet){
+		if(planet.owner==me){
+			mps.push(planet)
+		} else if (planet.owner==0){
+			nps.push(planet)
+		} else {
+			eps.push(planet)
+		}
+	})
+
+	loop(data.fleets,function(i,fleet){
+		if(fleet.owner==me){
+			mfs.push(fleet)
+		} else {
+			efs.push(fleet)
+		}
+	})
+	
+	//turn logic
+	if(!mfs.length){
+		//get best target
+		var notps=nps.concat(eps),
+			val,
+			best=notps[0]
+			
+		loop(notps,function(i,p){
+			if(p.ships<best.ships){
+				best=p
+			}
+		})
+	
+		loop(mps,function(i,mp){
+			if(mp.ships){
+				if(best){
+					me.order(mp,best,mp.ships/3)
+				}
+			}
+		})
+	}
+	
+	pl2.endturn()
+}
+
+game.addplanets()
+
+d.on('ready',function(e){
+	game.addevents()
+	
+	var ele,
+		color=['grey','red','blue'],		
+		space=d.body.r('div class=map')
+			.s('width:800px height:800px border:1px solid #aaa')	
+		
+	loop(game.planets,function(i,planet){
+		ele=space.r('div class=planet '+planet.type)
+		ele.h(planet.ships)
+			.s('color:white position:absolute border:1px solid #aaa border-radius:40px text-align:center')
+			.s('left:'+(planet.x-5*planet.growth)+'px')
+			.s('top:'+(planet.y-5*planet.growth)+'px')
+			.s('width:'+10*planet.growth+'px')
+			.s('height:'+10*planet.growth+'px')
+		ele.s('background-color:'+color[planet.owner.id || 0])
+			
+	})
+	game.startturn()
+})
+</script>

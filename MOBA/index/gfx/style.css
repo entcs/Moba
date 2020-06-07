@@ -1,0 +1,129 @@
+html,body {
+	width: 100%;
+	height: 100%;
+}
+body
+{
+	font-family: 'Architects Daughter', cursive;
+    font-weight: bold;
+	padding: 0;
+    margin: 0;
+    text-align: center;
+    background: #fff;	
+	text-transform: uppercase;
+}
+ul {
+	list-style: none;
+}
+.but {
+	text-transform: uppercase;
+	border-radius: 64px;
+	padding: 5px 15px;
+	border: 2px solid #666;
+	background: -moz-linear-gradient(top, #ffffff 0%, #dbdbdb 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#dbdbdb)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ffffff 0%,#dbdbdb 100%); /* Chrome10+,Safari5.1+ */		
+	box-shadow: 0px 3px 8px -3px #000;
+}
+.but:hover{
+	border: 2px solid #bd0;
+}
+.but:active{
+	box-shadow: 0px 3px 3px -3px #000;
+}
+a {
+	text-decoration: none;
+}
+.icon {
+	width: 64px;
+	height: 64px;
+	display: block;
+	margin: 5px auto;
+}
+.inb {
+	display: inline-block;
+}
+/*wrap*/
+.wrap {
+	width: 960px;
+	border: 1px solid white;
+	box-shadow: 0px 0px 15px 0px #CCC;
+	margin: auto;
+	-webkit-border-top-left-radius: 64px;
+	-webkit-border-bottom-right-radius: 64px;
+	-moz-border-radius-topleft: 64px;
+	-moz-border-radius-bottomright: 64px;
+	border-top-left-radius: 64px;
+	border-bottom-right-radius: 64px;
+	overflow: hidden;
+	//white-space:nowrap;
+	text-align: center;
+	display: none;
+}
+.header {
+	margin-top: 40px;	
+}
+.logo {
+	margin: auto;
+	font-family: 'Chango', cursive;
+}
+#nav-wrap{
+	white-space:nowrap;	
+	//padding: 10px 0;
+	background: #ddd;
+}
+#nav-main {
+	//width: 1400px;	
+}
+.nav {
+	margin: 10px 0;
+	padding: 0;
+}
+.nav li {
+	display: inline-block;	
+	margin: 5px 0;
+}
+.content {
+	width: 850px;
+	//height: 600px;
+	border: 2px solid #666;
+	-webkit-border-top-left-radius: 48px;
+	-webkit-border-bottom-right-radius: 48px;
+	-moz-border-radius-topleft: 48px;
+	-moz-border-radius-bottomright: 48px;
+	border-top-left-radius: 48px;
+	border-bottom-right-radius: 48px;
+	margin: auto;
+	overflow: auto;
+	overflow-x: hidden;
+	
+}
+.content .sec{
+	min-height: 256px;
+	margin: 10px 0;	
+}
+#hoiud {
+	margin-top: -160px;
+}
+.footer {
+	height: 32px;
+	//border: 2px solid #666;
+	//border-radius: 64px;
+	margin: 10px 0;
+	//margin: 20px;
+	//padding: 20px;	
+	background: #ddd;
+}
+/*contents*/
+/*specific shit*/
+.youtube {
+	display: inline-block;
+	background: url(icons.png) 0 0;
+}
+.linkedin {
+	display: inline-block;
+	background: url(icons.png) -64px 0;
+}
+.panda3d {
+	background: url(icons.png) -128px 0;
+}

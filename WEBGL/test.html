@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+
+			}
+
+			a { color: red }
+		</style>
+	</head>
+	<body>
+		<script src="js/Three.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/Stats.js"></script>
+
+		<script>
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			var container, stats;
+			var camera, scene, renderer, objects;
+			var particleLight, pointLight;
+			var dae, skin;
+
+			var clock = new THREE.Clock();
+			var morph=0;
+			var ferf,mx,my;
+			init();
+			animate();
+
+			function getCursorXY(e) {
+				mx=(window.Event) ? e.pageX : event.clientX + (document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft);
+				my=(window.Event) ? e.pageY : event.clientY + (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
+			}
+			
+			function init() {
+				if (window.Event) {
+				document.captureEvents(Event.MOUSEMOVE);
+				}
+				document.onmousemove = getCursorXY;			
+			
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				
+				scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0xffffff, 0.01 );
+
+				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set(0,5,10);
+				
+				scene.add(camera);
+
+
+				var mats = [
+
+					{ material: new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } ), doubleSided: true },
+					{ material: new THREE.MeshBasicMaterial( { color: 0xff0000, blending: THREE.AdditiveBlending } ), doubleSided: true },
+					{ material: new THREE.MeshLambertMaterial( { color: 0xffffff, shading: THREE.FlatShading, overdraw: true } ), doubleSided: false },
+					{ material: new THREE.MeshLambertMaterial( { color: 0xffffff, shading: THREE.SmoothShading, overdraw: true } ), doubleSided: false },
+					{ material: new THREE.MeshDepthMaterial( { overdraw: true } ), doubleSided: false },
+					{ material: new THREE.MeshNormalMaterial( { overdraw: true } ), doubleSided: false },
+					{ material: new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'models/feralf0.png' ) } ), doubleSided: false },
+					{ material: new THREE.MeshFaceMaterial( { map: THREE.ImageUtils.loadTexture( 'models/feralf0.png' ) } ), doubleSided: false },
+					{ material: new THREE.MeshBasicMaterial( { envMap: THREE.ImageUtils.loadTexture( 'models/feralf0.png', new THREE.SphericalReflectionMapping() ) } ), doubleSided: false }
+
+				];				
+				
+				var loader = new THREE.JSONLoader();
+				loader.load( "models/feralf.js", function ( geom ) {
+					var material = geom.materials[0];
+					material.morphTargets = true;
+				
+					//material.skinning = true;
+					//material.transparent = true;
+					//material.alphaTest = 0.75;
+					
+					
+					
+					var mat1 = new THREE.MeshFaceMaterial({shading: THREE.FlatShading,perPixel:true});					
+					console.log(geom);
+					morph = new THREE.MorphAnimMesh( geom, mat1);
+					morph.duration = 1000;
+					var s = 0.4;//THREE.Math.randFloat( 0.00075, 0.001 );
+					morph.scale.set( s, s, s );
+					
+					//morph.position.y=-3;
+					morph.matrixAutoUpdate = false;
+					morph.updateMatrix();
+					scene.add( morph );
+				});
+				
+				// Lights
+				//not working
+				scene.add( new THREE.AmbientLight( 0xffff00 ) );
+				//scene.add( new THREE.AmbientLight( 0x666666 ) );
+
+				pl = new THREE.SpotLight( 0xaaaaaa, 5, 30 );
+				pl.castShadow = true;
+				pl.position.set( 0, 0, 10 );
+				scene.add( pl );
+				
+				//ground
+				var gt=THREE.ImageUtils.loadTexture('models/grass.png');
+				var gg=new THREE.PlaneGeometry(1000,1000);
+				var gm=new THREE.MeshPhongMaterial({color:0xffffff,map:gt,perPixel:true});
+				
+				var ground=new THREE.Mesh(gg,gm);
+				ground.material.map.repeat.set(100,100);
+				ground.material.map.wrapS=ground.material.map.wrapT=THREE.RepeatWrapping;
+				ground.recieveShadow=true;				
+				scene.add(ground);
+				
+				// Renderer
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				// Stats
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				stats.domElement.children[ 0 ].children[ 0 ].style.color = "#aaa";
+				stats.domElement.children[ 0 ].style.background = "transparent";
+				stats.domElement.children[ 0 ].children[ 1 ].style.display = "none";
+
+				// Events
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize( event ) {
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+			}
+
+			var t = 0;
+			function animate() {
+				requestAnimationFrame(animate);
+				var delta = clock.getDelta();
+				if (morph) morph.updateAnimation( 1000 * delta );
+				render();
+				stats.update();
+			}
+
+			function render() {
+				var timer = Date.now() * 0.0005;
+				if (morph) {
+					
+					morph.rotation.y+=0.01;
+					
+					morph.updateMatrix();
+					camera.lookAt(morph.position);
+				};
+				
+				/*
+				camera.position.x = Math.cos( timer ) * 10;
+				camera.position.y = 4;
+				camera.position.z = Math.sin( timer ) * 10;
+				camera.lookAt( scene.position );
+				/**/
+				renderer.render( scene, camera );
+			}
+
+		</script>
+	</body>
+</html>

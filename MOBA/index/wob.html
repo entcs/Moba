@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="author" content="Webmedia Group">
+    
+    <title>MER - www.moba.ee</title>
+    <link rel="stylesheet" href="styles.css" media="screen" /> 
+           
+    
+<style>
+body
+{
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-smooth:always;
+    background: black;
+    color: grey;
+    font-family: arial;
+    font-size: 12px;
+}
+
+img
+{
+    border: 0;
+}
+
+#container
+{
+    width: 796px;
+    height: 575px;    
+}
+
+#content1
+{
+    overflow: hidden;
+    //height: inherit;
+    width: 556px;
+    height: 471px;
+    margin-top: 32px;
+    //background: black;
+    //border: 1px solid grey;
+    text-align: left;
+    //padding: 16px;
+    color: #AAAAAA;
+    //opacity: 0.8;
+}
+
+.sec1
+{
+    //font-weight: 900;
+    //font-size: 18px;
+    width: 536px;
+    height: 471px;        
+    //opacity: 1.0;
+    //color: white;
+    
+}
+
+#menu1
+{
+    margin: 0;
+    padding: 0;
+    //padding-top: 12px;
+    height: 64px;
+    width: 626px;    
+    background: url(gfx/menuback.png) 0 0 no-repeat;
+}
+
+
+#menu1 li
+{
+    //height: 32px;
+    //width: 72px;
+    //text-align: center;
+    display: inline;
+    //margin: 8px;
+    //margin-top: 164px;
+    position: relative;
+    //background: red;
+}
+    
+a
+{
+    text-decoration: none;
+    outline: none;
+}  
+
+.red
+{
+    color: red;
+}
+
+.green
+{
+    color: green;
+}
+
+.mid
+{
+    margin-left: auto;
+    margin-right: auto;    
+}
+
+.cen
+{
+    margin-top: auto;
+    margin-bottom: auto;    
+}
+    
+.but
+{
+    margin-top: 12px;
+    width: 72px;
+    height: 40px;
+    //display: inline;
+    float: left;
+    //background: green;
+    background: url(gfx/but.png) 0 0 no-repeat;
+    color: #cccccc;
+    line-height: 40px;
+    //font-size: 14px;
+    font-weight: 900;
+}
+
+</style>
+    <script 
+        language="javascript" src="js/script.js">
+    </script>
+
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v1" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico?v1" /> 
+    
+</head>
+
+<body>
+    <DIV style='width: 100%; height: 100%;'>                
+        <br>
+        
+        <div id='container' class='mid'> 
+            <div class='mid' style='margin-top: 32px; width: 450px; height: 85px; background: url(gfx/top.png) 0 0 no-repeat;'>
+            <a href='http://www.moba.ee#games'><img src="gfx/logo.png" style='border: 0; margin-top: -40px;'></a>    
+            </div>
+            <div style='margin-top: 64px; width: 85px; height: 575px; background: url(gfx/side.png) 0 0 no-repeat; float: left;'></div>
+            <div style='margin-top: 64px; width: 85px; height: 575px; background: url(gfx/right.png) 0 0 no-repeat; float: right;'></div>
+            <div class='mid' style='width: 626px; height: 575px; background: url(gfx/contentback.png) 0 0 no-repeat;'>
+                <div id='menu1'>
+                    <div class='mid' style='width: 432px;'>
+                        <a href='#s1'>
+                        <div class='but mid cen'
+                        onmouseover="this.style.backgroundImage='url(gfx/buto.png)'"
+                        onmouseout="this.style.backgroundImage='url(gfx/but.png)'">
+                        ABOUT</div></a>
+
+                        <a href='#s2'>
+                        <div class='but mid cen'
+                        onmouseover="this.style.backgroundImage='url(gfx/buto.png)'"
+                        onmouseout="this.style.backgroundImage='url(gfx/but.png)'">
+                        MODULES</div></a>
+
+                        <a href='#s3'>
+                        <div class='but mid cen'
+                        onmouseover="this.style.backgroundImage='url(gfx/buto.png)'"
+                        onmouseout="this.style.backgroundImage='url(gfx/but.png)'">
+                        SCRIPTS</div></a>
+
+                        <a href='#s4'>
+                        <div class='but mid cen'
+                        onmouseover="this.style.backgroundImage='url(gfx/buto.png)'"
+                        onmouseout="this.style.backgroundImage='url(gfx/but.png)'">
+                        SIGNALS</div></a>
+
+                        <a href='#s5'>
+                        <div class='but mid cen'
+                        onmouseover="this.style.backgroundImage='url(gfx/buto.png)'"
+                        onmouseout="this.style.backgroundImage='url(gfx/but.png)'">
+                        LOG</div></a>
+
+                        <a href='#s6'>
+                        <div class='but mid cen'
+                        onmouseover="this.style.backgroundImage='url(gfx/buto.png)'"
+                        onmouseout="this.style.backgroundImage='url(gfx/but.png)'">
+                        GUILDS</div></a>
+
+
+                    </div>
+                </div>
+                  
+                <div id='content1' class='mid'>
+                    
+                    <div class='sec1'>                    
+                        <a name="s1">About</a>                                                              
+                        <br>
+                        <ul>
+                            <li>
+                                With this game i really want to help the angry parents who see their children glued to the screen for hours, so its first goal wast to be time efficient.
+                            </li>
+                            <li>
+                                I also wanted reduce the mindless button smacking, the game has to teach something that has a value in real life, constraints and conditions "How things work, what you do is what you get".
+                            </li>
+                            <li>
+                                And of course i wanted the players to learn the value of a real person, not the value of your in game character based on some numbers, so no levelling or fancy items that make you character better.
+                            </li>
+                        </ul>
+
+                        So combining these goals i decided to make a space game where players need to craft artificial spaceships and teach them to build, explore, defend, attack and communicate. 
+                            
+                        <ul>
+                            <li>
+                                So after sending the ships to the space the user can happily turn off the computer and check back later to see how the ships are doing. The player gets info from a log to see if the ships were doing well or not and adjust the ships behaviour accordingly. Of course the game has 3d graphics so once in a while its nice to observer the doings of your ships, like fish in a tank.
+                            </li>
+                            <li>
+                                The ships AI is crafted with a visual drag and drop scripting system, that uses basic programming principles in simplified way, so while playing the player learns the basics of programming.
+                            </li>
+                            <li>
+                                As there are no levels or no do this 1000 times then you get +1 to something, players will quickly understand that another player carries the highest value in this games concept, so guilds,communication, tactical approaches and long term strategy will be a key element.
+                            </li>
+                            <li>
+                                Players also will get the possibility to host a solar system on their home computer that can be linked to the global universe. This was simply to reduce the cost of the infrastructure and to give players just a tiny sneakpeak into how networking and P2P solutions work and to teach them a tiny bit of responsibility(while hosting a system things will start to depend on you).
+                            </li>
+                        </ul>        
+                        
+                    </div>
+                                        
+                    <div class='sec1'>
+                        <a name="s2">Modules</a>
+                        <br>
+                        <br>
+                        Every ship will need modules in order to operate.<br>                                
+                        <ul>
+                            <li>ENG - Engine affects the flying speed and jumping speed.</li>
+                            <li>REP - Repper allows you to collect energy, repair, buld and even drain energy from enemies.</li>
+                            <li>GUN - Gun is for shooting enemies.</li>
+                            <li>HUL - Hull increases your hitpoint and your enrgy capacity.</li>
+                            <li>SHI - Shield absorbs incoming damage.</li>
+                            <li>WEB - Webber slows movment and jumping speed of hostile ships.</li>
+                            <li>SIG - The signal module allows you to send long range signals and hack enemy ships.</li>
+                        </ul>
+                    </div>
+                
+                    <div class='sec1'>
+                        <a name="s3">Scripts</a>
+                        <br> 
+                        <br> 
+                        
+                        Scripts are the brains of your ships.<br>               
+                        Scripts can be crafted with logic blocks.<br>
+                        The logic block are divided into several groups.<br>
+                        <ul>
+                            <li>Green - SUP, BLD and ATT. This block will tell your ship to support, build or attack.</li>
+                            <li>Blue - The location or trvelling commnds, With theres you can order your ships to move and explore the universe.</li>
+                            <li>Blue - The location or trvelling commnds, With theres you can order your ships to move and explore the universe.</li>
+                            <li>Yellow - The value blocks.</li>
+                            <li>Light blue - The object collection blocks.</li>
+                            <li>Grey - The condition blocks.</li>
+                            <li>And the send signal and reciveve signal blocks.</li>
+                            
+                        </ul>
+                    </div>
+                                        
+                    <div class='sec1'>
+                        <a name="s4">Signals</a>
+                        <br>
+                        <br>
+                        Your ships can choose to forward a signal or to jump to the signal origin.<br>
+                        This way you can call for help and cluster up your defencive forces.<br>
+                        <br>
+                    </div>
+                    
+                    <div class='sec1'>
+                        <a name="s5">Log</a>
+                        <br>
+                        <br>
+                        Log will show you what has happend to your ships while you were offline.<br>
+                        <br>
+                    </div>
+                    
+                    <div class='sec1'>
+                        <a class='sec1' name="s6">Guilds</a>
+                        <br>
+                        <br>
+                        Guild will allow you achieve things you can not do alone.
+                    </div>
+                    
+                        
+                    
+                    
+                </div>
+                
+            </div>
+            <div class='mid' style='width: 450px; height: 85px; background: url(gfx/bot.png) 0 0 no-repeat;'>
+                Copyright &copy; Hendrik Kangro 2009. All rights reserved.    
+                <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+                <input type="hidden" name="cmd" value="_s-xclick">
+                <input type="hidden" name="hosted_button_id" value="A3MWNEYQXQ3N4">
+                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+                <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+                </form>  
+            </div>
+            
+                   
+            
+
+
+
+            <div>
+                
+            </div>        
+
+        
+        </div>
+    </DIV>
+</body>
+</html>
