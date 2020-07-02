@@ -30,6 +30,7 @@ MouseEvent.prototype.node=false
 var c0={
 	runtime: 16,
 	resize:false,
+	showframerate: false,
 	nodes:[],
 	uidcount:0,
 	m:{x:0,y:0},
@@ -82,7 +83,7 @@ var c0={
 			}
 		}
 		this.c2=this.canvas.getContext('2d')
-		
+				
 		//add events to canvas
 		this.addevents()
 		this.run(this)
@@ -209,8 +210,10 @@ var c0={
 					}		
 					move=c0.add(p1,move)	
 					this.pos(move)		
-				},				
-				loop:function(p){},//todo
+				},								
+				look:function(p,speed){
+					this.an=self.an(this,p)
+				},
 				dist:function(p){
 					return c0.dist(this.getpos(),p)
 				},
@@ -456,6 +459,7 @@ var c0={
 		return node			
 	},
 	img:function(a){
+		self=this
 		var node=this.node('img')
 		node.type='img'
 		node.hit='rect'
@@ -475,7 +479,7 @@ var c0={
 		} else {
 			//from src
 			node.img=new Image()				
-			node.img.src=a.src
+			node.img.src=node.src
 		}
 		if(node.onload){
 			node.on('load',node.onload)
@@ -486,13 +490,13 @@ var c0={
 			//can.draw(node)
 		}					
 						
-		node.draw=function(){
-			var c=can.c2
-			c.drawImage(node.img, 
-				node.offx||0,node.offy||0,
-				node.wid,node.hig,
-				-node.wid/2,-node.hig/2,
-				node.wid,node.hig)						
+		node.draw=function(){			
+			//context.drawImage(img,x,y);
+			//context.drawImage(img,x,y,width,height);
+			//context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);						
+			var wid = node.wid || node.clipw || node.img.naturalWidth,
+				hig = node.hig || node.cliph || node.img.naturalHeight
+			self.c2.drawImage(node.img,node.startclipx || 0, node.startclipy || 0, node.clipw || wid,node.cliph || hig,node.offx || 0, node.offy || 0, wid, hig)
 		}
 		return node
 	},
@@ -683,7 +687,7 @@ var c0={
 			return Math.sqrt(a.x*a.x+a.y*a.y)
 		}
 	},
-	an:function(a,b){		
+	an:function(a,b){//angle between two points		
 		b=c0.sub(b,a)
 		
 		var an=c0.rtoa(Math.atan(b.x/b.y))			
