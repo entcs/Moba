@@ -9,16 +9,17 @@
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <body></body>
-<script src='d0/d0.js'></script>
-<script src='d0/c0.js'></script>
+<script src='pixi.min.js'></script>
+<script src='gg.js'></script>
+
 <script>
-c0.showframerate = true
-c0.addcanvas({
+gg.showframerate = true
+gg.addcanvas({
 	wid: '100%',
 	hig: '100%',
 })
 
-var marker = c0.node(),
+var marker = gg.node(),
 	range = 100,
 	sight = 300,
 	bulletspeed = 300,
@@ -27,15 +28,15 @@ var marker = c0.node(),
 	damage = 1,
 	plsize = 10
 	
-var c1=c0.circ({
-	x:c0.canvas.width/2,
-	y:c0.canvas.height/2,
+var c1=gg.circ({
+	x:gg.canvas.width/2,
+	y:gg.canvas.height/2,
 	rad:plsize,
 	color:'green',
 	linewid:2,
 	linecolor:'#222'
 })
-var c2=c0.circ({
+var c2=gg.circ({
 	x:0,
 	y:0,
 	rad:range,
@@ -44,7 +45,7 @@ var c2=c0.circ({
 	linecolor:'#222'
 })
 c2.to(c1)
-var c3=c0.circ({
+var c3=gg.circ({
 	x:0,
 	y:0,
 	rad:sight,
@@ -55,10 +56,10 @@ var c3=c0.circ({
 c3.to(c1)
 
 var enemies=[]
-c0.canvas.on('click',function(e){	
-	//spawnenemy(c0.m.x,c0.m.y)
+gg.canvas.on('click',function(e){	
+	//spawnenemy(gg.m.x,gg.m.y)
 	loop(100,function(i){
-		spawnenemy(30+c0.random(c0.canvas.width-60),30+c0.random(c0.canvas.height-60))
+		spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
 	})	
 })
 var bullets=[],
@@ -70,7 +71,7 @@ var random={},
 	rng
 	
 function spawnenemy(x,y){
-	var ene=c0.circ({
+	var ene=gg.circ({
 		x:x,
 		y:y,
 		color:'red',
@@ -80,8 +81,8 @@ function spawnenemy(x,y){
 }
 //buffs
 function spawnbuff(x,y){	
-	var b=btypes[c0.random(btypes.length)-1]	
-	var buff=c0.circ({
+	var b=btypes[gg.random(btypes.length)-1]	
+	var buff=gg.circ({
 		rad:7,
 		color:b.color,
 		bufftype:b.type,
@@ -137,7 +138,7 @@ var btypes=[
 var btexts={}
 loop(btypes, function(i,bt){
 	console.log(20+i*10)
-	btexts[bt.type]=c0.text({
+	btexts[bt.type]=gg.text({
 		text:bt.val(),
 		x:20,
 		y:20+i*10,
@@ -149,17 +150,17 @@ loop(btypes, function(i,bt){
 
 //populate
 loop(0,function(i){
-	spawnbuff(30+c0.random(c0.canvas.width-60),30+c0.random(c0.canvas.height-60))
+	spawnbuff(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
 })
 loop(0,function(i){
-	spawnenemy(30+c0.random(c0.canvas.width-60),30+c0.random(c0.canvas.height-60))
+	spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
 })
 
 //tasks
-c0.addtask({
+gg.addtask({
 	name:'gameloop',
 	run: function(){
-		//c1.fol(c0.m,movementspeed)
+		//c1.fol(gg.m,movementspeed)
 		var tar,
 			dist = sight,
 			d,
@@ -185,10 +186,10 @@ c0.addtask({
 		}
 		if(tar){			
 			if(tar.dist(p)<range){
-				if(c0.ct>lastshot){
-					lastshot = c0.ct+cooldown
+				if(gg.ct>lastshot){
+					lastshot = gg.ct+cooldown
 					//shoot
-					bul=c0.circ({
+					bul=gg.circ({
 						x:p.x,
 						y:p.y,
 						rad:2,
@@ -239,20 +240,19 @@ c0.addtask({
 		loop(rembuffs,function(i,b){
 			buffs.splice(buffs.indexOf(b),1)
 			b.rem()
-		})	
-		/**/
+		})			
 	}
 })
-
+/**/
 /*
-var l1=c0.line({
+var l1=gg.line({
 	p1:{x:200,y:200},
 	p2:{x:100,y:300},	
 	color:'green',
 	linewid:2,
 	linecolor:'#222'
 })
-var r1=c0.rect({
+var r1=gg.rect({
 	x:300,
 	y:300,
 	wid:100,
