@@ -502,9 +502,19 @@ var gg={
 			//context.drawImage(img,x,y);
 			//context.drawImage(img,x,y,width,height);
 			//context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);						
+			
 			var wid = node.wid || node.clipw || node.img.naturalWidth,
 				hig = node.hig || node.cliph || node.img.naturalHeight
-			self.c2.drawImage(node.img,node.startclipx || 0, node.startclipy || 0, node.clipw || wid,node.cliph || hig,node.offx || 0, node.offy || 0, wid, hig)
+			if(node.flipx){
+				//self.c2.translate(wid, 0)
+				self.c2.scale(-1, 1)
+			}	
+			if(node.flipy){
+				self.c2.translate(hig, 0)
+				self.c2.scale(1, -1)
+			}
+			
+			self.c2.drawImage(node.img,node.clipx || 0, node.clipy || 0, node.clipw || wid,node.cliph || hig,node.offx || 0, node.offy || 0, wid, hig)
 		}
 		return node
 	},
@@ -549,7 +559,12 @@ var gg={
 			//console.log('node:',node)
 			c.save()
 			//translate
-			if(node.x || node.y) c.translate(node.x,node.y)
+			if(node.pixelperfect){
+				if(node.x || node.y) c.translate(parseInt(node.x),parseInt(node.y))
+			} else {
+				if(node.x || node.y) c.translate(node.x,node.y)	
+			}
+			
 				
 			//rotate
 			if(node.an%360) c.rotate(gg.ator(node.an))

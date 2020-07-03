@@ -20,21 +20,26 @@ gg.addcanvas({
 })
 
 var marker = gg.node(),
-	range = 100,
-	sight = 300,
+	range = 400,
+	sight = 500,
 	bulletspeed = 300,
 	movementspeed = 100,
-	cooldown = 10,
-	damage = 1,
+	cooldown = 1000,
+	damage = 5,
 	plsize = 10
 	
-var c1=gg.circ({
+var c1=gg.img({
 	x:gg.canvas.width/2,
 	y:gg.canvas.height/2,
-	rad:plsize,
-	color:'green',
-	linewid:2,
-	linecolor:'#222'
+	clipx:56,
+	clipy:42,
+	clipw:64,
+	cliph:72,
+	offx:-28,
+	offy:-21,
+	flipx:true,
+	src:'heroes.png',
+	pixelperfect: true,
 })
 var c2=gg.circ({
 	x:0,
@@ -57,11 +62,13 @@ c3.to(c1)
 
 var enemies=[]
 gg.canvas.on('click',function(e){	
-	//spawnenemy(gg.m.x,gg.m.y)
-	loop(100,function(i){
-		spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
-	})	
+	spawnenemy(gg.m.x,gg.m.y)
 })
+
+loop(10,function(i){
+	spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
+})	
+
 var bullets=[],
 	bul,	
 	lastshot = new Date().getTime()
@@ -71,11 +78,17 @@ var random={},
 	rng
 	
 function spawnenemy(x,y){
-	var ene=gg.circ({
+	var ene=gg.img({
 		x:x,
 		y:y,
-		color:'red',
-		rad:plsize
+		src:'heroes.png',
+		clipx:190,
+		clipy:40,
+		clipw: 72,
+		cliph:72,
+		offx:-36,
+		offy:-36,
+		hp:10,
 	})
 	enemies.push(ene)
 }
@@ -184,18 +197,27 @@ gg.addtask({
 		if(buff){
 			c1.fol(buff.pos(),movementspeed)
 		}
-		if(tar){			
+		if(tar){	
+			if(tar.x<c1.x) {
+				c1.flipx=true
+			} else {
+				c1.flipx=false
+			}
 			if(tar.dist(p)<range){
 				if(gg.ct>lastshot){
 					lastshot = gg.ct+cooldown
 					//shoot
-					bul=gg.circ({
+					bul=gg.img({
 						x:p.x,
 						y:p.y,
-						rad:2,
-						color:'black'
+						offx:-20,
+						offy:-12,
+						src:'fireball.png'
+						
 					})
 					bul.tar=tar
+					bul.look(tar.pos())
+					bul.an-=90
 					bullets.push(bul)
 				}
 			}else if(!buff){
@@ -210,9 +232,9 @@ gg.addtask({
 			dist = b.dist(b.tar.pos())
 			if(!dist){
 				//hit				
-				b.tar.rad -= damage
+				b.tar.hp -= damage
 				deadbullets.push(b)
-				if(!b.tar.removed && b.tar.rad<0){
+				if(!b.tar.removed && b.tar.hp<0){
 					//spawn buff
 					var sp=b.tar.pos()
 					spawnbuff(sp.x,sp.y)
