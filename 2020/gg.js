@@ -25,6 +25,10 @@ Node.prototype.on=function(name,fn){
 	this.eventfunctions['efn-'+name]=fn
 	return this
 }
+Number.prototype.round=function(round){
+	var pow = Math.pow(10,round||0)
+	return Math.round(this*pow)/pow
+}
 MouseEvent.prototype.stop=false
 MouseEvent.prototype.node=false
 var gg={
@@ -88,7 +92,7 @@ var gg={
 		//add fps
 		this.fps = this.text({
 			x:5,
-			y:5,
+			y:10,
 			text: 'fps'			
 		})
 				
@@ -131,9 +135,9 @@ var gg={
 					var ind=this.parent.children.indexOf(this)
 					this.parent.children.splice(ind,1)
 
-					ind=gg.nodes.indexOf(this)
+					ind=gg.nodes.indexOf(this)					
 					gg.nodes.splice(ind,1)
-					this.removed=true
+					this.removed=true	
 					return this
 				},
 				//util	
@@ -460,9 +464,9 @@ var gg={
 			if(this.linewid){
 				c.lineWidth = this.linewid
 				c.strokeStyle = this.linecolor || 'black'				
-				c.strokeText(this.text,node.x,node.y)
+				c.strokeText(this.text,0,0)
 			}
-			c.fillText(this.text,node.x,node.y)
+			c.fillText(this.text,0,0)
 		}
 		return node			
 	},
@@ -503,8 +507,9 @@ var gg={
 			//context.drawImage(img,x,y,width,height);
 			//context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);						
 			
-			var wid = node.wid || node.clipw || node.img.naturalWidth,
-				hig = node.hig || node.cliph || node.img.naturalHeight
+			node.wid = node.wid || node.clipw || node.img.naturalWidth
+			node.hig = node.hig || node.cliph || node.img.naturalHeight
+				
 			if(node.flipx){
 				//self.c2.translate(wid, 0)
 				self.c2.scale(-1, 1)
@@ -514,7 +519,7 @@ var gg={
 				self.c2.scale(1, -1)
 			}
 			
-			self.c2.drawImage(node.img,node.clipx || 0, node.clipy || 0, node.clipw || wid,node.cliph || hig,node.offx || 0, node.offy || 0, wid, hig)
+			self.c2.drawImage(node.img,node.clipx || 0, node.clipy || 0, node.clipw || node.wid,node.cliph || node.hig,node.offx || 0, node.offy || 0, node.wid, node.hig)
 		}
 		return node
 	},
@@ -560,7 +565,7 @@ var gg={
 			c.save()
 			//translate
 			if(node.pixelperfect){
-				if(node.x || node.y) c.translate(parseInt(node.x),parseInt(node.y))
+				if(node.x || node.y) c.translate(node.x.round(),node.y.round())
 			} else {
 				if(node.x || node.y) c.translate(node.x,node.y)	
 			}
@@ -608,6 +613,10 @@ var gg={
 					var hits=self.doevents(self,'mouseover',self.root)	
 					loop(hits,function(i,n){
 						n.events.mouseover()
+						if(!n.mouseover){
+							//mouse enter
+							n.trigger('mouseenter')
+						}
 						n.mouseover=true
 					})
 					loop(self.nodes, function(i,n){
@@ -899,13 +908,13 @@ var gg={
 		var sign=(b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x)
 		return sign
 	},
-	dc:function(p,c){
+	dc:function(p,c){//dot vs circle
 		if(gg.dist(p,c.getpos())<c.rad*c.getscale().sx){
 			return true
 		}
 		return false
 	},
-	dr:function(d,r){			
+	dr:function(d,r){//dot vs rect			
 		var pos=gg.sub(d,r.getpos()),
 			scale=r.getscale(),
 			w2=scale.sx*r.wid/2,
@@ -916,7 +925,7 @@ var gg={
 		}
 		return false
 	},
-	cc:function(n1,n2){
+	cc:function(n1,n2){//circle vs circle
 		var dist=n1.dist(n2.getpos()),
 			rr=n1.rad+n2.rad,
 			dif=rr-dist
@@ -933,7 +942,7 @@ var gg={
 		}			
 		return 0
 	},
-	cl:function(c,l){
+	cl:function(c,l){//circle vs line
 		//console.log('cl:',l)
 		var col=false,
 			cpos=c.getpos()
@@ -977,7 +986,7 @@ var gg={
 		//console.log(a,c1,c2,x,y)
 		return col
 	},
-	cr:function(c,r){
+	cr:function(c,r){//circle vs rect
 		var col=gg.dr(c,r),
 			cpos=c.getpos()
 		if(col){

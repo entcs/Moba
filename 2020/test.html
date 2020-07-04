@@ -1,43 +1,55 @@
-<!doctype html>
-<meta charset="utf-8">
-<title>Moving sprites</title>
-<body>
-<script src="pixi.min.js"></script>
+<style>
+	body {
+		margin:0px;
+		background-color:#000;
+	}
+	canvas{
+		background-color:#eee;
+	}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<body></body>
+<script src='gg.js'></script>
+
 <script>
-const app = new PIXI.Application({
-    width: 800, height: 600, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
-});
-document.body.appendChild(app.view);
+gg.showframerate = true
+gg.addcanvas({
+	wid: '100%',
+	hig: '100%',
+})
+	
+var player=gg.img({
+	x:gg.canvas.width/2,
+	y:gg.canvas.height/2,
+	clipx:56,
+	clipy:42,
+	clipw:64,
+	cliph:72,
+	offx:-28,
+	offy:-21,
+	flipx:true,
+	src:'heroes.png',
+	pixelperfect: true,
+})
+player.active=true
+var cc
+player.on('mouseover',function(e){
+	console.log('Player stats')
+	cc=gg.circ({
+		x:player.x+100,
+		y:player.y,
+		color:'red',
+		rad:50
+	})
+	cc=gg.text({
+		x:480,
+		y:50,
+		size: 50,
+		text:'Player stats'
+	})
+})
+player.on('mouseout',function(e){
+	
+})	
 
-const container = new PIXI.Container();
-
-app.stage.addChild(container);
-
-// Create a new texture
-const texture = PIXI.Texture.from('tactics.png');
-
-// Create a 5x5 grid of bunnies
-for (let i = 0; i < 25; i++) {
-    const bunny = new PIXI.Sprite(texture);
-    bunny.anchor.set(0.5);
-    bunny.x = (i % 5) * 40;
-    bunny.y = Math.floor(i / 5) * 40;
-    container.addChild(bunny);
-}
-
-// Move container to the center
-container.x = app.screen.width / 2;
-container.y = app.screen.height / 2;
-
-// Center bunny sprite in local container coordinates
-container.pivot.x = container.width / 2;
-container.pivot.y = container.height / 2;
-
-// Listen for animate update
-app.ticker.add((delta) => {
-    // rotate the container!
-    // use delta to create frame-independent transform
-    container.rotation -= 0.01 * delta;
-});
 </script>
-</body>

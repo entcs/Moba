@@ -9,7 +9,6 @@
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <body></body>
-<script src='pixi.min.js'></script>
 <script src='gg.js'></script>
 
 <script>
@@ -22,13 +21,14 @@ gg.addcanvas({
 var marker = gg.node(),
 	range = 400,
 	sight = 500,
-	bulletspeed = 300,
+	bulletspeed = 1000,
 	movementspeed = 100,
 	cooldown = 1000,
+	attackspeed = 1000/cooldown
 	damage = 5,
-	plsize = 10
+	enemyhp = 10
 	
-var c1=gg.img({
+var player=gg.img({
 	x:gg.canvas.width/2,
 	y:gg.canvas.height/2,
 	clipx:56,
@@ -41,6 +41,21 @@ var c1=gg.img({
 	src:'heroes.png',
 	pixelperfect: true,
 })
+<!-- player.active=true -->
+<!-- player.on('mouseover',function(e){ -->
+	<!-- console.log('Player stats') -->
+	<!-- player.note=gg.text({ -->
+		<!-- x:player.x, -->
+		<!-- y:player.y, -->
+		<!-- text:'Player stats' -->
+	<!-- }) -->
+<!-- }) -->
+<!-- player.on('mouseout',function(e){ -->
+	<!-- player.note.rem() -->
+<!-- })	 -->
+
+var fol = player.pos()
+
 var c2=gg.circ({
 	x:0,
 	y:0,
@@ -49,7 +64,7 @@ var c2=gg.circ({
 	linewid:1,
 	linecolor:'#222'
 })
-c2.to(c1)
+c2.to(player)
 var c3=gg.circ({
 	x:0,
 	y:0,
@@ -58,16 +73,19 @@ var c3=gg.circ({
 	linewid:0.5,
 	linecolor:'#222'
 })
-c3.to(c1)
+c3.to(player)
 
 var enemies=[]
 gg.canvas.on('click',function(e){	
-	spawnenemy(gg.m.x,gg.m.y)
+	//fol={x:gg.m.x,y:gg.m.y}
+	//spawnenemy(gg.m.x,gg.m.y)
+	loop(30,function(i){
+		spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
+	})	
 })
+/*
 
-loop(10,function(i){
-	spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
-})	
+/**/	
 
 var bullets=[],
 	bul,	
@@ -88,25 +106,49 @@ function spawnenemy(x,y){
 		cliph:72,
 		offx:-36,
 		offy:-36,
-		hp:10,
+		hp:enemyhp,
 	})
 	enemies.push(ene)
 }
 //buffs
 function spawnbuff(x,y){	
-	var b=btypes[gg.random(btypes.length)-1]	
-	var buff=gg.circ({
-		rad:7,
-		color:b.color,
+	var b=btypes[gg.random(btypes.length)-1]
+	var buff=gg.img({
+		src:'items.png',
+		clipx:0+b.cx,
+		clipy:0+b.cy,
+		clipw:42,
+		cliph:28,
+		offx:-21,
+		offy:-14,
+		//color:b.color,
 		bufftype:b.type,
+		description:b.description,
 		x:x,
 		y:y
 	})
+	buff.active=true
+	buff.on('mouseover',function(e){
+		console.log('Player stats')
+		if(!buff.note || buff.note.removed){
+			buff.note=gg.text({
+				x:buff.x-buff.wid/2,
+				y:buff.y-20,
+				size:10,
+				color:'grey',
+				text:buff.description
+			})
+		}
+	})
+	buff.on('mouseout',function(e){
+		buff.note.rem()		
+	})	
 	buffs.push(buff)
 }
 function eatbuff(b){
 	if(b.bufftype=='ats'){
-		cooldown*=0.9
+		attackspeed+=0.1
+		cooldown=(1000/attackspeed).round(2)
 	}else if(b.bufftype=='dmg'){
 		damage+=1
 	}else if(b.bufftype=='spd'){
@@ -122,29 +164,39 @@ function eatbuff(b){
 	bt.text=bt.updatetextval()
 }
 var btypes=[
-	<!-- { -->
-		<!-- type:'ats', -->
-		<!-- color:'purple', -->
-		<!-- val: function(){return 'attackspeed:'+(cooldown/1000).toFixed(2)} -->
-	<!-- }, -->
+	{
+		type:'ats',
+		description:'Attack speed',
+		cx:5*42,
+		cy:30*28,		
+		val: function(){return 'attackspeed:'+attackspeed.round(2)}
+	},
 	{
 		type:'dmg',
-		color:'orange',
+		description:'Damage',
+		cx:4*42,
+		cy:6*28,		
 		val: function(){return 'damage:'+damage.toFixed(2)}
 	},
 	{
 		type:'spd',
-		color:'yellow',
+		description:'Movement speed',
+		cx:5*42,
+		cy:11*28,		
 		val: function(){return 'movementspeed:'+movementspeed.toFixed(2)}
 	},
 	{
 		type:'vis',
-		color:'lightblue',
+		description:'Vision',
+		cx:5*42,
+		cy:22*28,		
 		val: function(){return 'vision:'+sight.toFixed(2)}
 	},		
 	{
 		type:'rng',
-		color:'lightgreen',
+		description:'Attack range',
+		cx:2*42,
+		cy:13*28,		
 		val: function(){return 'range:'+range.toFixed(2)}
 	}		
 ]
@@ -155,7 +207,7 @@ loop(btypes, function(i,bt){
 		text:bt.val(),
 		x:20,
 		y:20+i*10,
-		size:20,
+		size:10,
 		color:bt.color,		
 		updatetextval:bt.val
 	})	
@@ -165,7 +217,7 @@ loop(btypes, function(i,bt){
 loop(0,function(i){
 	spawnbuff(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
 })
-loop(0,function(i){
+loop(50,function(i){
 	spawnenemy(30+gg.random(gg.canvas.width-60),30+gg.random(gg.canvas.height-60))
 })
 
@@ -173,11 +225,18 @@ loop(0,function(i){
 gg.addtask({
 	name:'gameloop',
 	run: function(){
-		//c1.fol(gg.m,movementspeed)
+		//player.fol(gg.m,movementspeed)
+		//player.fol(fol,movementspeed)
+		if(fol.x<player.x) {
+				player.flipx=true
+			} else {
+				player.flipx=false
+			}
+			
 		var tar,
 			dist = sight,
 			d,
-			p = c1.pos()
+			p = player.pos()
 		loop(enemies,function(i,e){
 			d=e.dist(p)
 			if(d<dist){
@@ -185,6 +244,7 @@ gg.addtask({
 				tar=e
 			}
 		})
+				
 		//collect buffs
 		var buff
 		dist = sight
@@ -195,13 +255,13 @@ gg.addtask({
 			}
 		})		
 		if(buff){
-			c1.fol(buff.pos(),movementspeed)
+			player.fol(buff.pos(),movementspeed)
 		}
 		if(tar){	
-			if(tar.x<c1.x) {
-				c1.flipx=true
+			if(tar.x<player.x) {
+				player.flipx=true
 			} else {
-				c1.flipx=false
+				player.flipx=false
 			}
 			if(tar.dist(p)<range){
 				if(gg.ct>lastshot){
@@ -221,7 +281,7 @@ gg.addtask({
 					bullets.push(bul)
 				}
 			}else if(!buff){
-				c1.fol(tar,movementspeed)
+				player.fol(tar,movementspeed)
 			}
 		}
 		
@@ -234,7 +294,7 @@ gg.addtask({
 				//hit				
 				b.tar.hp -= damage
 				deadbullets.push(b)
-				if(!b.tar.removed && b.tar.hp<0){
+				if(!b.tar.removed && b.tar.hp.round()<=0){
 					//spawn buff
 					var sp=b.tar.pos()
 					spawnbuff(sp.x,sp.y)
@@ -261,6 +321,7 @@ gg.addtask({
 		})
 		loop(rembuffs,function(i,b){
 			buffs.splice(buffs.indexOf(b),1)
+			if(b.note) b.note.rem()
 			b.rem()
 		})			
 	}
