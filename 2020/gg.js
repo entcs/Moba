@@ -12,6 +12,13 @@ var loop=function(obj,fn){
 		}	
 	}
 }
+var objlen=function(obj){
+	var len=0
+	loop(obj,function(i){
+		len+=1
+	})
+	return len
+}
 Node.prototype.trigger=function(n,a){
 	var e = document.createEvent("HTMLEvents");
 	e.initEvent(n, true, true ); // event type,bubbling,cancelable		
@@ -61,7 +68,7 @@ var gg={
 	addcanvas:function(a){		
 		//add root node
 		this.root=this.node('root')
-		
+		this.clearcolor = a.clearcolor || '#fff'
 		if(a && a.canvas){
 			this.canvas=a.canvas
 		} else {
@@ -493,37 +500,30 @@ var gg={
 			node.img=new Image()				
 			node.img.src=node.src
 		}
-		if(node.onload){
-			node.on('load',node.onload)
-		}
-		node.img.onload=function(e){
-			node.imgready=true
-			node.trigger('load')
-			//can.draw(node)
-		}					
+		// if(node.onload){
+			// node.on('load',node.onload)
+		// }
+		// node.img.onload=function(e){
+			// node.imgready=true
+			// node.trigger('load')
+		// }					
 						
-		node.draw=function(){			
-			//context.drawImage(img,x,y);
-			//context.drawImage(img,x,y,width,height);
-			//context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);						
-			
+		node.draw=function(){						
 			node.wid = node.wid || node.clipw || node.img.naturalWidth
-			node.hig = node.hig || node.cliph || node.img.naturalHeight
-				
+			node.hig = node.hig || node.cliph || node.img.naturalHeight				
 			if(node.flipx){
-				//self.c2.translate(wid, 0)
 				self.c2.scale(-1, 1)
 			}	
 			if(node.flipy){
 				self.c2.translate(hig, 0)
 				self.c2.scale(1, -1)
-			}
-			
+			}			
 			self.c2.drawImage(node.img,node.clipx || 0, node.clipy || 0, node.clipw || node.wid,node.cliph || node.hig,node.offx || 0, node.offy || 0, node.wid, node.hig)
 		}
 		return node
 	},
 	pat:function(a){
+		var self=this
 		var node=this.node('pat')
 		node.type='pat'
 		node.hit='rect'
@@ -536,24 +536,26 @@ var gg={
 		node.imgready=false						
 		imgo.onload = function() {
 			node.imgready=true
-			node.pat=context.createPattern(node.imgo, 'repeat')
+			node.pat=self.c2.createPattern(node.imgo, 'repeat')
 			gg.render(node)
 		}
 		node.draw=function(){
 			if(node.imgready){
-				pos=node.getpos()
-				x=pos.x-node.wid/2
-				y=pos.y-node.hig/2
+				// pos=node.getpos()
+				// x=pos.x-node.wid/2
+				// y=pos.y-node.hig/2
 				//gg.c.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid, node.hig)
-				gg.c.fillStyle = node.pat
-				gg.c.fillRect(x, y, node.wid, node.hig) // context.fillRect(x, y, width, height);				
+				self.c2.fillStyle = node.pat				
+				self.c2.fillRect(node.x, node.y, node.wid, node.hig) // context.fillRect(x, y, width, height);				
 			}						
 		}
 		return node	
 	},
 	//rendering
 	clear:function(){
-		this.c2.clearRect(0, 0, this.canvas.width, this.canvas.height)
+		this.c2.fillStyle=this.clearcolor
+		this.c2.fillRect(0, 0, this.canvas.width, this.canvas.height)
+		//this.c2.clearRect(0, 0, this.canvas.width, this.canvas.height)
 	},
 	draw:function(node){
 		var c=this.c2
@@ -563,6 +565,7 @@ var gg={
 		if(node.visible){
 			//console.log('node:',node)
 			c.save()
+			c.globalAlpha = node.alpha || 1
 			//translate
 			if(node.pixelperfect){
 				if(node.x || node.y) c.translate(node.x.round(),node.y.round())
@@ -590,7 +593,7 @@ var gg={
 	},
 	render:function(node){
 		node=node||this.root
-		this.clear()
+		this.clear()		
 		this.draw(node)
 	},			
 	//events

@@ -18,38 +18,12 @@ gg.addcanvas({
 	hig: '100%',
 })
 	
-var player=gg.img({
-	x:gg.canvas.width/2,
-	y:gg.canvas.height/2,
-	clipx:56,
-	clipy:42,
-	clipw:64,
-	cliph:72,
-	offx:-28,
-	offy:-21,
-	flipx:true,
-	src:'heroes.png',
-	pixelperfect: true,
+var player=gg.pat({
+	x:0,
+	y:0,
+	wid:1980,
+	hig:1050,
+	src:'grass1.jpg'
 })
-player.active=true
-var cc
-player.on('mouseover',function(e){
-	console.log('Player stats')
-	cc=gg.circ({
-		x:player.x+100,
-		y:player.y,
-		color:'red',
-		rad:50
-	})
-	cc=gg.text({
-		x:480,
-		y:50,
-		size: 50,
-		text:'Player stats'
-	})
-})
-player.on('mouseout',function(e){
-	
-})	
 
 </script>
