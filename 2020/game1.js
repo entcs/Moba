@@ -1,7 +1,7 @@
 var bulletspeed = 500,
 	plrange = 100,
 	plvision = 200,
-	plmovementspeed = 400,
+	plmovementspeed = 100,
 	plattackspeed = 1,
 	pldamage = 5,
 	plhp=100,
@@ -13,10 +13,12 @@ var bulletspeed = 500,
 	towervision = 300,
 	towerattackspeed=1,
 
+	minionmovementspeed=50,
+	minionhp=25,
+	miniondamage=2,
+
 	bullets={},
-	bul,
-	blu='#394a8a'
-	red='#bc4e18'
+	bul
 
 gg.showframerate = true
 gg.addcanvas({
@@ -29,13 +31,19 @@ var game = {
 		this.addtowers()
 		this.addplayers()
 	},
+	objs:{},
 	blu:{
+		name:'blu',
+		color:'#394a8a',
 		objs:{}
 	},
 	red:{
+		name:'red',
+		color:'#bc4e18',
 		objs:{}
 	},
 	addobj:function(a){
+		a.color=a.color|| a.team?a.team.color:'#fff'
 		var o=gg.circ(a)
 		o.maxhp=a.hp
 		o.g_range=gg.circ({
@@ -64,43 +72,62 @@ var game = {
 			wid:40,
 			hig:5
 		}).to(o)
-		console.log('added obj',o.hp,o.maxhp)
+		if(o.team==game.blu){
+			o.eteam=game.red
+		} else if(o.team==game.red){
+			o.eteam=game.blu
+		}
+		game.objs[o.uid]=o
+		o.team.objs[o.uid]=o
 		return o
 	},
-	addplayers: function(){
+	addminion:function(p,team){
+		var o=game.addobj({
+			x:p.x,
+			y:p.y,
+			rad:5,
+			color:team.color,
+			range:plrange,
+			vision:plvision,
+			attackspeed:plattackspeed,
+			movementspeed:minionspeed,
+			hp:minionhp,
+			damage:miniondamage,
+			lastshot:new Date().getTime(),
+			team:team
+		})
+	},
+	addplayer: function(a){
 		var pl=game.addobj({
+			x:a.x,
+			y:a.y,
+			rad:10,
+			team:a.team,
+			// color:a.team.color,
+			range:plrange,
+			vision:plvision,
+			attackspeed:plattackspeed,
+			movementspeed:plmovementspeed,
+			hp:plhp,
+			damage:pldamage,
+			hpregen:plhpregen,
+			lastshot:new Date().getTime()
+		})
+		pl.team.pl=pl
+		return pl
+	},
+	addplayers: function(){
+		game.addplayer({
 			x:gg.canvas.width/2-500,
 			y:gg.canvas.height/2,
-			rad:10,
-			color:blu,
-			range:plrange,
-			vision:plvision,
-			attackspeed:plattackspeed,
-			movementspeed:plmovementspeed,
-			hp:plhp,
-			damage:pldamage,
-			hpregen:plhpregen,
-			lastshot:new Date().getTime()
+			team:game.blu
 		})
-		game.blu.pl=pl
-		game.blu.objs[pl.uid]=pl
 
-		pl=game.addobj({
+		game.addplayer({
 			x:gg.canvas.width/2+500,
 			y:gg.canvas.height/2,
-			rad:10,
-			color:red,
-			range:plrange,
-			vision:plvision,
-			attackspeed:plattackspeed,
-			movementspeed:plmovementspeed,
-			hp:plhp,
-			damage:pldamage,
-			hpregen:plhpregen,
-			lastshot:new Date().getTime()
+			team:game.red
 		})
-		game.red.pl=pl
-		game.red.objs[pl.uid]=pl
 	},
 	addtowers: function(){
 		var w=1920/2
@@ -126,7 +153,7 @@ var game = {
 				x:p.x,
 				y:p.y,
 				rad:15,
-				color:blu,
+				team:game.blu,
 				range:towerrange,
 				vision:towervision,
 				attackspeed:towerattackspeed,
@@ -134,15 +161,13 @@ var game = {
 				hp:towerhp,
 				lastshot:new Date().getTime()
 			})
-			game.blu.objs[tower.uid]=tower
-
 		})
 		loop(towerpos2,function(i,p){
 			tower = game.addobj({
 				x:p.x,
 				y:p.y,
 				rad:15,
-				color:red,
+				team:game.red,
 				range:towerrange,
 				vision:towervision,
 				attackspeed:towerattackspeed,
@@ -150,55 +175,32 @@ var game = {
 				hp:towerhp,
 				lastshot:new Date().getTime()
 			})
-			game.red.objs[tower.uid]=tower
 		})
 
 		//add bases
-		var base=gg.circ({
+		var base=game.addobj({
 			x:100,
 			y:500,
 			rad:20,
-			color:blu,
+			team:game.blu,
 			range:towerrange,
 			attackspeed:towerattackspeed,
 			damage:towerdamage,
 			hp:towerhp,
 			lastshot:new Date().getTime()
 		})
-		base.g_range=gg.circ({
-			rad:towerrange,
-			linewid:1,
-			linecolor:'#222'
-		}).to(base)
-		base.g_vision=gg.circ({
-			rad:towervision,
-			linewid:0.5,
-			linecolor:'#222'
-		}).to(base)
-		game.blu.objs[base.uid]=base
 
-		base=gg.circ({
+		base=game.addobj({
 			x:1820,
 			y:500,
 			rad:20,
-			color:red,
+			team:game.red,
 			range:towerrange,
 			attackspeed:towerattackspeed,
 			damage:towerdamage,
 			hp:towerhp,
 			lastshot:new Date().getTime()
 		})
-		base.g_range=gg.circ({
-			rad:towerrange,
-			linewid:1,
-			linecolor:'#222'
-		}).to(base)
-		base.g_vision=gg.circ({
-			rad:towervision,
-			linewid:0.5,
-			linecolor:'#222'
-		}).to(base)
-		game.red.objs[base.uid]=base
 	},
 	updatehpbar:function(o){
 		var dif=o.hp/o.maxhp
@@ -214,59 +216,46 @@ var game = {
 			game.blu.pl.fol(fol,game.blu.pl.movementspeed)
 
 			//reset targets and closest
-			loop(game.red.objs,function(i,r){
+			loop(game.objs,function(i,r){
 				r.tar=''
 				r.closest=10000000
-			})
-			loop(game.blu.objs, function(j,b){
-				b.tar=''
-				b.closest=10000000
 			})
 
 			//find new targets
 			loop(game.red.objs,function(i,r){
 				loop(game.blu.objs, function(j,b){
 					d=r.dist(b)
-					if(d<=r.range && d<r.closest){
+					if(d<=r.vision && d<r.closest){
 						r.closest=d
 						r.tar=b
 					}
-					if(d<=b.range && d<b.closest){
+					if(d<=b.vision && d<b.closest){
 						b.closest=d
 						b.tar=r
 					}
 				})
 			})
-			loop(game.red.objs,function(i,o){
+			loop(game.objs,function(i,o){
+
 				if(o.tar){
-					if(gg.ct>=o.lastshot){
-						o.lastshot=gg.ct+1000/o.attackspeed
+					if(o.closest<=o.range){
 						//shoot
-						bul=gg.circ({
-							x:o.x,
-							y:o.y,
-							rad:3,
-							color:o.color,
-							damage:o.damage
-						})
-						bul.tar=o.tar
-						bullets[bul.uid]=bul
-					}
-				}
-			})
-			loop(game.blu.objs, function(j,o){
-				if(o.tar){
-					if(gg.ct>=o.lastshot){
-						o.lastshot=gg.ct+1000/o.attackspeed
-						bul=gg.circ({
-							x:o.x,
-							y:o.y,
-							rad:3,
-							color:o.color,
-							damage:o.damage
-						})
-						bul.tar=o.tar
-						bullets[bul.uid]=bul
+						if(gg.ct>=o.lastshot){
+							o.lastshot=gg.ct+1000/o.attackspeed
+							bul=gg.circ({
+								x:o.x,
+								y:o.y,
+								rad:3,
+								color:o.color,
+								damage:o.damage
+							})
+							bul.tar=o.tar
+							bullets[bul.uid]=bul
+						}
+					} else if(o.movementspeed){
+						if(o!=game.blu.pl){
+							o.fol(o.tar.pos(),o.movementspeed)
+						}
 					}
 				}
 			})

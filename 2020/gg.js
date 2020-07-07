@@ -2,14 +2,14 @@ var loop=function(obj,fn){
 	if(obj){
 		if(fn===undefined){
 			var count=0
-			while(obj(count)!==false) count+=1		
+			while(obj(count)!==false) count+=1
 		} else if(typeof(obj)=='number'){
-			for(var nr=0;nr<obj;nr++) if(fn(nr)===false) break		
-		} else if(obj.length){		
-			for(var nr=0;nr<obj.length;nr++) if(obj.hasOwnProperty(nr)) if(fn(nr,obj[nr])===false) break					
+			for(var nr=0;nr<obj;nr++) if(fn(nr)===false) break
+		} else if(obj.length){
+			for(var nr=0;nr<obj.length;nr++) if(obj.hasOwnProperty(nr)) if(fn(nr,obj[nr])===false) break
 		} else {
-			for(var key in obj) if(fn(key,obj[key])===false) break		
-		}	
+			for(var key in obj) if(fn(key,obj[key])===false) break
+		}
 	}
 }
 var objlen=function(obj){
@@ -21,9 +21,9 @@ var objlen=function(obj){
 }
 Node.prototype.trigger=function(n,a){
 	var e = document.createEvent("HTMLEvents");
-	e.initEvent(n, true, true ); // event type,bubbling,cancelable		
+	e.initEvent(n, true, true ); // event type,bubbling,cancelable
 	if (a) e.args=a;
-	this.dispatchEvent(e);	
+	this.dispatchEvent(e);
 	return this;
 }
 Node.prototype.on=function(name,fn){
@@ -39,7 +39,7 @@ Number.prototype.round=function(round){
 MouseEvent.prototype.stop=false
 MouseEvent.prototype.node=false
 var gg={
-	runtime: 16,
+	runtime: 10,
 	resize:false,
 	showframerate: false,
 	nodes:[],
@@ -50,6 +50,7 @@ var gg={
 	lt:new Date().getTime(),
 	ct:new Date().getTime(),
 	dt:0,
+	dts:[],
 	ldt:0,
 	tasks:{},
 	deadtasks:{},
@@ -65,7 +66,7 @@ var gg={
 	over:0,
 	lastover:0,
 	//addcanvas
-	addcanvas:function(a){		
+	addcanvas:function(a){
 		//add root node
 		this.root=this.node('root')
 		this.clearcolor = a.clearcolor || '#fff'
@@ -90,23 +91,23 @@ var gg={
 				if(typeof(a.hig) == 'string' && a.hig.indexOf('%')!=-1){
 					var pct = parseInt(a.hig)
 					a.hig = window.innerHeight*pct/100
-				}				
+				}
 				this.canvas.height=a.hig
 			}
 		}
 		this.c2=this.canvas.getContext('2d')
-				
+
 		//add fps
 		this.fps = this.text({
 			x:5,
 			y:10,
-			text: 'fps'			
+			text: 'fps'
 		})
-				
+
 		//add events to canvas
 		this.addevents()
 		this.run()
-	},	
+	},
 	//primitives
 	node:function(name){
 		self=this
@@ -114,7 +115,7 @@ var gg={
 				uid:gg.uid(),
 				type:'node',
 				name:name,
-				parent:0,	
+				parent:0,
 				children:[],
 				visible:true,
 				an:0,
@@ -122,7 +123,7 @@ var gg={
 				sx:1,
 				sy:1,
 				x:0,
-				y:0,				
+				y:0,
 				hit:0,
 				events:{},
 				enabled:false,
@@ -135,19 +136,19 @@ var gg={
 						this.parent.children.splice(this.parent.children.indexOf(this),1)
 					}
 					parent.children.push(this)
-					this.parent=parent				
+					this.parent=parent
 					return this
 				},
 				rem:function(){
 					var ind=this.parent.children.indexOf(this)
 					this.parent.children.splice(ind,1)
 
-					ind=gg.nodes.indexOf(this)					
+					ind=gg.nodes.indexOf(this)
 					gg.nodes.splice(ind,1)
-					this.removed=true	
+					this.removed=true
 					return this
 				},
-				//util	
+				//util
 				mpos:function(){
 					var pos=this.getpos(),
 						scale=this.getscale(),
@@ -183,22 +184,22 @@ var gg={
 							x:this.x,
 							y:this.y
 						}
-					if(this.parent){								
+					if(this.parent){
 						var scale=this.parent.getscale()
 						pos.x*=scale.sx
 						pos.y*=scale.sy
-						
+
 						pos=gg.rot(pos,this.parent.getan())
 						var ppos=this.parent.getpos()
 						pos=gg.add(pos,ppos)
-					}						
+					}
 					return pos
-				},			
+				},
 				getan:function(){
 					var an=this.an
 					if(this.parent){
 						an+=this.parent.getan()
-					}					
+					}
 					return an%360
 				},
 				getscale:function(){
@@ -216,20 +217,20 @@ var gg={
 						p2=p,
 						dif=gg.sub(p2,p1),
 						norm=gg.norm(dif),
-						dist=gg.dist(p1,p2),			
+						dist=gg.dist(p1,p2),
 						move={
 							x:norm.x*speed*gg.dt/1000,
 							y:norm.y*speed*gg.dt/1000
-						}		
+						}
 					if(Math.abs(move.x)>Math.abs(dif.x)){
 						move.x=dif.x
 					}
 					if(Math.abs(move.y)>Math.abs(dif.y)){
 						move.y=dif.y
-					}		
-					move=gg.add(p1,move)	
-					this.pos(move)		
-				},								
+					}
+					move=gg.add(p1,move)
+					this.pos(move)
+				},
 				look:function(p,speed){
 					this.an=self.an(this,p)
 				},
@@ -241,7 +242,7 @@ var gg={
 						if(gg.dist(this.getpos(),p)<=this.rad*this.getscale()){
 							gg.canvas.s('cursor:pointer')
 							return true
-						}						
+						}
 					} else {
 						//rect
 					}
@@ -257,22 +258,22 @@ var gg={
 							scale=this.getscale(),
 							w2=this.wid/2,
 							h2=this.hig/2
-							
+
 						pos=gg.sub(p,pos)
 						pos=gg.rot(pos,-an)
 						pos.x/=scale
-						pos.y/=scale										
-						if(pos.x>-w2 && pos.x<w2 && pos.y>-h2 && pos.y<h2){							
+						pos.y/=scale
+						if(pos.x>-w2 && pos.x<w2 && pos.y>-h2 && pos.y<h2){
 							return true
 						}
-			
+
 					}
 					return false
 				},
 				move:function(speed){
 					var vec=gg.rot({x:0,y:-speed},this.an)
 					this.x+=vec.x
-					this.y+=vec.y					
+					this.y+=vec.y
 				},
 				//events
 				trigger:function(name,data){
@@ -287,7 +288,7 @@ var gg={
 				},
 				off:function(name){
 					delete this.events[name]
-				},				
+				},
 				//collisions
 				enable:function(){
 					this.enabled=true
@@ -324,12 +325,12 @@ var gg={
 							can.animations.splice(ind,1)
 							node.anim=0
 						},
-						animate:function(dt,ct){									
+						animate:function(dt,ct){
 							if(ct>this.end){
 								if(this.type=='scale'){
-									//node.sx=this.val											
+									//node.sx=this.val
 									//node.sy=this.val
-								}									
+								}
 								this.rem()
 							} else {
 								if(this.type=='scale'){
@@ -350,7 +351,7 @@ var gg={
 				}
 			}
 		this.nodes.push(node)
-		
+
 		//attach to root node
 		if(name!='root'){
 			node.to(this.root)
@@ -369,7 +370,7 @@ var gg={
 		})
 		self=this
 		node.draw=function(){
-			var c=self.c2					
+			var c=self.c2
 			c.beginPath()
 			c.rect(-this.wid/2,-this.hig/2,this.wid,this.hig)
 			if(this.color){
@@ -380,13 +381,13 @@ var gg={
 				c.lineWidth = this.linewid//*scale
 				c.strokeStyle = this.linecolor
 				c.stroke()
-			}					
+			}
 		}
-		
+
 		return node
 	},
 	circ:function(a){
-		var node=this.node('circ')		
+		var node=this.node('circ')
 		node.type='circ'
 		node.hit='circ'
 		node.arc=2 * Math.PI
@@ -396,7 +397,7 @@ var gg={
 		var self = this
 		node.draw=function(){
 			var c=self.c2
-			c.beginPath()			
+			c.beginPath()
 			an=Math.PI*1.5+gg.ator(node.getan())
 			c.arc(0,0, this.rad, an-node.arc/2, an+node.arc/2, false)
 			if(this.color){
@@ -409,7 +410,7 @@ var gg={
 				c.stroke()
 			}
 		}
-		return node		
+		return node
 	},
 	line:function(a){
 		//gradient line
@@ -424,7 +425,7 @@ var gg={
 		// ctx.lineTo(150,150);
 
 		// ctx.stroke();
-		
+
 		var node=this.node('line')
 		node.type='line'
 		loop(a,function(k,v){
@@ -444,11 +445,11 @@ var gg={
 			c.lineTo(x,y)
 			c.strokeStyle = this.color || 'black'
 			if(this.linewid){
-				c.lineWidth = this.linewid*this.getscale().sx			
-			}			
+				c.lineWidth = this.linewid*this.getscale().sx
+			}
 			c.stroke()
 		}
-		return node			
+		return node
 	},
 	text:function(a){
 		//context.font = "normal normal 20px Verdana";
@@ -460,22 +461,22 @@ var gg={
 		})
 		node.type='text'
 		self=this
-		node.draw=function(){					
+		node.draw=function(){
 			var c=self.c2
 			c.textAlign = this.align || 'left'
 			c.font='Xpx sans-serif'.replace('X',node.size)
 			if(this.font){
 				c.font = this.font
 			}
-			c.fillStyle=this.color || 'black'			
+			c.fillStyle=this.color || 'black'
 			if(this.linewid){
 				c.lineWidth = this.linewid
-				c.strokeStyle = this.linecolor || 'black'				
+				c.strokeStyle = this.linecolor || 'black'
 				c.strokeText(this.text,0,0)
 			}
 			c.fillText(this.text,0,0)
 		}
-		return node			
+		return node
 	},
 	img:function(a){
 		self=this
@@ -486,18 +487,18 @@ var gg={
 		loop(a,function(k,v){
 			node[k]=v
 		})
-		if(node.img){		
+		if(node.img){
 			//from image object
 			if(node.img.tagName.toLowerCase()=='canvas'){
 				//from canvas
 				var img=new Image()
 				img.src=node.img.toDataURL('image/png')
 				node.img=img
-			}					
+			}
 			node.src=node.img.src
 		} else {
 			//from src
-			node.img=new Image()				
+			node.img=new Image()
 			node.img.src=node.src
 		}
 		// if(node.onload){
@@ -506,18 +507,18 @@ var gg={
 		// node.img.onload=function(e){
 			// node.imgready=true
 			// node.trigger('load')
-		// }					
-						
-		node.draw=function(){						
+		// }
+
+		node.draw=function(){
 			node.wid = node.wid || node.clipw || node.img.naturalWidth
-			node.hig = node.hig || node.cliph || node.img.naturalHeight				
+			node.hig = node.hig || node.cliph || node.img.naturalHeight
 			if(node.flipx){
 				self.c2.scale(-1, 1)
-			}	
+			}
 			if(node.flipy){
 				self.c2.translate(hig, 0)
 				self.c2.scale(1, -1)
-			}			
+			}
 			self.c2.drawImage(node.img,node.clipx || 0, node.clipy || 0, node.clipw || node.wid,node.cliph || node.hig,node.offx || 0, node.offy || 0, node.wid, node.hig)
 		}
 		return node
@@ -530,10 +531,10 @@ var gg={
 		var imgo=new Image()
 		loop(a,function(k,v){
 			node[k]=v
-		})		
+		})
 		imgo.src = a.src
 		node.imgo=imgo
-		node.imgready=false						
+		node.imgready=false
 		imgo.onload = function() {
 			node.imgready=true
 			node.pat=self.c2.createPattern(node.imgo, 'repeat')
@@ -545,11 +546,11 @@ var gg={
 				// x=pos.x-node.wid/2
 				// y=pos.y-node.hig/2
 				//gg.c.drawImage(imgo,offx,offy, node.wid,node.hig,x,y, node.wid, node.hig)
-				self.c2.fillStyle = node.pat				
-				self.c2.fillRect(node.x, node.y, node.wid, node.hig) // context.fillRect(x, y, width, height);				
-			}						
+				self.c2.fillStyle = node.pat
+				self.c2.fillRect(node.x, node.y, node.wid, node.hig) // context.fillRect(x, y, width, height);
+			}
 		}
-		return node	
+		return node
 	},
 	//rendering
 	clear:function(){
@@ -561,7 +562,7 @@ var gg={
 		var c=this.c2
 		if(!node){
 			node=this.root
-		}				
+		}
 		if(node.visible){
 			//console.log('node:',node)
 			c.save()
@@ -570,19 +571,19 @@ var gg={
 			if(node.pixelperfect){
 				if(node.x || node.y) c.translate(node.x.round(),node.y.round())
 			} else {
-				if(node.x || node.y) c.translate(node.x,node.y)	
+				if(node.x || node.y) c.translate(node.x,node.y)
 			}
-			
-				
+
+
 			//rotate
 			if(node.an%360) c.rotate(gg.ator(node.an))
-				
+
 			//scale
-			if(node.sx!=1 || node.sy!=1) c.scale(node.sx,node.sy)					
-				
+			if(node.sx!=1 || node.sy!=1) c.scale(node.sx,node.sy)
+
 			if(node.draw){
 				node.draw()
-			}	
+			}
 			self = this
 			loop(node.children,function(i,chi){
 				self.draw(chi)
@@ -593,13 +594,13 @@ var gg={
 	},
 	render:function(node){
 		node=node||this.root
-		this.clear()		
+		this.clear()
 		this.draw(node)
-	},			
+	},
 	//events
 	addevents: function(){
 		var self = this
-		
+
 		var bounds,
 			events={
 				click:0,
@@ -611,9 +612,9 @@ var gg={
 					var bounds=self.canvas.getBoundingClientRect()
 					self.m.x=e.x-bounds.left
 					self.m.y=e.y-bounds.top
-					
+
 					//mouse over
-					var hits=self.doevents(self,'mouseover',self.root)	
+					var hits=self.doevents(self,'mouseover',self.root)
 					loop(hits,function(i,n){
 						n.events.mouseover()
 						if(!n.mouseover){
@@ -629,7 +630,7 @@ var gg={
 							n.mouseover=false
 						}
 					})
-					
+
 				},
 				mouseover:0,
 				mouseout:0,
@@ -640,9 +641,9 @@ var gg={
 				touchleave:0,
 				touchcancel:0
 			}
-		
+
 		loop(events,function(n,fn){
-			self.canvas.on(n,function(e){					
+			self.canvas.on(n,function(e){
 				if(fn) fn(e)
 				var hits=self.doevents(self,n,self.root)
 				loop(hits,function(i,node){
@@ -652,31 +653,31 @@ var gg={
 					} else {
 						return false
 					}
-				})				
-			})			
+				})
+			})
 		})
 		//resize
 		window.addEventListener('resize', function(){
 			self.canvas.width=window.innerWidth
 			self.canvas.height=window.innerHeight
 		})
-	},	
-	doevents:function(self,event,node,hits){		
+	},
+	doevents:function(self,event,node,hits){
 		hits=hits || []
-		if(node.active && node.events[event]){			
+		if(node.active && node.events[event]){
 			if(node.hit){
 				var hit
-				if(node.hit=='rect'){							
-					hit=gg.dr(this.m,node)							
+				if(node.hit=='rect'){
+					hit=gg.dr(this.m,node)
 				} else if(node.hit=='circ'){
-					hit=gg.dc(this.m,node)					
+					hit=gg.dc(this.m,node)
 				}
 				if(hit){
 					hits.splice(0,0,node)
 				}
 			}
 		}
-		
+
 		loop(node.children,function(i,chi){
 			self.doevents(self,event,chi,hits)
 		})
@@ -685,20 +686,20 @@ var gg={
 	//animations
 	animations:[],
 	animate:function(){
-		loop(this.animations,function(i,anim){					
+		loop(this.animations,function(i,anim){
 			//anim.animate(can.dt,can.ct)
 			anim(can.dt,can.ct)
 		})
-	},	
+	},
 	//util
 	uidcount:0,
 	uid:function(){
 		//unigue id
 		var time=new Date().getTime()
 			uid=[time.toString(16),(time+this.uidcount).toString(16)].join('')
-		this.uidcount+=1		
+		this.uidcount+=1
 		return uid
-	},	
+	},
 	sign:function(){
 		var aa=arguments,
 			pos=0,
@@ -725,10 +726,10 @@ var gg={
 			return Math.sqrt(a.x*a.x+a.y*a.y)
 		}
 	},
-	an:function(a,b){//angle between two points		
+	an:function(a,b){//angle between two points
 		b=gg.sub(b,a)
-		
-		var an=gg.rtoa(Math.atan(b.x/b.y))			
+
+		var an=gg.rtoa(Math.atan(b.x/b.y))
 		if(b.x>0){
 			if(b.y<0){
 				an=-an
@@ -740,15 +741,15 @@ var gg={
 				an=180-an
 			} else {
 				an=360-an
-			}						
+			}
 		}
 		//console.log('an:',an)
 		an%=360
 		return an
 	},
 	an3p:function(A,B,C){
-		var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));    
-		var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2)); 
+		var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));
+		var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2));
 		var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
 		var an=Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB))
 		an=this.rtoa(an)
@@ -758,12 +759,12 @@ var gg={
 		var rad=this.ator(an),
 			sin=Math.sin(rad),
 			cos=Math.cos(rad)
-			
+
 		return {
 			x:p.x*cos-p.y*sin,
 			y:p.x*sin+p.y*cos
 		}
-	},	
+	},
 	ator:function(an){
 		return (an*Math.PI/180)%(Math.PI*2)
 	},
@@ -783,7 +784,7 @@ var gg={
 		}
 	},
 	norm:function(p){
-		if(!p.x && !p.y){			
+		if(!p.x && !p.y){
 			return p
 		}
 		var norm=1/Math.sqrt(p.x*p.x+p.y*p.y)
@@ -803,11 +804,11 @@ var gg={
 				break
 			case 'object':
 				break
-		}		
+		}
 		return rng
 	},
 	//tasks
-	dotasks:function(){		
+	dotasks:function(){
 		var dotask=false,
 			tt=this.ct
 		//rem dead tasks
@@ -815,7 +816,7 @@ var gg={
 			if(task.ondeath){
 				task.ondeath(gg.time)
 			}
-			
+
 			delete gg.tasks[task.name]
 		})
 		this.deadtasks={}
@@ -825,8 +826,8 @@ var gg={
 			//check life
 			if(task.life && tt>task.birth+task.life){
 				//dead
-				task.rem('lifeended')			
-				dotask=false			
+				task.rem('lifeended')
+				dotask=false
 			}
 			//check interval
 			if(task.interval){
@@ -836,26 +837,26 @@ var gg={
 					//check count
 					if(task.count){
 						task.count-=1
-					}			
+					}
 				}
-			//check count				
-			} else if(task.count){				
+			//check count
+			} else if(task.count){
 				task.count-=1
-			}			
-			
+			}
+
 			if(dotask){
 				task.ct=tt
 				task.td=tt-task.lt
 				task.run()
 				task.lt+=task.interval
-				if(!task.count) task.rem('count 0')				
+				if(!task.count) task.rem('count 0')
 			}
-		})	
+		})
 	},
 	addtask:function(a){
 		var task={
 			name:'task'+gg.uid(),
-			run:function(){},			
+			run:function(){},
 			rem:function(mes){
 				this.mes=mes
 				gg.deadtasks[this.name]=this
@@ -880,15 +881,25 @@ var gg={
 		return task
 	},
 	//run
-	run:function(){			
+	run:function(){
 		gg.ct = new Date().getTime()
 		gg.dt = gg.ct-gg.lt
+		// var dt = gg.ct-gg.lt
+		// gg.dts.push(dt)
+		// if(gg.dts.length>10){
+		// 	gg.dts.splice(0,1)
+		// }
+		// dt=0
+		// loop(gg.dts, function(i,d){
+		// 	dt+=d
+		// })
+		// gg.dt=dt/gg.dts.length
 		gg.fps.text = 'fps:'+parseInt(1000/gg.dt)
 		//smooth dt
-		
-		
-		gg.clear()		
-		gg.draw(self.root)		
+
+
+		gg.clear()
+		gg.draw(self.root)
 		gg.dotasks()
 		gg.lt=gg.ct
 		setTimeout(function(){
@@ -917,7 +928,7 @@ var gg={
 		}
 		return false
 	},
-	dr:function(d,r){//dot vs rect			
+	dr:function(d,r){//dot vs rect
 		var pos=gg.sub(d,r.getpos()),
 			scale=r.getscale(),
 			w2=scale.sx*r.wid/2,
@@ -932,7 +943,7 @@ var gg={
 		var dist=n1.dist(n2.getpos()),
 			rr=n1.rad+n2.rad,
 			dif=rr-dist
-			
+
 		if(dif>0){
 			return {
 				type:'cc',
@@ -940,9 +951,9 @@ var gg={
 				n2:n2,
 				dist:dist,
 				rr:rr,
-				dif:dif					
+				dif:dif
 			}
-		}			
+		}
 		return 0
 	},
 	cl:function(c,l){//circle vs line
@@ -950,31 +961,31 @@ var gg={
 		var col=false,
 			cpos=c.getpos()
 		//a1*a2=-1 perpendicular
-						
+
 		if(l.p2.x==300 && l.p1.x==300){
 			u=1
 		}
-		//rise of the line			
+		//rise of the line
 		var a1=(l.p2.y-l.p1.y)/(l.p2.x-l.p1.x)
 		if(a1==0){
 			x=c.x
-			y=l.p1.y		
+			y=l.p1.y
 		} else if (a1==Infinity || a1==-Infinity){
 			x=l.p1.x
-			y=c.y			
+			y=c.y
 		} else {
 			//shift of the line
 			var b1=l.p1.y-a1*l.p1.x
-			//rise of perpendicular projection line					
-			var a2=-1/a1	
+			//rise of perpendicular projection line
+			var a2=-1/a1
 			//shift of perpendicular projection line
 			var b2=c.y-a2*c.x
 			//col spot
 			var x=(b2-b1)/(a1-a2)
 			var y=a2*x+b2
-		}			
+		}
 		var rad=c.rad/c.getscale()
-		if((x>l.p1.x && x>l.p2.x) || (x<l.p1.x && x<l.p2.x) || (y>l.p1.y && y>l.p2.y) ||(y<l.p1.y && y<l.p2.y)) {				
+		if((x>l.p1.x && x>l.p2.x) || (x<l.p1.x && x<l.p2.x) || (y>l.p1.y && y>l.p2.y) ||(y<l.p1.y && y<l.p2.y)) {
 			if(gg.dist(l.p1,c.getpos())<rad){
 				col={n1:c,n2:l,hit:l.p1}
 				//c2.pos(l.p1)
@@ -983,8 +994,8 @@ var gg={
 				//c2.pos(l.p2)
 			}
 		}else if(gg.dist({x:x,y:y},c.getpos())<rad){
-			col={n1:c,n2:l,hit:{x:x,y:y}}				
-		}	
+			col={n1:c,n2:l,hit:{x:x,y:y}}
+		}
 
 		//console.log(a,c1,c2,x,y)
 		return col
@@ -1003,14 +1014,14 @@ var gg={
 				cdist,
 				hit
 			//line.p1=pts[0]
-			//line.p2=pts[1]			
+			//line.p2=pts[1]
 			loop(pts,function(i,pt){
 				p1=pts[i]
-				nr=(i+1)%(pts.length)				
+				nr=(i+1)%(pts.length)
 				p2=pts[nr]
 				cc=gg.cl(c,{p1:p1,p2:p2})
 				if(cc){
-					cdist=gg.dist(cc.hit,cpos)						
+					cdist=gg.dist(cc.hit,cpos)
 					if(cdist<dist){
 						dist=cdist
 						col=cc
@@ -1023,9 +1034,9 @@ var gg={
 			}
 		}
 		return col
-		
-	},	
-	collide:function(callback){		
+
+	},
+	collide:function(callback){
 		var cui1,
 			cui2,
 			col
@@ -1033,15 +1044,15 @@ var gg={
 			loop(gg.collidables,function(u2,n2){
 				cui1=u1+u2
 				cui2=u2+u1
-				if(u1!=u2 && !gg.collisions[cui1] && !gg.collisions[cui2]){					
-					col=gg.collidenow(n1,n2)					
+				if(u1!=u2 && !gg.collisions[cui1] && !gg.collisions[cui2]){
+					col=gg.collidenow(n1,n2)
 					if(col){
 						callback(col)
 					}
 					gg.collisions[cui1]=col
 				}
 			})
-		})		
+		})
 		this.collisions={}
 	},
 	collidenow:function(n1,n2){
@@ -1071,6 +1082,6 @@ var gg={
 	/*
 	line v line
 	line v rect
-	rect v rect	
+	rect v rect
 	/**/
 }
