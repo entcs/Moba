@@ -82,6 +82,7 @@ var game = {
 			wid:30,
 			hig:3
 		}).to(o)
+		o.crit=10
 		if(o.team==game.blu){
 			o.eteam=game.red
 		} else if(o.team==game.red){
@@ -284,6 +285,20 @@ var game = {
 		}
 		o.g_hpleft.wid=o.g_hp.wid*dif
 		o.g_hpleft.x=(o.g_hp.wid-o.g_hpleft.wid)/2
+	},
+	isdead:function(o){
+		if(!o.removed && o.hp.round()<=0){
+			//console.log('dead')
+			//dead
+			if(o.respawn){
+				o.pos(o.respawn.pos)
+			} else if(!o.removed){
+				o.rem()
+				delete game.objs[o.uid]
+				delete o.team.objs[o.uid]
+			}
+		}
+
 	}
 }
 game.init()
@@ -302,21 +317,21 @@ var spells={
 			power:2,
 			cooldown:10000,
 			cancast:0,
-			effect:'explosion'
+			effect:'attspeed'
 		},
 		{
 			key:'e',
 			power:3,
 			cooldown:20000,
 			cancast:0,
-			effect:'explosion'
+			effect:'critical'
 		},
 		{
 			key:'r',
 			power:4,
 			cooldown:40000,
 			cancast:0,
-			effect:'teleport'
+			effect:'lifesteal'
 		}
 	],
 	effects:{
@@ -342,8 +357,10 @@ var spells={
 					d=e.dist(p)
 					if(d<=pl.area.rad){
 						//hit
-						var dam=pl.damage*2*spell.power,
+						var dam=pl.damage*2*spell.power*spells.iscrit(pl),
 							size=8+dam/3
+
+						spells.dolifesteal(Math.min(dam,e.hp),pl)
 						e.hp-=dam
 						var dt=gg.text({
 							x:e.x,
@@ -358,9 +375,52 @@ var spells={
 						damtexts[dt.uid]=dt
 
 						game.updatehpbar(e)
+						game.isdead(e)
 					}
 				})
 				console.log(p)
+			}
+		},
+		critical:{
+			oncast: function(pl,spell){
+				pl.crit=10+10*spell.power
+				pl.linecolor='orange'
+				pl.linewid=1
+				gg.addtask({
+					life:3000*spell.power,
+					ondeath:function(){
+						pl.crit=10
+						pl.linewid=0
+					}
+				})
+			}
+		},
+		lifesteal:{
+			oncast: function(pl,spell){
+				pl.lifesteal=25*spell.power
+				pl.linecolor='red'
+				pl.linewid=1
+				gg.addtask({
+					life:3000*spell.power,
+					ondeath:function(){
+						pl.lifesteal=0
+						pl.linewid=0
+					}
+				})
+			}
+		},
+		attspeed:{
+			oncast: function(pl,spell){
+				pl.attackspeed=1+0.1*spell.power
+				pl.linecolor='red'
+				pl.linewid=1
+				gg.addtask({
+					life:3000*spell.power,
+					ondeath:function(){
+						pl.attackspeed=1
+						pl.linewid=0
+					}
+				})
 			}
 		}
 	},
@@ -373,6 +433,17 @@ var spells={
 				spell.cancast=gg.ct+spell.cooldown
 			}
 		}
+	},
+	dolifesteal:function(dam,pl){
+		if(pl.lifesteal){
+			pl.hp+=dam*pl.lifesteal/100
+			pl.hp=Math.min(pl.hp,pl.maxhp)
+			game.updatehpbar(pl)
+		}
+
+	},
+	iscrit:function(pl){
+		return gg.random(100)<=pl.crit?2:1
 	},
 	getcooldown:function(spell){
 		var cooldown=0
@@ -399,6 +470,11 @@ var ui={
 		var cooldown
 		loop(spells.list,function(i,spell){
 			cooldown=spells.getcooldown(spell)
+			if(cooldown){
+				spell.button.alpha=0.3
+			} else {
+				spell.button.alpha=0.8
+			}
 			spell.button.cooldown.text=cooldown.toFixed(1)
 			spell.button.description.text=(spell.effect || '').toUpperCase()
 		})
@@ -524,7 +600,8 @@ gg.addtask({
 							y:o.y,
 							rad:2,
 							color:o.color,
-							damage:o.damage
+							damage:o.damage,
+							owner:o
 						})
 						bul.tar=o.tar
 						bullets[bul.uid]=bul
@@ -552,7 +629,7 @@ gg.addtask({
 			if(dist<=pl.range){
 				pl.area.linecolor='red'
 			} else {
-				pl.area.linecolor='green'
+				pl.area.linecolor='black'
 			}
 		}
 
@@ -564,7 +641,8 @@ gg.addtask({
 			if(dist<1){
 				//hit
 				//crit chance
-				var dam=b.damage*(gg.random(10)==10?2:1)
+				var dam=b.damage*spells.iscrit(b.owner)
+				spells.dolifesteal(Math.min(dam,b.tar.hp),b.owner)
 				size=8+dam/3
 				b.tar.hp -= dam
 				var dt=gg.text({
@@ -582,17 +660,7 @@ gg.addtask({
 				game.updatehpbar(b.tar)
 				delete bullets[id]
 				b.rem()
-				if(!b.tar.removed && b.tar.hp.round()<=0){
-					//console.log('dead')
-					//dead
-					if(b.tar.respawn){
-						b.tar.pos(b.tar.respawn.pos)
-					} else if(!b.tar.removed){
-						b.tar.rem()
-						delete game.objs[b.tar.uid]
-						delete b.tar.team.objs[b.tar.uid]
-					}
-				}
+				game.isdead(b.tar)
 			}
 		})
 
@@ -615,7 +683,12 @@ gg.addtask({
 	interval: 100,
 	run:function(){
 		ui.updatecooldowns()
-
+	}
+})
+gg.addtask({
+	name:'500',
+	interval: 500,
+	run:function(){
 		var pl=game.blu.pl
 		pl.hp+=Math.min(pl.hpregen,pl.maxhp-pl.hp)
 		game.updatehpbar(pl)
