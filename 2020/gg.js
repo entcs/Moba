@@ -232,7 +232,7 @@ var gg={
 					this.pos(move)
 				},
 				look:function(p,speed){
-					this.an=self.an(this,p)
+					this.an=self.an(this.getpos(),p)
 				},
 				dist:function(p){
 					return gg.dist(this.getpos(),p)
@@ -464,7 +464,7 @@ var gg={
 		node.draw=function(){
 			var c=self.c2
 			c.textAlign = this.align || 'left'
-			c.font='Xpx sans-serif'.replace('X',node.size)
+			c.font='Xpx Roboto Condensed'.replace('X',node.size)
 			if(this.font){
 				c.font = this.font
 			}
@@ -632,6 +632,10 @@ var gg={
 					})
 
 				},
+				resize:0,
+				keyup:0,
+				keydown:0,
+				keypressed:0,
 				mouseover:0,
 				mouseout:0,
 				touchstart:0,
@@ -657,10 +661,22 @@ var gg={
 			})
 		})
 		//resize
-		window.addEventListener('resize', function(){
-			self.canvas.width=window.innerWidth
-			self.canvas.height=window.innerHeight
+		window.addEventListener('resize', function(e){
+			if(e.target==window){
+				self.canvas.width=window.innerWidth
+				self.canvas.height=window.innerHeight
+				self.canvas.trigger('resize')
+			}
 		})
+		var ke=['keyup','keydown','keypress']
+		loop(ke,function(i,k){
+			window.addEventListener(k, function(e){
+				if(e.target==document.body){
+					self.canvas.trigger(k,e)
+				}
+			})
+		})
+
 	},
 	doevents:function(self,event,node,hits){
 		hits=hits || []
@@ -801,10 +817,17 @@ var gg={
 				if(rng>v)rng=v
 				break
 			case 'string':
+				rng=v[gg.random(v.length)-1]
 				break
 			case 'object':
+				if(v.length){
+					rng=v[gg.random(v.length)-1]
+				} else {
+					rng=v[gg.random(Object.entries(v))[0]]
+				}
 				break
 		}
+		//console.log(v,rng)
 		return rng
 	},
 	//tasks
