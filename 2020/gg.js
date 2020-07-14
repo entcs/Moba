@@ -275,6 +275,25 @@ var gg={
 					this.x+=vec.x
 					this.y+=vec.y
 				},
+				//add child node
+				circ:function(a){
+					gg.circ(a).to(this)
+				},
+				rect:function(a){
+					gg.rect(a).to(this)
+				},
+				line:function(a){
+					gg.line(a).to(this)
+				},
+				text:function(a){
+					gg.text(a).to(this)
+				},
+				img:function(a){
+					gg.img(a).to(this)
+				},
+				pat:function(a){
+					gg.pat(a).to(this)
+				},
 				//events
 				trigger:function(name,data){
 					var fn=this.events[name]

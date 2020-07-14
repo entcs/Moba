@@ -31,6 +31,7 @@ gg.addcanvas({
 	hig: '100%',
 	clearcolor:'#799d31'
 })
+
 var game = {
 	init: function(){
 		this.addtowers()
@@ -292,6 +293,9 @@ var game = {
 			//dead
 			if(o.respawn){
 				o.pos(o.respawn.pos)
+				if(o==game.blu.pl){
+					fol=o.respawn.pos
+				}
 			} else if(!o.removed){
 				o.rem()
 				delete game.objs[o.uid]
@@ -299,11 +303,152 @@ var game = {
 			}
 		}
 
+	},
+	run:function(){
+		game.blu.pl.fol(fol,game.blu.pl.movementspeed)
+
+		//reset targets and closest
+		loop(game.objs,function(i,r){
+			r.tar=''
+			r.closest=10000000
+		})
+
+		//find new targets
+		loop(game.red.objs,function(i,r){
+			loop(game.blu.objs, function(j,b){
+				if(!r.remove && !b.removed){
+					d=r.dist(b)
+					if(d<=r.vision && d<r.closest){
+						r.closest=d
+						r.tar=b
+					}
+					if(d<=b.vision && d<b.closest){
+						b.closest=d
+						b.tar=r
+					}
+				}
+			})
+		})
+
+		//check if fol or att
+		loop(game.objs,function(i,o){
+			//minions target towers if no tar
+			if(o.objtype=='minion' && !o.tar){
+			   loop(o.eteam.objs,function(i,e){
+				   if(e.objtype=='tower'){
+					   var d=o.dist(e)
+					   if(d<=o.closest){
+						   o.closest=d
+						   o.tar=e
+					   }
+				   }
+			   })
+			}
+
+			if(o.tar){
+				if(o.closest<=o.range){
+					if(o.area){
+						o.area.look(o.tar)
+					}
+					//shoot
+					if(gg.ct>=o.lastshot){
+						o.lastshot=gg.ct+1000/o.attackspeed
+						bul=gg.circ({
+							x:o.x,
+							y:o.y,
+							rad:2,
+							color:o.color,
+							damage:o.damage,
+							owner:o
+						})
+						bul.tar=o.tar
+						bullets[bul.uid]=bul
+					}
+				} else if(o.movementspeed){
+					if(o!=game.blu.pl){
+						o.fol(o.tar.pos(),o.movementspeed)
+					}
+				}
+			}
+		})
+
+		//pl
+		var pl=game.blu.pl
+		pl.aim.look(gg.m)
+
+		if(!pl.tar){
+			pl.areanode.look(gg.m)
+			pl.area.y=-pl.range
+			pl.area.linecolor='black'
+		} else {
+			pl.areanode.look(pl.tar)
+			var dist=gg.dist(pl.pos(),pl.tar.pos())
+			pl.area.y=-Math.min(pl.range,dist).round(2)
+			if(dist<=pl.range){
+				pl.area.linecolor='red'
+			} else {
+				pl.area.linecolor='black'
+			}
+		}
+
+
+		//bullets
+		loop(bullets,function(id,b){
+			b.fol(b.tar.pos(),bulletspeed)
+			dist = b.dist(b.tar.pos())
+			if(dist<1){
+				//hit
+				//crit chance
+				var dam=b.damage*spells.iscrit(b.owner)
+				spells.dolifesteal(Math.min(dam,b.tar.hp),b.owner)
+				size=8+dam/3
+				b.tar.hp -= dam
+				var dt=gg.text({
+					x:b.tar.x,
+					y:b.tar.y-10,
+					vx:(gg.random(300)-150)/100,
+					vy:3,
+					death:new Date().getTime()+damtexttime,
+					text:dam,
+					size:size,
+					alpha:0.5
+				})
+				damtexts[dt.uid]=dt
+
+				game.updatehpbar(b.tar)
+				delete bullets[id]
+				b.rem()
+				game.isdead(b.tar)
+			}
+		})
+
+		//damtexts
+		loop(damtexts,function(k,dt){
+			if(dt.death<gg.ct){
+				dt.rem()
+				delete damtexts[k]
+			} else {
+				dt.y-=dt.vy
+				dt.x+=dt.vx
+				dt.vy*=0.9
+				dt.vx*=0.9
+			}
+		})
 	}
 }
 game.init()
 
 var spells={
+	botgap:64,
+	init:function(){
+		this.draw()
+		gg.canvas.on('resize', function(e){
+			spells.update()
+		})
+		gg.canvas.on('keyup',function(e){
+			spells.cast(e.args.key,game.blu.pl)
+		})
+	},
 	list:[
 		{
 			key:'q',
@@ -452,19 +597,6 @@ var spells={
 			if(cooldown<0) cooldown=0
 		}
 		return cooldown
-	}
-}
-
-var ui={
-	botgap:64,
-	init:function(){
-		this.draw()
-		gg.canvas.on('resize', function(e){
-			ui.update()
-		})
-		gg.canvas.on('keyup',function(e){
-			spells.cast(e.args.key,game.blu.pl)
-		})
 	},
 	updatecooldowns:function(){
 		var cooldown
@@ -482,8 +614,8 @@ var ui={
 	keyup:{},
 	buttons:[],
 	update:function(){
-		loop(ui.buttons, function(i,b){
-			b.y=window.innerHeight-ui.botgap
+		loop(spells.buttons, function(i,b){
+			b.y=window.innerHeight-spells.botgap
 		})
 	},
 	draw:function(){
@@ -498,7 +630,7 @@ var ui={
 		loop(spells.list, function(i,spell){
 			b=gg.rect({
 				x:midx-length*wid/2-(length-1)*gap/2+i*wid+i*gap,
-				y:window.innerHeight-ui.botgap,
+				y:window.innerHeight-spells.botgap,
 				wid:wid,
 				hig:wid,
 				color:'lightgrey',
@@ -528,11 +660,22 @@ var ui={
 			}).to(b)
 
 
-			ui.buttons[i]=b
+			spells.buttons[i]=b
 		})
+	},
+	run:function(){
+		spells.updatecooldowns()
 	}
 }
-ui.init()
+spells.init()
+
+var shop={
+	init:function(){
+
+	}
+}
+shop.init()
+
 
 var fol = game.blu.pl.pos()
 gg.canvas.on('click',function(e){
@@ -546,143 +689,14 @@ gg.canvas.on('mousemove',function(e){
 gg.addtask({
 	name:'gameloop',
 	run: function(){
-
-		game.blu.pl.fol(fol,game.blu.pl.movementspeed)
-
-		//reset targets and closest
-		loop(game.objs,function(i,r){
-			r.tar=''
-			r.closest=10000000
-		})
-
-		//find new targets
-		loop(game.red.objs,function(i,r){
-			loop(game.blu.objs, function(j,b){
-				if(!r.remove && !b.removed){
-					d=r.dist(b)
-					if(d<=r.vision && d<r.closest){
-						r.closest=d
-						r.tar=b
-					}
-					if(d<=b.vision && d<b.closest){
-						b.closest=d
-						b.tar=r
-					}
-				}
-			})
-		})
-
-		//check if fol or att
-		loop(game.objs,function(i,o){
-			//minions target towers if no tar
-			if(o.objtype=='minion' && !o.tar){
-			   loop(o.eteam.objs,function(i,e){
-				   if(e.objtype=='tower'){
-					   var d=o.dist(e)
-					   if(d<=o.closest){
-						   o.closest=d
-						   o.tar=e
-					   }
-				   }
-			   })
-			}
-
-			if(o.tar){
-				if(o.closest<=o.range){
-					if(o.area){
-						o.area.look(o.tar)
-					}
-					//shoot
-					if(gg.ct>=o.lastshot){
-						o.lastshot=gg.ct+1000/o.attackspeed
-						bul=gg.circ({
-							x:o.x,
-							y:o.y,
-							rad:2,
-							color:o.color,
-							damage:o.damage,
-							owner:o
-						})
-						bul.tar=o.tar
-						bullets[bul.uid]=bul
-					}
-				} else if(o.movementspeed){
-					if(o!=game.blu.pl){
-						o.fol(o.tar.pos(),o.movementspeed)
-					}
-				}
-			}
-		})
-
-		//pl
-		var pl=game.blu.pl
-		pl.aim.look(gg.m)
-
-		if(!pl.tar){
-			pl.areanode.look(gg.m)
-			pl.area.y=-pl.range
-			pl.area.linecolor='black'
-		} else {
-			pl.areanode.look(pl.tar)
-			var dist=gg.dist(pl.pos(),pl.tar.pos())
-			pl.area.y=-Math.min(pl.range,dist).round(2)
-			if(dist<=pl.range){
-				pl.area.linecolor='red'
-			} else {
-				pl.area.linecolor='black'
-			}
-		}
-
-
-		//bullets
-		loop(bullets,function(id,b){
-			b.fol(b.tar.pos(),bulletspeed)
-			dist = b.dist(b.tar.pos())
-			if(dist<1){
-				//hit
-				//crit chance
-				var dam=b.damage*spells.iscrit(b.owner)
-				spells.dolifesteal(Math.min(dam,b.tar.hp),b.owner)
-				size=8+dam/3
-				b.tar.hp -= dam
-				var dt=gg.text({
-					x:b.tar.x,
-					y:b.tar.y-10,
-					vx:(gg.random(300)-150)/100,
-					vy:3,
-					death:new Date().getTime()+damtexttime,
-					text:dam,
-					size:size,
-					alpha:0.5
-				})
-				damtexts[dt.uid]=dt
-
-				game.updatehpbar(b.tar)
-				delete bullets[id]
-				b.rem()
-				game.isdead(b.tar)
-			}
-		})
-
-		//damtexts
-		loop(damtexts,function(k,dt){
-			if(dt.death<gg.ct){
-				dt.rem()
-				delete damtexts[k]
-			} else {
-				dt.y-=dt.vy
-				dt.x+=dt.vx
-				dt.vy*=0.9
-				dt.vx*=0.9
-			}
-		})
+		game.run()
 	}
 })
 gg.addtask({
 	name:'100',
 	interval: 100,
 	run:function(){
-		ui.updatecooldowns()
+		spells.run()
 	}
 })
 gg.addtask({
