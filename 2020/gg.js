@@ -277,22 +277,22 @@ var gg={
 				},
 				//add child node
 				circ:function(a){
-					gg.circ(a).to(this)
+					return gg.circ(a).to(this)
 				},
 				rect:function(a){
-					gg.rect(a).to(this)
+					return gg.rect(a).to(this)
 				},
 				line:function(a){
-					gg.line(a).to(this)
+					return gg.line(a).to(this)
 				},
 				text:function(a){
-					gg.text(a).to(this)
+					return gg.text(a).to(this)
 				},
 				img:function(a){
-					gg.img(a).to(this)
+					return gg.img(a).to(this)
 				},
 				pat:function(a){
-					gg.pat(a).to(this)
+					return gg.pat(a).to(this)
 				},
 				//events
 				trigger:function(name,data){
@@ -699,7 +699,7 @@ var gg={
 	},
 	doevents:function(self,event,node,hits){
 		hits=hits || []
-		if(node.active && node.events[event]){
+		if(node.visible && node.active && node.events[event]){
 			if(node.hit){
 				var hit
 				if(node.hit=='rect'){

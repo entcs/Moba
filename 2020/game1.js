@@ -29,11 +29,19 @@ gg.showframerate = true
 gg.addcanvas({
 	wid: '100%',
 	hig: '100%',
-	clearcolor:'#799d31'
+	clearcolor:'#000'
 })
 
 var game = {
 	init: function(){
+		this.root=gg.node()
+		this.ground=this.root.rect({
+			x:window.innerWidth/2,
+			y:window.innerHeight/2,
+			wid:10000,
+			hig:10000,
+			color:'#799d31'
+		})
 		this.addtowers()
 		this.addplayers()
 		this.addminions()
@@ -51,7 +59,7 @@ var game = {
 	},
 	addobj:function(a){
 		a.color=a.color|| a.team?a.team.color:'#fff'
-		var o=gg.circ(a)
+		var o=this.root.circ(a)
 		o.maxhp=a.hp
 		if(!a.hiderange){
 			o.g_range=gg.circ({
@@ -670,20 +678,81 @@ var spells={
 spells.init()
 
 var shop={
+	root:'',
 	init:function(){
-
-	}
+		this.draw()
+		gg.canvas.on('keyup',function(e){
+			if(e.args.key=='s'){
+				shop.root.visible=!shop.root.visible
+			}
+		})
+	},
+	draw:function(){
+		shop.root=gg.rect({
+			x:window.innerWidth/2,
+			y:window.innerHeight/2,
+			wid:window.innerWidth,
+			hig:window.innerHeight,
+			alpha:0.8,
+			visible:false
+		})
+		shop.root.on('click',function(e){
+			e.stop=true
+			console.log('shop click')
+		})
+		shop.root.on('mousemove',function(e){
+			e.stop=true
+		})
+		var wid=64,
+			i=0,
+			length=objlen(spells.effects),
+			count=4
+		loop(spells.effects,function(k,v){
+			var b=shop.root.rect({
+				x:(i%count)*(wid+8)-count*(wid+8)/2,
+				y:-window.innerHeight/2+8+wid/2+(wid+8)*parseInt(i/count),
+				wid:wid,
+				hig:wid,
+				color:'lightgrey',
+				linecolor:'white',
+				linewid:0,
+				spell:v
+			})
+			b.on('mouseover',function(e){
+				b.linewid=1
+			})
+			b.on('mouseout',function(e){
+				b.linewid=0
+			})
+			b.name=gg.text({
+				text:k,
+				size:16,
+				align:'center',
+				y:-wid/2+16
+			}).to(b)
+			i+=1
+		})
+	},
+	show:function(){},
+	hide:function(){}
 }
 shop.init()
 
 
 var fol = game.blu.pl.pos()
-gg.canvas.on('click',function(e){
+game.ground.on('click',function(e){
 	fol={
 		x:gg.m.x,
 		y:gg.m.y
 	}
 })
+game.ground.on('mousemove',function(e){
+	fol={
+		x:gg.m.x,
+		y:gg.m.y
+	}
+})
+
 gg.canvas.on('mousemove',function(e){
 })
 gg.addtask({
