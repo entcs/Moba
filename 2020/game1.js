@@ -62,12 +62,12 @@ var game = {
 		var o=this.root.circ(a)
 		o.maxhp=a.hp
 		if(!a.hiderange){
-			o.g_range=gg.circ({
+			o.g_range=o.circ({
 				rad:a.range,
 				linewid:1,
 				linecolor:'#222',
 				alpha:0.5
-			}).to(o)
+			})
 		}
 		// if(!a.hidevision){
 		// 	o.g_vision=gg.circ({
@@ -77,20 +77,20 @@ var game = {
 		// 		alpha:0.5
 		// 	}).to(o)
 		// }
-		o.g_hp=gg.rect({
+		o.g_hp=o.rect({
 			color:'orange',
 			x:0,
 			y:-o.rad-5,
 			wid:30,
 			hig:3
-		}).to(o)
-		o.g_hpleft=gg.rect({
+		})
+		o.g_hpleft=o.rect({
 			color:'yellowgreen',
 			x:0,
 			y:-o.rad-5,
 			wid:30,
 			hig:3
-		}).to(o)
+		})
 		o.crit=10
 		if(o.team==game.blu){
 			o.eteam=game.red
@@ -211,7 +211,17 @@ var game = {
 			}
 		})
 	},
+	remtowers:function(){
+		loop(game.objs,function(i,o){
+			if(o.objtype=='tower'){
+				delete game.objs[o.uid]
+				delete o.team.objs[o.uid]
+				o.rem()
+			}
+		})
+	},
 	addtowers: function(){
+		game.remtowers()
 		var w=1920/2
 		var towerpos1=[
 			{x:w-200,y:100},
@@ -447,6 +457,7 @@ var game = {
 game.init()
 
 var spells={
+	node:gg.node(),
 	botgap:64,
 	init:function(){
 		this.draw()
@@ -470,21 +481,21 @@ var spells={
 			power:2,
 			cooldown:10000,
 			cancast:0,
-			effect:'attspeed'
+			effect:'explosion'
 		},
 		{
 			key:'e',
 			power:3,
 			cooldown:20000,
 			cancast:0,
-			effect:'critical'
+			effect:'explosion'
 		},
 		{
 			key:'r',
 			power:4,
 			cooldown:40000,
 			cancast:0,
-			effect:'lifesteal'
+			effect:'explosion'
 		}
 	],
 	effects:{
@@ -636,7 +647,7 @@ var spells={
 
 
 		loop(spells.list, function(i,spell){
-			b=gg.rect({
+			b=spells.node.rect({
 				x:midx-length*wid/2-(length-1)*gap/2+i*wid+i*gap,
 				y:window.innerHeight-spells.botgap,
 				wid:wid,
@@ -645,28 +656,27 @@ var spells={
 				spell:spell
 			})
 			spell.button=b
-			b.cooldown=gg.text({
+			b.cooldown=b.text({
 				text:spell.key.toUpperCase(),
 				size:16,
 				x:wid/2-3,
 				align:'right',
 				y:-wid/2+16
-			}).to(b)
-			b.text=gg.text({
+			})
+			b.spellkey=b.text({
 				text:spell.key.toUpperCase(),
 				size:16,
 				x:-wid/2+3,
 				align:'left',
 				y:-wid/2+16
-			}).to(b)
-			b.description=gg.text({
+			})
+			b.description=b.text({
 				text:spell.key.toUpperCase(),
 				size:14,
 				x:0,
 				y:5,
 				align:'center'
-			}).to(b)
-
+			})
 
 			spells.buttons[i]=b
 		})
@@ -678,17 +688,17 @@ var spells={
 spells.init()
 
 var shop={
-	root:'',
+	node:'',
 	init:function(){
-		this.draw()
+		this.drawshop()
 		gg.canvas.on('keyup',function(e){
 			if(e.args.key=='s'){
-				shop.root.visible=!shop.root.visible
+				shop.node.visible=!shop.node.visible
 			}
 		})
 	},
-	draw:function(){
-		shop.root=gg.rect({
+	drawshop:function(){
+		shop.node=gg.rect({
 			x:window.innerWidth/2,
 			y:window.innerHeight/2,
 			wid:window.innerWidth,
@@ -696,11 +706,11 @@ var shop={
 			alpha:0.8,
 			visible:false
 		})
-		shop.root.on('click',function(e){
+		shop.node.on('click',function(e){
 			e.stop=true
 			console.log('shop click')
 		})
-		shop.root.on('mousemove',function(e){
+		shop.node.on('mousemove',function(e){
 			e.stop=true
 		})
 		var wid=64,
@@ -708,7 +718,7 @@ var shop={
 			length=objlen(spells.effects),
 			count=4
 		loop(spells.effects,function(k,v){
-			var b=shop.root.rect({
+			var b=shop.node.rect({
 				x:(i%count)*(wid+8)-count*(wid+8)/2,
 				y:-window.innerHeight/2+8+wid/2+(wid+8)*parseInt(i/count),
 				wid:wid,
@@ -724,19 +734,21 @@ var shop={
 			b.on('mouseout',function(e){
 				b.linewid=0
 			})
-			b.name=gg.text({
+			b.name=b.text({
 				text:k,
 				size:16,
 				align:'center',
 				y:-wid/2+16
-			}).to(b)
+			})
 			i+=1
 		})
-	},
-	show:function(){},
-	hide:function(){}
+	}
 }
 shop.init()
+
+var ui=gg.node()
+shop.node.to(ui)
+spells.node.to(ui)
 
 
 var fol = game.blu.pl.pos()
@@ -780,6 +792,24 @@ gg.addtask({
 		pl.hp+=Math.min(pl.hpregen,pl.maxhp-pl.hp)
 		game.updatehpbar(pl)
 
+		//win condition
+		var haveblutowers=false,
+			haveredtowers=false
+		loop(game.blu.objs,function(i,o){
+			if(o.objtype=='tower'){
+				haveblutowers=true
+				return false
+			}
+		})
+		loop(game.red.objs,function(i,o){
+			if(o.objtype=='tower'){
+				haveredtowers=true
+				return false
+			}
+		})
+		if(!haveblutowers || !haveredtowers){
+			//game.addtowers()
+		}
 	}
 })
 gg.addtask({
