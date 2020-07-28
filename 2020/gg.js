@@ -128,6 +128,7 @@ var gg={
 				events:{},
 				enabled:false,
 				mouseover:false,
+				draggable:false,
 				active:false,
 				removed:false,
 				//rendering
@@ -194,6 +195,13 @@ var gg={
 						pos=gg.add(pos,ppos)
 					}
 					return pos
+				},
+				setpos:function(p){
+					if(this.parent){
+						var pos=this.parent.getpos()
+						p=gg.sub(p,pos)
+					}
+					this.pos(p)
 				},
 				getan:function(){
 					var an=this.an
@@ -401,6 +409,15 @@ var gg={
 				c.strokeStyle = this.linecolor
 				c.stroke()
 			}
+		}
+		//draggable
+		if(a.draggable){
+			node.on('mousedown',function(e){
+				gg.dragging=node
+				var pos=node.getpos()
+				gg.draggingstart={x:gg.m.x-pos.x,y:gg.m.y-pos.y}
+				console.log(gg.draggingstart)
+			})
 		}
 
 		return node
@@ -624,7 +641,11 @@ var gg={
 			events={
 				click:0,
 				mousedown:0,
-				mouseup:0,
+				mouseup:function(e){
+					if(gg.dragging){
+						gg.dragging=''
+					}
+				},
 				dblclick:0,
 				mousewheel:0,
 				mousemove:function(e){
@@ -735,21 +756,12 @@ var gg={
 		this.uidcount+=1
 		return uid
 	},
-	sign:function(){
-		var aa=arguments,
-			pos=0,
-			neg=0,
-			res=true
-		loop(aa,function(i,a){
-			if(a>=0){
-				pos=1
-				if(neg) res=false
-			} else {
-				neg=1
-				if(pos) res=false
-			}
-		})
-		return res
+	sign:function(n){
+		if(n>=0){
+			return 1
+		} else {
+			return -1
+		}
 	},
 	dist:function(a,b){
 		if(b){
@@ -849,6 +861,14 @@ var gg={
 		//console.log(v,rng)
 		return rng
 	},
+	//draggingstart
+	dodragging:function(){
+		if(gg.dragging){
+			var x=gg.m.x-gg.draggingstart.x,
+				y=gg.m.y-gg.draggingstart.y
+			gg.dragging.setpos({x:x,y:y})
+		}
+	},
 	//tasks
 	dotasks:function(){
 		var dotask=false,
@@ -926,23 +946,13 @@ var gg={
 	run:function(){
 		gg.ct = new Date().getTime()
 		gg.dt = gg.ct-gg.lt
-		// var dt = gg.ct-gg.lt
-		// gg.dts.push(dt)
-		// if(gg.dts.length>10){
-		// 	gg.dts.splice(0,1)
-		// }
-		// dt=0
-		// loop(gg.dts, function(i,d){
-		// 	dt+=d
-		// })
-		// gg.dt=dt/gg.dts.length
 		gg.fps.text = 'fps:'+parseInt(1000/gg.dt)
-		//smooth dt
 
 
 		gg.clear()
 		gg.draw(self.root)
 		gg.dotasks()
+		gg.dodragging()
 		gg.lt=gg.ct
 		setTimeout(function(){
 			self.run(self)

@@ -474,38 +474,40 @@ var spells={
 			power:1,
 			cooldown:5000,
 			cancast:0,
-			effect:'explosion'
+			effect:'teleport'
 		},
 		{
 			key:'w',
 			power:2,
 			cooldown:10000,
 			cancast:0,
-			effect:'explosion'
+			effect:'teleport'
 		},
 		{
 			key:'e',
 			power:3,
 			cooldown:20000,
 			cancast:0,
-			effect:'explosion'
+			effect:'teleport'
 		},
 		{
 			key:'r',
 			power:4,
 			cooldown:40000,
 			cancast:0,
-			effect:'explosion'
+			effect:'teleport'
 		}
 	],
 	effects:{
 		teleport:{
 			oncast: function(pl,spell){
 				var p=gg.rot(pl.aim.p2,pl.aim.an),
-					movefol=false
+					movefol=false,
+					signx=gg.sign(p.x),
+					signy=gg.sign(p.y)
 
-				pl.x=pl.x+p.x*spell.power
-				pl.y=pl.y+p.y*spell.power
+				pl.x=pl.x+Math.min(Math.abs(p.x*spell.power),Math.abs(gg.m.x-pl.x))*signx
+				pl.y=pl.y+Math.min(Math.abs(p.y*spell.power),Math.abs(gg.m.y-pl.y))*signy
 				fol={
 					x:gg.m.x,
 					y:gg.m.y
@@ -677,6 +679,11 @@ var spells={
 				y:5,
 				align:'center'
 			})
+			b.on('mouseup',function(e){
+				if(shop.dragging){
+					spell.effect=shop.draginfo
+				}
+			})
 
 			spells.buttons[i]=b
 		})
@@ -697,6 +704,8 @@ var shop={
 			}
 		})
 	},
+	dragging:'',
+	draginfo:'',
 	drawshop:function(){
 		shop.node=gg.rect({
 			x:window.innerWidth/2,
@@ -712,6 +721,15 @@ var shop={
 		})
 		shop.node.on('mousemove',function(e){
 			e.stop=true
+			if(shop.dragging){
+				shop.dragging.setpos(gg.m)
+			}
+		})
+		shop.node.on('mouseup',function(e){
+			if(shop.dragging){
+				shop.dragging.rem()
+				shop.dragging=''
+			}
 		})
 		var wid=64,
 			i=0,
@@ -734,12 +752,23 @@ var shop={
 			b.on('mouseout',function(e){
 				b.linewid=0
 			})
+			b.on('mousedown',function(e){
+				var n=shop.node.circ({
+					rad:10,
+					color:'lightgrey'
+				})
+				n.setpos(gg.m)
+				shop.dragging=n
+				shop.draginfo=k
+
+			})
 			b.name=b.text({
 				text:k,
 				size:16,
 				align:'center',
 				y:-wid/2+16
 			})
+
 			i+=1
 		})
 	}
@@ -765,8 +794,6 @@ game.ground.on('mousemove',function(e){
 	}
 })
 
-gg.canvas.on('mousemove',function(e){
-})
 gg.addtask({
 	name:'gameloop',
 	run: function(){
