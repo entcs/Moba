@@ -16,14 +16,29 @@ gg.showframerate = true
 gg.addcanvas({
 	wid: '100%',
 	hig: '100%',
+	color:'grey'
 })
-	
-var player=gg.pat({
-	x:0,
-	y:0,
-	wid:1980,
-	hig:1050,
-	src:'grass1.jpg'
+var pl=gg.circ({
+	x:100,
+	y:100,
+	rad:10,
+	color:'red'
+})
+var trail=pl.trail({
+	len:200,
+	wid:50,
+	color:'black'
+})
+gg.canvas.on('mousemove',function(e){
+	//pl.fol(gg.m,100)
+})
+
+gg.addtask({
+	interval:0,
+	run:function(){
+		pl.fol(gg.m,200)
+		//pl.pos(gg.m)
+	}
 })
 
 </script>

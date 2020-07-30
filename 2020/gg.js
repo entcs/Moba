@@ -69,7 +69,7 @@ var gg={
 	addcanvas:function(a){
 		//add root node
 		this.root=this.node('root')
-		this.clearcolor = a.clearcolor || '#fff'
+		this.color = a.color || '#fff'
 		if(a && a.canvas){
 			this.canvas=a.canvas
 		} else {
@@ -284,6 +284,9 @@ var gg={
 					this.y+=vec.y
 				},
 				//add child node
+				node:function(a){
+					return gg.node(a).to(this)
+				},
 				circ:function(a){
 					return gg.circ(a).to(this)
 				},
@@ -301,6 +304,9 @@ var gg={
 				},
 				pat:function(a){
 					return gg.pat(a).to(this)
+				},
+				trail:function(a){
+					return gg.trail(a).to(this)
 				},
 				//events
 				trigger:function(name,data){
@@ -423,7 +429,17 @@ var gg={
 		return node
 	},
 	circ:function(a){
-		var node=this.node('circ')
+		if(a.temp){
+			var c=this.c2
+			c.beginPath()
+			c.arc(a.x,a.y,a.rad,0,2*Math.PI)
+			c.fillStyle = a.color||'white'
+			c.fill()
+			return false
+		}
+
+		var	node=this.node('circ')
+
 		node.type='circ'
 		node.hit='circ'
 		node.arc=2 * Math.PI
@@ -435,14 +451,14 @@ var gg={
 			var c=self.c2
 			c.beginPath()
 			an=Math.PI*1.5+gg.ator(node.getan())
-			c.arc(0,0, this.rad, an-node.arc/2, an+node.arc/2, false)
-			if(this.color){
-				c.fillStyle = this.color
+			c.arc(0,0, node.rad, an-node.arc/2, an+node.arc/2, false)
+			if(node.color){
+				c.fillStyle = node.color
 				c.fill()
 			}
-			if(this.linewid){
-				c.lineWidth = this.linewid*this.getscale().sx
-				c.strokeStyle = this.linecolor
+			if(node.linewid){
+				c.lineWidth = node.linewid*node.getscale().sx
+				c.strokeStyle = node.linecolor
 				c.stroke()
 			}
 		}
@@ -588,9 +604,53 @@ var gg={
 		}
 		return node
 	},
+	trail:function(a){
+		var node=this.node('trail')
+		node.type='trail'
+		node.spots=[]
+		node.sps=[]
+		//node.hit='trail'
+		loop(a,function(k,v){
+			node[k]=v
+		})
+
+		var n=node.node({x:0,y:0,rad:50,color:'black'})
+		n.circ({y:node.wid,rad:10,color:'blue'}),
+		n.circ({y:-node.wid,rad:10,color:'green'})
+
+		loop(node.len,function(i){
+			node.spots.push({x:0,y:0})
+		})
+		var self = this
+		node.draw=function(){
+			var c=self.c2
+			var p=node.parent.pos()
+			var an=self.an(p,node.spots[node.spots.length-1])+90
+
+			n.an=isNaN(an)?n.an:an
+			var last=node.spots[node.len-1]
+			if(p.x==last.x && p.y==last.y){
+
+			} else {
+				node.spots.push(p)
+				node.spots.splice(0,1)
+			}
+			loop(node.spots,function(i,p){
+				gg.circ({
+					x:p.x-node.parent.x,
+					y:p.y-node.parent.y,
+					rad:(node.wid/node.len)*i+1,
+					//rad:1,
+					color:node.color || 'white',
+					temp:true
+				})
+			})
+		}
+		return node
+	},
 	//rendering
 	clear:function(){
-		this.c2.fillStyle=this.clearcolor
+		this.c2.fillStyle=this.color
 		this.c2.fillRect(0, 0, this.canvas.width, this.canvas.height)
 		//this.c2.clearRect(0, 0, this.canvas.width, this.canvas.height)
 	},
@@ -626,6 +686,9 @@ var gg={
 			})
 			//restore
 			c.restore()
+			if(node.type=='trail'){
+				node.parent.draw()
+			}
 		}
 	},
 	render:function(node){
