@@ -1,0 +1,72 @@
+body,input,select{
+    font-family: 'Cabin Condensed', sans-serif;
+    font-size:18px;            
+}
+table{
+    text-align:right;
+}
+input {
+    width: 32px;
+}
+#cardcraft > span {
+    display: inline-block;
+    vertical-align: top;
+}
+.traits > div{
+    cursor: pointer;
+}
+.traits > div:hover{
+    background-color: #eee;
+}
+.traits > div.selected{
+    background-color: #aaa;
+}
+.card{
+    width: 150px;
+    height: 200px;
+    border: 5px solid #ddd;
+    border-radius: 10px;
+    cursor: pointer; 
+    position: absolute;   
+    overflow: hidden;
+}
+.card .header{
+    background-color: #eee;
+    border-bottom: 2px solid #ddd;
+}
+.card .img{
+    height: 50%;
+    border-bottom: 2px solid #ddd;
+    text-align: center;
+}
+.card .desc{
+    text-align: center;
+}
+.card .pow{
+    width: 60px;
+    padding: 0px 10px;
+    text-align: center;
+    border:2px solid #ddd;
+    border-radius: 10px 10px 0px 0px;
+    border-bottom: none;
+    margin:0 auto;
+    position: absolute;
+    bottom: 0px;
+}
+
+.cols{
+    display: table;
+    width: 100%;   
+}
+.cols > *{
+    display: table-cell;
+}
+.tleft{
+    text-align: left;
+}
+.tright{
+    text-align: right;
+}
+.tcenter{
+    text-align: center;
+}

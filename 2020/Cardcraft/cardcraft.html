@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<link href="https://fonts.googleapis.com/css2?family=Cabin+Condensed&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cardcraft.css">
+<script src="d0.js"></script>
+<html>
+<body>
+    <form id=cardcraft>
+        <span>
+            <table>
+                <tr id=manacost>
+                    <td>
+                        <label>Manacost</label>
+                        <select>
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>
+                            <option value=6>6</option>
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>        
+                    </td>
+                    <td>
+                        <label>Cardpoints</label>
+                        <input readonly />
+                    </td>
+                </tr>
+                <tr id=draw>
+                    <td>
+                        <label>Draw</label>
+                        <select>
+                            <option value=0>0</option>
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>
+                            <option value=6>6</option>
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                    </td>
+                    <td>
+                        <label>Cost</label>
+                        <input readonly class=cost></div> 
+                    </td>
+                </tr>
+                <tr id=damage>
+                    <td>
+                        <label>Damage</label>
+                        <select>
+                            <option value=0>0</option>
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>
+                            <option value=6>6</option>
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                    </td>
+                    <td>
+                        <label>Cost</label>
+                        <input readonly class=cost></div> 
+                    </td>
+                </tr>
+                <tr id=power>
+                    <td>
+                        <label>Power</label>
+                        <select>
+                            <option value=0>0</option>
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>
+                            <option value=6>6</option>
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                    </td>
+                    <td>
+                        <label>Cost</label>
+                        <input readonly class=cost></div> 
+                    </td>
+                </tr>
+                <tr id=toughness>
+                    <td>
+                        <label>Toughness</label>
+                        <select>
+                            <option value=0>0</option>
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>
+                            <option value=6>6</option>
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                    </td>
+                    <td>
+                        <label>Cost</label>
+                        <input readonly class=cost></div> 
+                    </td>
+                </tr>                      
+                <tr id=discard>
+                    <td>
+                        <label>Discard</label>
+                        <select>
+                            <option value=0>0</option>
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>
+                            <option value=6>6</option>
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                    </td>
+                    <td>
+                        <label>Cost</label>
+                        <input readonly class=cost></div> 
+                    </td>
+                </tr>              
+            </table>
+            <div class="traits"></div>
+        </span>
+        <span>
+            <div id=manacost1>1</div>
+            <div id=powertoughness>1/1</div>
+        </span>
+    </form>
+    <div class='card draggable' >
+        <div class='header cols'>
+            <div class='title'>Card name</div>
+            <div class='manacost tright'>Manacost</div>
+        </div>
+        <div class='img'>Image</div>
+        <div class='desc'>Description</div>
+        <div class='pow tcenter'>Pow/Tou</div>
+    </div>
+</body>
+<script src="cardcraft.js"></script>
+</html>
