@@ -29,6 +29,7 @@ input {
     cursor: pointer; 
     position: absolute;   
     overflow: hidden;
+    background-color: #eee;
 }
 .card .header{
     background-color: #eee;
@@ -38,12 +39,12 @@ input {
     height: 50%;
     border-bottom: 2px solid #ddd;
     text-align: center;
+    background-color: #fff;
 }
 .card .desc{
-    text-align: center;
+    text-align: center;    
 }
 .card .pow{
-    width: 60px;
     padding: 0px 10px;
     text-align: center;
     border:2px solid #ddd;
@@ -51,7 +52,9 @@ input {
     border-bottom: none;
     margin:0 auto;
     position: absolute;
+    right: 55px;
     bottom: 0px;
+    background-color: #fff;
 }
 
 .cols{
