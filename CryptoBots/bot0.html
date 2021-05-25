@@ -1,43 +1,108 @@
 <body>
 </body>
 <script>
+	var PRICE = 100,
+		SOLD = 0
+	var loop=function(obj,fn){
+	if(obj){
+		if(fn===undefined){
+			var count=0
+			while(obj(count)!==false) count+=1
+		} else if(typeof(obj)=='number'){
+			for(var nr=0;nr<obj;nr++) if(fn(nr)===false) break
+		} else if(obj.length){
+			for(var nr=0;nr<obj.length;nr++) if(obj.hasOwnProperty(nr)) if(fn(nr,obj[nr])===false) break
+		} else {
+			for(var key in obj) if(fn(key,obj[key])===false) break
+		}
+	}
+}
+	var Guid = function (){
+		//8 4 4 4 12
+		var guid = new Date().getTime().toString().split('').reverse().join('')
+		return [guid.slice(0,8),guid.slice(0,4),guid.slice(0,4),guid.slice(0,4),guid.slice(0,12)].join('-')
+	}
 	var BotFactory = {
+		bots: [],
+		currencies: {
+			'USD': 1000,
+			'ADA': 0
+		},
 		addsnakebot: function(conf){
+			conf = conf || {}
 			var bot = {
 				buyorders: [],
 				sellorders: [],
 				orders: [],
-				step: conf.step || 1,
+				price: 0,
+				baseprice: 0,				
+				profit: conf.profit || 1,
+				buystep: conf.buystep || 1,
 				steps: conf.steps || 10,
 				volume: conf.ordersize || 10,
 				helpneck: conf.helpneck || 50,
-				askprice: function(){
-					return price
+				basecurrency: '' || 'USD',
+				currency: '' || 'ADA',
+				slither: function(){					
+					this.getprice()
+					
+					var order = this.sellorders[this.sellorders.length - 1]
+					if(!this.sellorders.length || (order && this.price <= order.price - this.buystep)){
+						this.buy({
+							price: this.price,
+							volume: this.volume,
+							basecurrency: this.basecurrency,
+							currency: this.currency
+						})
+					} else if(this.price >= order.price + this.profit) {						
+						//sell
+						this.sell()
+					}					
+				},
+				getprice: function(){
+					PRICE += 10 - Math.random()*20
+					if (PRICE <= 0 ) PRICE = 1
+					this.price = PRICE
+					return PRICE
 				},
 				buy: function(conf){
-					var buyorder = {
-						price: conf.price,
-						volume: 0,
-						time: new Date().getTime()
+					var order = {
+						id: Guid(),
+						price: this.price,
+						basecurrency: conf.basecurrency,
+						currency: conf.currency,
+						volume: conf.volume,
+						time: new Date().getTime(),
+						bot: this
 					}		
-					if(!conf.price){
-						//market order
-					} else {
-						//limit order
-					}
-					this.buyorders.push(order)
-					return buyorder			
-				},
-				sell: function(conf){
-					var sellorder = {
+					order.volume = this.volume/order.price					
+					BotFactory.currencies[order.basecurrency] -= this.volume
+					BotFactory.currencies[order.currency] += order.volume
 
-					}
-					if(!conf.price){
-						//market order
-					} else {
-						//limit order
-					}
-					return sellorder
+					this.sellorders.push(order)
+					console.log('buy ', PRICE, BotFactory.currencies,  this.sellorders)
+					return order			
+				},
+				sell: function(conf){					
+					var order = this.sellorders.pop()					
+					BotFactory.currencies[order.basecurrency] += order.volume * PRICE
+					BotFactory.currencies[order.currency] -= order.volume					
+					console.log('sell',PRICE, BotFactory.currencies, SOLD,  this.sellorders)
+					SOLD += 1
+				},
+				bought: function(order){
+					var volume,
+						price,
+						currency1,
+						currency2
+					loop(order.bought, function(i, vp){
+						volume = vp[0]
+						price = vp[1]
+						amount = volume * price
+					})
+				},
+				sold: function(order){
+
 				}
 			}
 			this.bots.push(bot)
@@ -46,5 +111,19 @@
 		adddcabot: function(conf){
 
 		},
+		run: function(){	
+			if(!STOP){				
+				loop(BotFactory.bots, function(i,bot){
+					bot.slither()
+				})		
+				setTimeout(function(){
+					BotFactory.run()
+				},10)
+			}
+		}
 	}
+	var STOP = false
+	BotFactory.run()
+	BotFactory.addsnakebot()
+
 </script>
