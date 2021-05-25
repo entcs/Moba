@@ -4,6 +4,9 @@
 	var BotFactory = {
 		addsnakebot: function(conf){
 			var bot = {
+				buyorders: [],
+				sellorders: [],
+				orders: [],
 				step: conf.step || 1,
 				steps: conf.steps || 10,
 				volume: conf.ordersize || 10,
@@ -13,12 +16,28 @@
 				},
 				buy: function(conf){
 					var buyorder = {
-						wantedprice: conf.price,
-						price: 0,
+						price: conf.price,
 						volume: 0,
 						time: new Date().getTime()
 					}		
+					if(!conf.price){
+						//market order
+					} else {
+						//limit order
+					}
+					this.buyorders.push(order)
 					return buyorder			
+				},
+				sell: function(conf){
+					var sellorder = {
+
+					}
+					if(!conf.price){
+						//market order
+					} else {
+						//limit order
+					}
+					return sellorder
 				}
 			}
 			this.bots.push(bot)
