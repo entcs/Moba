@@ -4,7 +4,7 @@
 <script src="d0.js"></script>
 <html>
 <body>
-    <form id=cardcraft>
+    <form id=cardcraft class=hide>
         <span>
             <table>
                 <tr id=manacost>
@@ -146,14 +146,29 @@
             <div id=powertoughness>1/1</div>
         </span>
     </form>
-    <div class='card draggable' >
-        <div class='header cols'>
-            <div class='title'>Card name</div>
-            <div class='manacost tright'>Manacost</div>
+    <div class='cardtemplate'>
+        <div class='card draggable' >
+            <div class='header cols'>
+                <div class='title'>Card name</div>
+                <div class='manacost tright'>Manacost</div>
+            </div>
+            <div class='img'>Image</div>
+            <div class='desc'>Description</div>
+            <div class='pow tcenter'>1/1</div>
+        </div>    
+    </div>
+    <div class='gamearea'>
+        <div id='player2' class='player2 player cols'>
+            <div class='discard'>Discard</div>
+            <div class='hand'>Hand</div>
+            <div class='deck'>Deck</div>
         </div>
-        <div class='img'>Image</div>
-        <div class='desc'>Description</div>
-        <div class='pow tcenter'>1/1</div>
+        <div class='play'></div>
+        <div id='player1' class='player1 player cols'>
+            <div class='deck'>Deck</div>            
+            <div class='hand'>Hand</div>
+            <div class='discard'>Discard</div>
+        </div>
     </div>
 </body>
 <script src="cardcraft.js"></script>

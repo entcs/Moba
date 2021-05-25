@@ -314,7 +314,7 @@ Element.prototype.__defineGetter__("p", function(){
 	return this.parentNode;
 })
 //text
-Element.prototype.t=function(v){
+Element.prototype.t=Element.prototype.text=function(v){
 	if (v===undefined) {
 		return this.innerText
 	} else {
@@ -516,12 +516,27 @@ String.prototype.splice=function(index,count,add){
 }
 //document
 document.on('ready',function(e){//style setters and getters
-	var styles=window.getComputedStyle(document.body)
-	loop(styles,function(name,val){
+	var styles=window.getComputedStyle(document.body),
+		pxnamelist = [
+			'height','width','left','right','top','bottom'
+		]
+
+	loop(styles,function(nr,name){
 		Element.prototype.__defineGetter__(name, function(){
-			return window.getComputedStyle(this)[name]
+			var val = window.getComputedStyle(this)[name]			
+			if(pxnamelist.indexOf(name)!=-1){				
+				if(val){
+					val = parseFloat(val.replace('px',''))
+				} else {
+					val = 0
+				}
+			}
+			return val
 		})
 		Element.prototype.__defineSetter__(name, function(val){
+			if(pxnamelist.indexOf(name)!=-1){				
+				val = val+'px'
+			}			
 			this.style[name]=val
 		})			
 	})		
