@@ -1,0 +1,31 @@
+<body>
+</body>
+<script>
+	var BotFactory = {
+		addsnakebot: function(conf){
+			var bot = {
+				step: conf.step || 1,
+				steps: conf.steps || 10,
+				volume: conf.ordersize || 10,
+				helpneck: conf.helpneck || 50,
+				askprice: function(){
+					return price
+				},
+				buy: function(conf){
+					var buyorder = {
+						wantedprice: conf.price,
+						price: 0,
+						volume: 0,
+						time: new Date().getTime()
+					}		
+					return buyorder			
+				}
+			}
+			this.bots.push(bot)
+			return bot
+		},
+		adddcabot: function(conf){
+
+		},
+	}
+</script>
