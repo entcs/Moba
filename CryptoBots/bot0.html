@@ -43,7 +43,7 @@
 				helpneck: conf.helpneck || 50,
 				basecurrency: '' || 'USD',
 				currency: '' || 'ADA',
-				slither: function(){					
+				run: function(){					
 					this.getprice()
 					
 					var order = this.sellorders[this.sellorders.length - 1]
@@ -114,7 +114,7 @@
 		run: function(){	
 			if(!STOP){				
 				loop(BotFactory.bots, function(i,bot){
-					bot.slither()
+					bot.run()
 				})		
 				setTimeout(function(){
 					BotFactory.run()
