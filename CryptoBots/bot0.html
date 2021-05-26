@@ -49,7 +49,7 @@
 				if(i>1) DATA.push(rd)
 			})
 			DATA = DATA.reverse()
-			console.log('have data', DATA)
+			console.log('have data', DATA.length)
         }
         reader.readAsBinaryString(e.target.files[0])
 	})
@@ -118,6 +118,7 @@
 			ADA += order.volume
 
 			this.sellorders.push(order)
+			if(this.sellorders.length > MAXSO) MAXSO = this.sellorders.length
 			return order			
 		},
 		sell: function(profitprice){					
@@ -145,6 +146,7 @@
 		PROFIT = 0
 		FEECOUNT = 0
 		FEEAMOUNT = 0,
+		MAXSO = 0
 		ADA = 0,
 		USD = 1000,
 		DATA = [
@@ -159,6 +161,7 @@
 		PROFIT = 0
 		FEECOUNT = 0
 		FEEAMOUNT = 0
+		MAXSO = 0
 		ADA = 0
 		USD = 1000		
 		bot.step = parseFloat($('#step').val())
@@ -174,7 +177,7 @@
 		loop(bot.sellorders, function(i,s){
 			sovalue += s.volume * PRICE
 		})
-		console.log($('#step').val(),'profit:', PROFIT, 'COUNT:',SOLD,'AVG:', PROFIT / SOLD,'FEES:',FEEAMOUNT, USD,ADA, bot.sellorders.length,'SOV:',sovalue,'TV:', USD+sovalue)
+		console.log($('#step').val(),'profit:', PROFIT, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, USD,bot.sellorders.length,'SOV:',sovalue,'TOTAL:', USD+sovalue,'MAXSO:',MAXSO)
 	})
 
 </script>
