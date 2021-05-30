@@ -14,28 +14,56 @@
 	.red {
 		color: rgb(139, 68, 21);
 	}
+	.cols {
+		display: table;
+	}
+	.cols > * {
+		display: table-cell;
+	}
+	.w100{
+		width: 100%;
+	}
+	.tright {
+		text-align: right;
+	}
+	.wrap{
+		width: 354px;
+	}
 </style>
 <body>
-	<p>Select local CSV File:</p>
-	<input id="csv" type="file">
-	<input id="sellstep" value=1 />
-	<button id="runsnake">RUNSNAKE</button>
-	<button id="rundca">RUNDCA</button>
-	<table>
-		<thead>
-			<tr>
-				<td>ACTION</td>
-				<td>PRICE</td>
-				<td>PROFIT</td>
-				<td>TOTAL PROFIT</td>
-				<td>FEE</td>
-				<td>TOTAL FEES</td>
-				<td>USD</td>
-			</tr>
-		</thead>
-		<tbody class='history'>
-		</tbody>
-	</table>
+	<div class="wrap">
+		<div>
+			<input class="w100" id="csv" type="file">
+		</div>
+		<div class='cols'>
+			<div>
+				<label>STARTINDEX</label><br>
+				<input id="startindex" value=0 />
+			</div>
+			<div>
+				<label>ENDINDEX</label><br>
+				<input id="endindex" value=0 />
+			</div>		
+		</div>
+		<div class='cols'>
+			<div>
+				<label>SELLSTEP</label><br>
+				<input id="sellstep" value=1 />
+			</div>
+			<div>
+				<label>BUYSTEP</label><br>
+				<input id="buystep" value=1 />
+			</div>
+		</div>
+		<div class='cols'>
+			<label>LOGINDEX</label>
+			<input id="logindex" value=0>
+		</div>
+		<div class='tright'>
+			<button id="runsnake">RUNSNAKE</button>		
+			<button id="rundca">RUNDCA</button>
+		</div>					
+	</div>
 </body>
 <script>	
 	$('#csv').on('change', function(e){
@@ -59,7 +87,13 @@
 		SOLD = 0,
 		PROFIT = 0,
 		FEECOUNT = 0,
-		FEEAMOUNT = 0
+		FEEAMOUNT = 0,
+		MAX = 0,
+		MIN = Number.MAX_VALUE,
+		MININDEX = 0,
+		MAXINDEX = 0,
+		MAXCOUNT = 0
+
 	var loop=function(obj,fn){
 		if(obj){
 			if(fn===undefined){
@@ -82,7 +116,7 @@
 		averageprice: 0,
 		steps: 10,
 		volume: 10,
-		helpneck: 50,
+		helpneck: 50,		
 		dosnake: function(){					
 			this.getprice()		
 			if(PRICE){			
@@ -105,29 +139,6 @@
 					this.sell(sellprice)
 				}	
 			}				
-		},
-		dodca: function(){
-			this.getprice()		
-			if(PRICE){			
-				var order = this.dcasellorder,
-					sellprice = 0,
-					buyprice = 0
-				if(order){
-					sellprice = order.price * (100+this.sellstep)/100
-					buyprice = order.price * (100-this.buystep)/100
-				}
-				if(!order || (order && PRICE <= buyprice)){
-					if(USD > this.volume){
-						this.buydca({
-							price: buyprice || PRICE,
-							volume: this.volume
-						})
-					}
-				} else if(PRICE >= sellprice) {						
-					//sell
-					this.selldca(sellprice)
-				}	
-			}	
 		},
 		getprice: function(){
 			PRICE = parseFloat(DATA[INDEX][6])
@@ -164,22 +175,58 @@
 			var profit = total - ordertotal
 			PROFIT += profit
 			SOLD += 1
+			var cv = this.currentvalue()
+			if(cv<MIN){
+				MIN = cv
+				MININDEX = INDEX
+			} else if(cv>MAX){
+				MAX = cv
+				MAXINDEX = INDEX
+			}
 		},
+		dodca: function(){
+			this.getprice()		
+			if(PRICE){			
+				var order = this.dcasellorder,
+					sellprice = 0,
+					buyprice = 0
+				if(order){
+					sellprice = order.price * (100+this.sellstep)/100
+					buyprice = order.price * (100-this.buystep)/100
+				}
+				if(!order || (order && PRICE <= buyprice)){
+					if(USD > this.volume){
+						this.buydca({
+							price: buyprice || PRICE,
+							volume: this.volume
+						})
+					}
+				} else if(PRICE >= sellprice) {						
+					//sell
+					this.selldca(sellprice)
+				}	
+			}	
+		},		
 		buydca: function(conf){
 			var ordervolume = conf.volume/conf.price
 			if(!this.dcasellorder){
 				this.dcasellorder = {
 					price: conf.price,
-					volume: ordervolume
+					volume: ordervolume,
+					count: 1
 				}	
+			} else {
+				this.dcasellorder.price = (this.dcasellorder.price * this.dcasellorder.volume + conf.volume) / (this.dcasellorder.volume + ordervolume)
+				this.dcasellorder.volume += ordervolume
+				this.dcasellorder.count += 1
 			}
-			var avgprice = (this.dcasellorder.price * this.dcasellorder.volume + conf.volume) / (this.dcasellorder.volume + ordervolume)
-			this.dcasellorder.volume += ordervolume
 
 			USD -= conf.volume
 			ADA += ordervolume
-			
-			this.dcabuycount+=1
+			if(this.dcasellorder.count > MAXSO) 
+			{
+				MAXSO = this.dcasellorder.count
+			}
 		},
 		selldca: function(sellprice){
 			var order = this.dcasellorder,					
@@ -199,6 +246,10 @@
 			SOLD += 1
 			this.dcasellorder = ''
 			this.dcabuycount = 0
+		},
+		currentvalue: function(){
+			var total = USD + ADA*PRICE
+			return total
 		}
 	}
 	var STOP = false,		
@@ -207,56 +258,71 @@
 		PROFIT = 0
 		FEECOUNT = 0
 		FEEAMOUNT = 0,
+		STARTINDEX = 0,
+		ENDINDEX = 0,
 		MAXSO = 0
 		ADA = 0,
 		USD = 1000,
 		DATA = [
 			[0,0,0,0,0,0,100],
-			[0,0,0,0,0,0,101]
-		]
-
-	$('#runsnake').on('click', function(e){
+			[0,0,0,0,0,0,99],
+			[0,0,0,0,0,0,98]
+		],
+		LOGINDEX = 0
+	var run = function(type){
 		SOLD = 0
 		PROFIT = 0
 		FEECOUNT = 0
 		FEEAMOUNT = 0
 		MAXSO = 0
 		ADA = 0
-		USD = 1000		
+		USD = 1000	
+		MAX = 0
+		MIN = Number.MAX_VALUE
+		MININDEX = 0
+		MAXINDEX = 0
+		MAXCOUNT = 0
+
+		LOGINDEX = parseInt($('#logindex').val())
 		bot.sellstep = parseFloat($('#sellstep').val())
-		bot.buystep = parseFloat($('#sellstep').val())		
-		bot.sellorders = []		
-		for(x=0;x<DATA.length;x++){
+		bot.buystep = parseFloat($('#buystep').val())
+		STARTINDEX = parseInt($('#startindex').val())
+		ENDINDEX = parseInt($('#endindex').val()) || DATA.length
+		bot.sellorders = []	
+		bot.dcasellorder = ''	
+		for(x=STARTINDEX;x<ENDINDEX;x++){
 			INDEX = x
-			if(STOP) return
-			bot.dosnake()
-			
+			if(type=='snake'){
+				bot.dosnake()
+			} else if(type=='dca'){
+				bot.dodca()
+			}	
+			if(LOGINDEX){
+				if(!(x%LOGINDEX)){				
+					log()
+				}
+			}
 		}
+		log()
+	}
+	var log = function(){
 		//order value at market price
 		var sovalue = 0
-		loop(bot.sellorders, function(i,s){
-			sovalue += s.volume * PRICE
-		})
-		console.log($('#sellstep').val(),'profit:', PROFIT, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, USD,bot.sellorders.length,'SOV:',sovalue,'TOTAL:', USD+sovalue,'MAXSO:',MAXSO)
+		if(bot.sellorders.length){
+			loop(bot.sellorders, function(i,s){
+				sovalue += s.volume * PRICE
+			})
+		} else if (bot.dcasellorder){
+			sovalue = bot.dcasellorder.volume * PRICE
+		}
+		var date = DATA[INDEX][1]
+		console.log(INDEX,date,$('#sellstep').val()+'/'+$('#buystep').val(),'profit:', PROFIT,'SOV:',sovalue,'TOTAL:', USD+sovalue, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, 'MAXSO:',MAXSO, 'MAX:',MAX,'MIN:',MIN)		
+	}
+	$('#runsnake').on('click', function(e){
+		run('snake')
 	})
 	$('#rundca').on('click', function(e){
-		SOLD = 0
-		PROFIT = 0
-		FEECOUNT = 0
-		FEEAMOUNT = 0
-		MAXSO = 0
-		ADA = 0
-		USD = 1000		
-		bot.sellstep = parseFloat($('#sellstep').val())
-		bot.buystep = parseFloat($('#sellstep').val())		
-		for(x=0;x<DATA.length;x++){
-			INDEX = x
-			if(STOP) return
-			bot.dodca()
-		}
-		//order value at market price
-		var sovalue = bot.dcasellorder.volume * PRICE
-		console.log($('#sellstep').val(),'profit:', PROFIT, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, USD,'SOV:',sovalue,'TOTAL:', USD+sovalue,'MAXSO:',MAXSO)
+		run('dca')
 	})
 
 
