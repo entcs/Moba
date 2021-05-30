@@ -56,8 +56,14 @@
 			</div>
 		</div>
 		<div class='cols'>
-			<label>LOGINDEX</label>
-			<input id="logindex" value=0>
+			<div>
+				<label>LOGINDEX</label><br>
+				<input id="logindex" value=0>
+			</div>
+			<div>
+				<label>USD</label><br>
+				<input id="startusd" value=1000>
+			</div>			
 		</div>
 		<div class='tright'>
 			<button id="runsnake">RUNSNAKE</button>		
@@ -269,6 +275,7 @@
 			[0,0,0,0,0,0,98]
 		],
 		LOGINDEX = 0
+		
 	var run = function(type){
 		SOLD = 0
 		PROFIT = 0
@@ -282,7 +289,7 @@
 		MININDEX = 0
 		MAXINDEX = 0
 		MAXCOUNT = 0
-
+		USD = parseInt($('#startusd').val())
 		LOGINDEX = parseInt($('#logindex').val())
 		bot.sellstep = parseFloat($('#sellstep').val())
 		bot.buystep = parseFloat($('#buystep').val())
@@ -316,7 +323,7 @@
 			sovalue = bot.dcasellorder.volume * PRICE
 		}
 		var date = DATA[INDEX][1]
-		console.log(INDEX,date,$('#sellstep').val()+'/'+$('#buystep').val(),'profit:', PROFIT,'SOV:',sovalue,'TOTAL:', USD+sovalue, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, 'MAXSO:',MAXSO, 'MAX:',MAX,'MIN:',MIN)		
+		console.log(INDEX,date,$('#sellstep').val()+'/'+$('#buystep').val(),'USD:', USD ,'profit:', PROFIT,'SOV:',sovalue,'TOTAL:', USD+sovalue, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, 'MAXSO:',MAXSO, 'MAX:',MAX,'MIN:',MIN)		
 	}
 	$('#runsnake').on('click', function(e){
 		run('snake')
