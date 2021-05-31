@@ -29,6 +29,9 @@
 	.wrap{
 		width: 354px;
 	}
+	input{
+		width: 300px;
+	}
 </style>
 <body>
 	<div class="wrap">
@@ -88,6 +91,22 @@
         }
         reader.readAsBinaryString(e.target.files[0])
 	})
+	$('#endindex').on('keyup', function(e){
+		var tar = $(e.target),
+			val = parseInt(tar.val())
+		if(val || val === 0){
+			var date = DATA[val][1]
+			tar.parent().find('label').text('ENDINDEX(date)'.replace('date',date))
+		}
+	})
+	$('#startindex').on('keyup', function(e){
+		var tar = $(e.target),
+			val = parseInt(tar.val())
+		if(val || val === 0){
+			var date = DATA[val][1]
+			tar.parent().find('label').text('STARTINDEX(date)'.replace('date',date))
+		}
+	})
 
 	var PRICE = 0,
 		SOLD = 0,
@@ -114,6 +133,10 @@
 			}
 		}
 	}
+	Number.prototype.round=function(round){
+	var pow = Math.pow(10,round||0)
+	return Math.round(this*pow)/pow
+}	
 	var bot = {
 		sellorders: [],
 		dcasellorder: '',
@@ -134,7 +157,7 @@
 					buyprice = order.price * (100-this.buystep)/100
 				}
 				if(!this.sellorders.length || (order && PRICE <= buyprice)){
-					if(USD > this.volume){
+					if(USD >= this.volume){
 						this.buy({
 							price: buyprice || PRICE,
 							volume: this.volume
@@ -201,7 +224,7 @@
 					buyprice = order.price * (100-this.buystep)/100
 				}
 				if(!order || (order && PRICE <= buyprice)){
-					if(USD > this.volume){
+					if(USD >= this.volume){
 						this.buydca({
 							price: buyprice || PRICE,
 							volume: this.volume
@@ -224,7 +247,7 @@
 			} else {
 				this.dcasellorder.price = (this.dcasellorder.price * this.dcasellorder.volume + conf.volume) / (this.dcasellorder.volume + ordervolume)
 				this.dcasellorder.volume += ordervolume
-				this.dcasellorder.count += 1
+				this.dcasellorder.count += 1				
 			}
 
 			USD -= conf.volume
@@ -252,6 +275,14 @@
 			SOLD += 1
 			this.dcasellorder = ''
 			this.dcabuycount = 0
+			var cv = this.currentvalue()
+			if(cv<MIN){
+				MIN = cv
+				MININDEX = INDEX
+			} else if(cv>MAX){
+				MAX = cv
+				MAXINDEX = INDEX
+			}			
 		},
 		currentvalue: function(){
 			var total = USD + ADA*PRICE
@@ -265,6 +296,7 @@
 		FEECOUNT = 0
 		FEEAMOUNT = 0,
 		STARTINDEX = 0,
+		SOCOUNT = 0,
 		ENDINDEX = 0,
 		MAXSO = 0
 		ADA = 0,
@@ -323,7 +355,7 @@
 			sovalue = bot.dcasellorder.volume * PRICE
 		}
 		var date = DATA[INDEX][1]
-		console.log(INDEX,date,$('#sellstep').val()+'/'+$('#buystep').val(),'USD:', USD ,'profit:', PROFIT,'SOV:',sovalue,'TOTAL:', USD+sovalue, 'COUNT:',SOLD,'FEES:',FEEAMOUNT, 'MAXSO:',MAXSO, 'MAX:',MAX,'MIN:',MIN)		
+		console.log(INDEX,date,'PRICE:', PRICE.round(5), $('#sellstep').val()+'/'+$('#buystep').val(),'USD:', USD.round(2) ,'profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.dcasellorder.count,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD,'FEES:',FEEAMOUNT.round(2), 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))		
 	}
 	$('#runsnake').on('click', function(e){
 		run('snake')
