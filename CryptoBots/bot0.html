@@ -26,12 +26,6 @@
 	.tright {
 		text-align: right;
 	}
-	.wrap{
-		width: 354px;
-	}
-	input{
-		width: 300px;
-	}
 </style>
 <body>
 	<div class="wrap">
@@ -41,12 +35,16 @@
 		<div class='cols'>
 			<div>
 				<label>STARTINDEX</label><br>
-				<input id="startindex" value=0 />
+				<input id="startindex" value=720300 />
 			</div>
 			<div>
 				<label>ENDINDEX</label><br>
 				<input id="endindex" value=0 />
-			</div>		
+			</div>	
+			<div>
+				<label>LOGINDEX</label><br>
+				<input id="logindex" value=0>
+			</div>	
 		</div>
 		<div class='cols'>
 			<div>
@@ -57,18 +55,20 @@
 				<label>BUYSTEP</label><br>
 				<input id="buystep" value=1 />
 			</div>
-		</div>
-		<div class='cols'>
 			<div>
-				<label>LOGINDEX</label><br>
-				<input id="logindex" value=0>
+				<label>STEPS</label><br>
+				<input id="steps" value=40 />
+			</div>
+			<div>
+				<label>VOLUME</label><br>
+				<input id="volume" value=10 />
 			</div>
 			<div>
 				<label>USD</label><br>
 				<input id="startusd" value=1000>
-			</div>			
+			</div>				
 		</div>
-		<div class='tright'>
+		<div>
 			<button id="runsnake">RUNSNAKE</button>		
 			<button id="rundca">RUNDCA</button>
 		</div>					
@@ -87,7 +87,6 @@
 				if(i>1) DATA.push(rd)
 			})
 			DATA = DATA.reverse()
-			console.log('have data', DATA.length)
         }
         reader.readAsBinaryString(e.target.files[0])
 	})
@@ -117,7 +116,7 @@
 		MIN = Number.MAX_VALUE,
 		MININDEX = 0,
 		MAXINDEX = 0,
-		MAXCOUNT = 0
+		MAXCOUNT = 0		
 
 	var loop=function(obj,fn){
 		if(obj){
@@ -143,9 +142,8 @@
 		sellstep: 1,
 		buystep: 1,
 		averageprice: 0,
-		steps: 10,
+		steps: 0,
 		volume: 10,
-		helpneck: 50,		
 		dosnake: function(){					
 			this.getprice()		
 			if(PRICE){			
@@ -157,7 +155,7 @@
 					buyprice = order.price * (100-this.buystep)/100
 				}
 				if(!this.sellorders.length || (order && PRICE <= buyprice)){
-					if(USD >= this.volume){
+					if(USD >= this.volume && (!this.steps || this.sellorders.length < this.steps)){
 						this.buy({
 							price: buyprice || PRICE,
 							volume: this.volume
@@ -224,7 +222,7 @@
 					buyprice = order.price * (100-this.buystep)/100
 				}
 				if(!order || (order && PRICE <= buyprice)){
-					if(USD >= this.volume){
+					if(USD >= this.volume && (!order || !this.steps || this.dcasellorder.count < this.steps)){
 						this.buydca({
 							price: buyprice || PRICE,
 							volume: this.volume
@@ -306,6 +304,7 @@
 			[0,0,0,0,0,0,99],
 			[0,0,0,0,0,0,98]
 		],
+		DATASETS = [],
 		LOGINDEX = 0
 		
 	var run = function(type){
@@ -325,6 +324,8 @@
 		LOGINDEX = parseInt($('#logindex').val())
 		bot.sellstep = parseFloat($('#sellstep').val())
 		bot.buystep = parseFloat($('#buystep').val())
+		bot.steps = parseFloat($('#steps').val())
+		bot.volume = parseFloat($('#volume').val())
 		STARTINDEX = parseInt($('#startindex').val())
 		ENDINDEX = parseInt($('#endindex').val()) || DATA.length
 		bot.sellorders = []	
@@ -355,7 +356,7 @@
 			sovalue = bot.dcasellorder.volume * PRICE
 		}
 		var date = DATA[INDEX][1]
-		console.log(INDEX,date,'PRICE:', PRICE.round(5), $('#sellstep').val()+'/'+$('#buystep').val(),'USD:', USD.round(2) ,'profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.dcasellorder.count,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD,'FEES:',FEEAMOUNT.round(2), 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))		
+		console.log(INDEX,date,'PRICE:', PRICE.round(5), $('#sellstep').val()+'/'+$('#buystep').val()+ ' x '+bot.volume +' x '+bot.steps,'USD:', USD.round(2) ,'profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.dcasellorder.count,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD,'FEES:',FEEAMOUNT.round(2), 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))		
 	}
 	$('#runsnake').on('click', function(e){
 		run('snake')
