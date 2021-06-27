@@ -51,6 +51,8 @@
 				if(order){
 					sellprice = order.price * (100+this.sellstep)/100
 					buyprice = order.price * (100-this.buystep)/100
+                    order.sellprice = sellprice
+                    order.buyprice = buyprice
 				}
 				if(!this.sellorders.length || (order && PRICE <= buyprice)){
 					if(USD >= this.volume && (!this.steps || this.sellorders.length < this.steps)){
@@ -196,8 +198,10 @@
 		} else if (bot.dcasellorder){
 			sovalue = bot.dcasellorder.volume * PRICE
 		}		
-		console.log(new Date(),'PRICE:', PRICE, bot.sellstep+'/'+bot.buystep+ ' x '+bot.volume +' x '+bot.steps,'USD:', USD.round(2) ,'profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.dcasellorder.count,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD,'FEES:',FEEAMOUNT.round(2), 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))		
-        console.log('______________________________________________________________________________')
+        var last = bot.sellorders[bot.sellorders.length-1],
+        tobuy = ((last.buyprice - PRICE)*10000/PRICE).round()+'%',
+        tosell = ((last.sellprice - PRICE)*10000/PRICE).round()+'%'
+		console.log(PRICE,'USD:', USD.round(2) ,'('+ tobuy +' <0> '+tosell+')','profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.dcasellorder.count,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD, 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))
 	}
 
 //BOT0
@@ -212,11 +216,9 @@
         binance.prices('ADABUSD', (error, ticker) => {
             LASTPRICE = PRICE
             PRICE = ticker.ADABUSD            
-            if(LASTPRICE){
-                change = (PRICE - LASTPRICE)*100/LASTPRICE
-            }
-            console.info("Price of ADABUSD: ", PRICE, change + '%')
             bot.dosnake()
+
+            tosell = 0    
             log()
         })
     }
