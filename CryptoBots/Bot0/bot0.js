@@ -6,15 +6,11 @@
 		FEEAMOUNT = 0,
 		MAX = 0,
 		MIN = Number.MAX_VALUE,
-		MININDEX = 0,
-		MAXINDEX = 0,
 		MAXCOUNT = 0,
 		SOCOUNT = 0,
-		ENDINDEX = 0,
 		MAXSO = 0
 		ADA = 0,
-		USD = 1000,
-        LOGINDEX = 0
+		USD = 1000
 
 	var loop=function(obj,fn){
 		if(obj){
@@ -68,7 +64,6 @@
 			}				
 		},
 		getprice: function(){
-			//PRICE = parseFloat(DATA[INDEX][6])            
 			return PRICE
 		},
 		buy: function(conf){
@@ -105,10 +100,8 @@
 			var cv = this.currentvalue()
 			if(cv<MIN){
 				MIN = cv
-				MININDEX = INDEX
 			} else if(cv>MAX){
 				MAX = cv
-				MAXINDEX = INDEX
 			}
 		},
 		dodca: function(){
@@ -176,10 +169,8 @@
 			var cv = this.currentvalue()
 			if(cv<MIN){
 				MIN = cv
-				MININDEX = INDEX
 			} else if(cv>MAX){
 				MAX = cv
-				MAXINDEX = INDEX
 			}			
 		},
 		currentvalue: function(){
@@ -197,11 +188,13 @@
 			})
 		} else if (bot.dcasellorder){
 			sovalue = bot.dcasellorder.volume * PRICE
-		}		
-        var last = bot.sellorders[bot.sellorders.length-1],
-        tobuy = ((last.buyprice - PRICE)*10000/PRICE).round()+'%',
-        tosell = ((last.sellprice - PRICE)*10000/PRICE).round()+'%'
-		console.log(PRICE,'USD:', USD.round(2) ,'('+ tobuy +' <0> '+tosell+')','profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.dcasellorder.count,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD, 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))
+		}	
+		if(bot.sellorders.length){
+			var last = bot.sellorders[bot.sellorders.length-1],
+			tobuy =  ((last.buyprice - PRICE)*100/(last.price*bot.buystep/100)).round()+'%'
+			tosell = ((last.sellprice - PRICE)*100/(last.price*bot.sellstep/100)).round()+'%'
+			console.log(new Date(), PRICE,'USD:', USD.round(2) ,'('+ tobuy +' <0> '+tosell+')','profit:', PROFIT.round(2),'SOV:',sovalue.round(2),'SOCOUNT:',bot.sellorders.length ,'TOTAL:', (USD+sovalue).round(5), 'COUNT:',SOLD, 'MAXSO:',MAXSO, 'MAX:',MAX.round(2),'MIN:',MIN.round(2))
+		}
 	}
 
 //BOT0
