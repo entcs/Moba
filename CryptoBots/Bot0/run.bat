@@ -1,0 +1,1 @@
+start cmd /k node bot0.js
