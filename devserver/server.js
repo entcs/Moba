@@ -5,13 +5,13 @@ var express = require('express'),
 	app = express(),
 	loop=require('./loop.js').loop,
 	pth=require('path'),
-	connection=mysql.createConnection({
-		host: 'localhost',
-		port:3333,
-		user:'root',
-		password:'Loikam22'//,
-		//database:'test'
-	}),
+	// connection=mysql.createConnection({
+	// 	host: 'localhost',
+	// 	port:3333,
+	// 	user:'root',
+	// 	password:'Loikam22'//,
+	// 	//database:'test'
+	// }),
 	fs=require('fs'),
 	apps={},
 	appspath=pth.resolve(__dirname+'/apps'),	
@@ -164,7 +164,7 @@ s.addwatcherevents()
 	
 app.use(express.bodyParser())	
 app.use(express.cookieParser())
-connection.connect()	
+//connection.connect()	
 
 app.get('*',function(req,res){
 	handle(req,res)

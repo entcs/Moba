@@ -68,7 +68,7 @@ var mysql=require('mysql'),
 		}
 		return q
 	}
-dbconnect()
+//dbconnect()
 var sessions={
 	users:{},
 	add:function(name){

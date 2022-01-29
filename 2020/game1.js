@@ -474,28 +474,28 @@ var spells={
 			power:1,
 			cooldown:5000,
 			cancast:0,
-			effect:'teleport'
+			effect:'explosion'
 		},
 		{
 			key:'w',
 			power:2,
 			cooldown:10000,
 			cancast:0,
-			effect:'teleport'
+			effect:'explosion'
 		},
 		{
 			key:'e',
 			power:3,
 			cooldown:20000,
 			cancast:0,
-			effect:'teleport'
+			effect:'explosion'
 		},
 		{
 			key:'r',
 			power:4,
 			cooldown:40000,
 			cancast:0,
-			effect:'teleport'
+			effect:'explosion'
 		}
 	],
 	effects:{

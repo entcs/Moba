@@ -3,7 +3,7 @@ var Bots = {
         this.addevents()
     },
     addevents: function () {
-        var addbot = d.find('.addbot')
+        var addbot = $('.addbot')
         addbot.on('click', function (e) {
             console.log('click')
             $.ajax({

@@ -253,7 +253,8 @@ router.post('/', function (req, res) {
 })
 router.post('/addbot', function (req, res) {
     console.log(req.body)
-    res.send('Got addbot request')
+    //res.send('Got addbot request')
+    res.sendFile('/public/addbot.html', { root: __dirname })
 })
 app.use("/", router);
 
