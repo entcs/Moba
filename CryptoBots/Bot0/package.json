@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "bot1.js",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "node-binance-api": "^0.12.5"
   },
   "devDependencies": {},
